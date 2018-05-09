@@ -1,0 +1,2 @@
+go get github.com/google/logger
+#go get github.com/tschoeftner/go-cli
