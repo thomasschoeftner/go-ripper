@@ -1,30 +1,30 @@
 package functional
 
-import (
-	"errors"
-)
-
-type iterator struct {
-	seq ISequence
-	currentPosition int
-	step int
-}
-
-func NewIterator(sequence ISequence) *iterator {
-	return &iterator{
-		seq: sequence,
-		currentPosition: -1,
-		step: 1,
-	}
-}
-
-func (si *iterator) nextPosition() int {
-	return si.currentPosition + si.step
-}
-
-func (si *iterator) IsOutOfBounds(position int) bool {
-	return position < 0 || position >= si.seq.Len()
-}
+//import (
+//	"errors"
+//)
+//
+//type iterator struct {
+//	seq ISequence
+//	currentPosition int
+//	step int
+//}
+//
+//func NewIterator(sequence ISequence) *iterator {
+//	return &iterator{
+//		seq: sequence,
+//		currentPosition: -1,
+//		step: 1,
+//	}
+//}
+//
+//func (si *iterator) nextPosition() int {
+//	return si.currentPosition + si.step
+//}
+//
+//func (si *iterator) IsOutOfBounds(position int) bool {
+//	return position < 0 || position >= si.seq.Len()
+//}
 
 func (si *iterator) Reverse() *iterator {
 	return &iterator{
