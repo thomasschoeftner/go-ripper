@@ -10,7 +10,7 @@ import (
 	"go-cli/task"
 	"go-ripper/ripper"
 	"go-cli/pipeline"
-	"fmt"
+	"flag"
 )
 
 const (
@@ -20,8 +20,8 @@ const (
 )
 
 
-var omdbFlags = cli.Array(cli.FromFlag(omdbTokenFlag, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(omdbTokenFlag)).WithDefault("invalid", "test", "ids!")
-var configFlag = cli.String(cli.FromFlag(configFileFlag, "the config file location").OrEnvironmentVar(ApplicationName + "-" + configFileFlag)).WithDefault(ApplicationName + ".conf")
+var omdbTokenFlags  = cli.FromFlag(omdbTokenFlag, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(omdbTokenFlag).GetArray().WithDefault()
+var configFlag = cli.FromFlag(configFileFlag,"the config file location").OrEnvironmentVar(ApplicationName + "-" + configFileFlag).GetString().WithDefault(ApplicationName + ".conf")
 
 func main() {
 	os.Exit(launch())
@@ -31,26 +31,27 @@ func main() {
 func launch() int {
 	logger.Init(ApplicationName, true, false, ioutil.Discard)
 
-	println("before" , *omdbFlags, *configFlag)
-	// read command line params (flags & args)
-	flags, taskNames := cli.GetFlagsAndTasks()
-	println("after " , *omdbFlags, *configFlag)
-	error, _:= cli.CheckRequiredFlags(omdbTokenFlag)
-	commons.Check(error)
-	cli.PrintFlagsAndArgs(logger.Infof)
-	fmt.Printf("omdboken is: \"%s\"", *omdbFlags)
-
-	// read config
-	configFile := flags[configFileFlag]
-	omdbToken := flags[omdbTokenFlag]
-	conf := ripper.AppConf{}
-	commons.Check(config.FromFile(&conf, configFile, map[string]string {"omdbtoken" : omdbToken}))
-
 	// create task Tree
 	allTasks, error := ripper.CreateTasks()
 	commons.Check(error)
 	taskMap, errs := task.ValidateTasks(allTasks)
 	commons.CheckMultiple(errs)
+
+	// read command line params (flags & args)
+	syntax := "[flags] task[...] target[...]"
+	cli.Setup(&syntax, allTasks)
+	taskNames, targets, error := cli.ParseCommandLineArguments(taskMap.TaskNamesDefined())
+	if error !=  nil {
+		flag.Usage()
+	}
+	commons.Check(error)
+
+	// read config
+	configFile := *configFlag
+	omdbTokens := *omdbTokenFlags
+	conf := ripper.AppConf{}
+	error = config.FromFile(&conf, configFile, map[string]string {})
+	commons.Check(error)
 
 	// run "tasks" by default if no other task is specified
 	if len(taskNames) == 0 {
@@ -61,14 +62,8 @@ func launch() int {
 	invokedTasks, error := taskMap.GetTasksForNames(taskNames...)
 	commons.Check(error)
 
-	// materialize pipelines
-	pipeline , error := pipeline.Materialize(invokedTasks).WithConfig(conf.Processing, conf)
-	commons.Check(error)
-	if pipeline != nil {
-		//TODO
-	}
 
-	// TODO remove following
+	// TODO remove
 	for idx, t := range invokedTasks {
 		logger.Infof("%d --- %s", idx, t.Name)
 		results := t.Handler(task.Context{allTasks, conf, commons.Printf}, task.Process(task.Param{"folder", "franz"}))
@@ -77,8 +72,17 @@ func launch() int {
 				logger.Error(r.Error)
 			}
 		}
+	}
+	logger.Infof("omdbtokens: %v", omdbTokens)
+	logger.Infof("targets: %s", targets)
+
+	// materialize pipelines
+	pipeline , error := pipeline.Materialize(invokedTasks).WithConfig(conf.Processing, conf)
+	commons.Check(error)
+	if pipeline != nil {
 		//TODO
 	}
+	//todo check required flags & target per task!!!
 
 	return 0
 }
