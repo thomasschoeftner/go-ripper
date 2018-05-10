@@ -18,10 +18,9 @@ const (
 	ApplicationName = "go-ripper"
 )
 
-var flags = [...]string {
-	cli.FromFlag(omdbTokenFlag, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(omdbTokenFlag).WithDefault(cli.UNDEFINED),
-	cli.FromFlag(configFileFlag, "the config file location").WithDefault(ApplicationName + ".conf"),
-}
+
+var omdbFlag = cli.String(cli.FromFlag(omdbTokenFlag, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(omdbTokenFlag)).WithDefault(cli.UNDEFINED)
+var configFlag = cli.String(cli.FromFlag(configFileFlag, "the config file location").OrEnvironmentVar(ApplicationName + "-" + configFileFlag)).WithDefault(ApplicationName + ".conf")
 
 func main() {
 	os.Exit(launch())
@@ -32,10 +31,10 @@ func launch() int {
 	logger.Init(ApplicationName, true, false, ioutil.Discard)
 
 	// read command line params (flags & args)
-	flags, args := cli.GetFlagsAndArgs()
-	error, _:= cli.CheckParamsDefined([]string {omdbTokenFlag})
+	flags, taskNames := cli.GetFlagsAndTasks()
+	error, _:= cli.CheckRequiredFlags(omdbTokenFlag)
 	commons.Check(error)
-	cli.DisplayFlagsAndArgs(logger.Infof)
+	cli.PrintFlagsAndArgs(logger.Infof)
 
 	// read config
 	configFile := flags[configFileFlag]
@@ -50,12 +49,12 @@ func launch() int {
 	commons.CheckMultiple(errs)
 
 	// run "tasks" by default if no other task is specified
-	if len(args) == 0 {
-		args = append(args, "tasks")
+	if len(taskNames) == 0 {
+		taskNames = append(taskNames, "tasks")
 	}
 
 	// calculate tasks to be invoked
-	invokedTasks, error := taskMap.GetTasksForNames(args...)
+	invokedTasks, error := taskMap.GetTasksForNames(taskNames...)
 	commons.Check(error)
 
 	// materialize pipelines
