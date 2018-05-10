@@ -9,6 +9,7 @@ import (
 	"go-cli/commons"
 	"go-cli/task"
 	"go-ripper/ripper"
+	"go-cli/pipeline"
 )
 
 const (
@@ -45,7 +46,7 @@ func launch() int {
 	// create task Tree
 	allTasks, error := ripper.CreateTasks()
 	commons.Check(error)
-	taskMap, errs := tasks.ValidateTasks(allTasks)
+	taskMap, errs := task.ValidateTasks(allTasks)
 	commons.CheckMultiple(errs)
 
 	// run "tasks" by default if no other task is specified
@@ -58,16 +59,16 @@ func launch() int {
 	commons.Check(error)
 
 	// materialize pipelines
-	pipeline , error := tasks.MaterializePipeline(invokedTasks).WithConfig(conf.Processing, conf)
+	pipeline , error := pipeline.Materialize(invokedTasks).WithConfig(conf.Processing, conf)
 	commons.Check(error)
 	if pipeline != nil {
 		//TODO
 	}
 
 	// TODO remove following
-	for idx, task := range invokedTasks {
-		logger.Infof("%d --- %s", idx, task.Name)
-		results := task.Handler(tasks.Context{allTasks, conf, commons.Printf}, tasks.Process(tasks.Param{"folder", "franz"}))
+	for idx, t := range invokedTasks {
+		logger.Infof("%d --- %s", idx, t.Name)
+		results := t.Handler(task.Context{allTasks, conf, commons.Printf}, task.Process(task.Param{"folder", "franz"}))
 		for _, r := range results {
 			if r.Error != nil {
 				logger.Error(r.Error)

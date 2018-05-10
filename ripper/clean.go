@@ -5,7 +5,7 @@ import (
 	"go-cli/task"
 )
 
-func cleanHandler(ctx tasks.Context, c *tasks.Command) []tasks.Result {
+func cleanHandler(ctx task.Context, c *task.Command) []task.Result {
 	conf := ctx.Config.(AppConf)
 	ctx.Printf("cleaning intermediate data from working folder \"%s\"", conf.WorkDirectory)
 	error := os.RemoveAll(conf.WorkDirectory)
@@ -14,6 +14,6 @@ func cleanHandler(ctx tasks.Context, c *tasks.Command) []tasks.Result {
 	} else {
 		ctx.Printf("  ...done\n")
 	}
-	return []tasks.Result{ {c, error} }
+	return []task.Result{ {c, error} }
 }
 

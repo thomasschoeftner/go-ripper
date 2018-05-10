@@ -7,7 +7,7 @@ import (
 type AppConf struct {
 	WorkDirectory string
 	OutputDirectory string
-	Processing *tasks.ProcessingConf
+	Processing *task.ProcessingConf
 	Omdb *OmdbConf
 	Tool *ToolConfig
 }
