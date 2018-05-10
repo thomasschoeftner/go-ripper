@@ -10,6 +10,7 @@ import (
 	"go-cli/task"
 	"go-ripper/ripper"
 	"go-cli/pipeline"
+	"fmt"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 )
 
 
-var omdbFlag = cli.String(cli.FromFlag(omdbTokenFlag, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(omdbTokenFlag)).WithDefault(cli.UNDEFINED)
+var omdbFlags = cli.Array(cli.FromFlag(omdbTokenFlag, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(omdbTokenFlag)).WithDefault("invalid", "test", "ids!")
 var configFlag = cli.String(cli.FromFlag(configFileFlag, "the config file location").OrEnvironmentVar(ApplicationName + "-" + configFileFlag)).WithDefault(ApplicationName + ".conf")
 
 func main() {
@@ -30,11 +31,14 @@ func main() {
 func launch() int {
 	logger.Init(ApplicationName, true, false, ioutil.Discard)
 
+	println("before" , *omdbFlags, *configFlag)
 	// read command line params (flags & args)
 	flags, taskNames := cli.GetFlagsAndTasks()
+	println("after " , *omdbFlags, *configFlag)
 	error, _:= cli.CheckRequiredFlags(omdbTokenFlag)
 	commons.Check(error)
 	cli.PrintFlagsAndArgs(logger.Infof)
+	fmt.Printf("omdboken is: \"%s\"", *omdbFlags)
 
 	// read config
 	configFile := flags[configFileFlag]
