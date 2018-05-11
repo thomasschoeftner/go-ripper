@@ -5,11 +5,11 @@ import (
 )
 
 type AppConf struct {
-	WorkDirectory string
-	OutputDirectory string
-	Processing *task.ProcessingConf
-	Omdb *OmdbConf
-	Tool *ToolConfig
+	TempDirectoryName   string
+	OutputDirectoryName string
+	Processing          *task.ProcessingConf
+	Omdb                *OmdbConf
+	Tool                *ToolConfig
 }
 
 type ToolConfig struct {
@@ -18,6 +18,7 @@ type ToolConfig struct {
 }
 
 type OmdbConf struct {
+	OmdbTokens []string
 	TitleQuery string
 	SeasonQuery string
 }

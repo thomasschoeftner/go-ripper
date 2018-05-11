@@ -6,7 +6,7 @@ import (
 
 func CreateTasks() (task.TaskSequence, error){
 	taskTasks := task.NewTask("tasks","show all available tasks and their dependencies", task.TasksOverviewHandler )
-	taskClean := task.NewTask("clean","cleans all intermediate processing artifacts except contents in results folder", cleanHandler)
+	taskClean := task.NewTask("clean","cleans specified output folders", cleanHandler)
 
 	taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", nil)
 	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", nil)
@@ -37,4 +37,3 @@ func CreateTasks() (task.TaskSequence, error){
 		taskTagAudio, taskTagVideo, taskTag,
 		taskAudio, taskVideo, taskAll)
 }
-

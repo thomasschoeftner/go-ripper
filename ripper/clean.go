@@ -5,15 +5,15 @@ import (
 	"go-cli/task"
 )
 
-func cleanHandler(ctx task.Context, c *task.Command) []task.Result {
+func cleanHandler(ctx task.Context, job task.Job) ([]task.Job, error) {
 	conf := ctx.Config.(AppConf)
-	ctx.Printf("cleaning intermediate data from working folder \"%s\"", conf.WorkDirectory)
-	error := os.RemoveAll(conf.WorkDirectory)
+	path := GetTempPathFor(job, conf)
+	ctx.Printf("cleaning data from \"%s\"", path)
+	error := os.RemoveAll(path)
 	if error != nil {
-		ctx.Printf("  ...failed\n")
+		ctx.Printf("  ...failed\n  due to: %s", error)
 	} else {
 		ctx.Printf("  ...done\n")
 	}
-	return []task.Result{ {c, error} }
+	return []task.Job{job}, error
 }
-
