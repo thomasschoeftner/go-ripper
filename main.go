@@ -6,15 +6,18 @@ import (
 	"io/ioutil"
 	"go-cli/config"
 	"go-cli/cli"
-	"go-cli/commons"
 	"go-cli/task"
 	"go-ripper/ripper"
 	"go-cli/pipeline"
 	"flag"
 	"fmt"
+	"go-cli/require"
 )
 
 const (
+	exit_success = 0
+	exit_failure = 1
+
 	cliFlagOmdbTokens          = "omdbtoken"
 	cliFlagConfigFile          = "config"
 	cliFlagWithoutDependencies = "without-dependencies"
@@ -35,54 +38,39 @@ func launch() int {
 	logger.Init(ApplicationName, true, false, ioutil.Discard)
 
 	// create task Tree
-	allTasks, error := ripper.CreateTasks()
-	commons.Check(error)
+	allTasks, err := ripper.CreateTasks()
+	require.NotFailed(err)
 	taskMap, errs := task.ValidateTasks(allTasks)
-	commons.CheckMultiple(errs)
+	require.NoneFailed(errs)
 
 	// read command line params (flags & args)
 	syntax := "[flags] task[...] target[...]"
 	cli.Setup(&syntax, allTasks)
-	taskNames, targets, error := cli.ParseCommandLineArguments(taskMap.TaskNamesDefined())
-	if error !=  nil {
-		flag.Usage()
+	taskNames, targets, err := cli.ParseCommandLineArguments(taskMap.TaskNamesDefined())
+	require.TrueOrDieAfter(err == nil, "", flag.Usage)
+	require.TrueOrDieAfter(len(taskNames) > 0, "no task(s) specified", flag.Usage)
+	if len(targets) == 0 {
+		// add default target "."
+		targets = append(targets, ".")
 	}
-	commons.Check(error)
+	require.True(len(targets) != 0, "no target(s) specified")
+
 
 	// read config
 	configFile := *configFlag
 	omdbTokens := *omdbTokenFlags
 	conf := ripper.AppConf{}
-	error = config.FromFile(&conf, configFile, map[string]string {})
-	commons.Check(error)
+	err = config.FromFile(&conf, configFile, map[string]string {})
+	require.NotFailed(err)
 	conf.Omdb.OmdbTokens = omdbTokens
 
-	// run "tasks" by default if no other task is specified
-	if len(taskNames) == 0 {
-		taskNames = append(taskNames, "tasks")
-	}
-
 	// calculate tasks to be invoked
-	invokedTasks, error := taskMap.GetTasksForNames(taskNames...)
-	commons.Check(error)
-
-
-	//{   // TODO remove
-	//	for idx, t := range invokedTasks {
-	//		logger.Infof("%d --- %s", idx, t.Name)
-	//		results := t.Handler(task.Context{allTasks, conf, commons.Printf}, task.Process(task.Param{"folder", "franz"}))
-	//		for _, r := range results {
-	//			if r.Error != nil {
-	//				logger.Error(r.Error)
-	//			}
-	//		}
-	//	}
-	//	logger.Infof("targets: %s", targets)
-	//}
+	invokedTasks, err := taskMap.GetTasksForNames(taskNames...)
+	require.NotFailed(err)
 
 	// materialize pipelines
-	pipe, error := pipeline.Materialize(invokedTasks).WithConfig(conf.Processing, conf, allTasks)
-	commons.Check(error)
+	pipe, err := pipeline.Materialize(invokedTasks).WithConfig(conf.Processing, conf, allTasks)
+	require.NotFailed(err)
 
 	go func() {
 		// feed work to pipeline asynchronously
@@ -100,7 +88,7 @@ func launch() int {
 		} else if isCanceled, reason := event.IsCanceled(); isCanceled {
 			logger.Infof("processing canceled due to reason: %s", reason)
 		} else if isError, err, job := event.IsError(); isError {
-			logger.Errorf("job %v failed with error %s", job, err)
+			logger.Errorf("job %v failed with err %s", job, err)
 		} else if isDone, job := event.IsDone(); isDone {
 			logger.Infof("job %v is completed", job)
 		} else {
@@ -110,22 +98,5 @@ func launch() int {
 
 	//todo check required flags & target per task!!!
 
-	return 0
+	return exit_success
 }
-
-//type CheckResult struct {
-//	Success bool
-//	Event pipeline.Event
-//
-//}
-//type Check func(event pipeline.Event) CheckResult
-//
-//func (c CheckResult) OrElse(check Check) CheckResult {
-//	if !c.Success {
-//		return check(c.Event)
-//	}
-//}
-//
-//func handleClosed(event pipeline.Event, pipelineClosed *bool) CheckResult {
-//
-//}
