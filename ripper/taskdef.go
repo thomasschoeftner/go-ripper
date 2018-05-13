@@ -6,7 +6,7 @@ import (
 
 const TaskName_Tasks = "tasks"
 
-func CreateTasks() (task.TaskSequence, error){
+func CreateTasks() task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
 	taskClean := task.NewTask("clean","cleans specified output folders", cleanHandler)
 

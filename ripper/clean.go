@@ -6,7 +6,8 @@ import (
 )
 
 func cleanHandler(ctx task.Context, job task.Job) ([]task.Job, error) {
-	conf := ctx.Config.(AppConf)
+	conf := ctx.Config.(*AppConf)
+
 	path := GetTempPathFor(job, conf)
 	ctx.Printf("cleaning data from \"%s\"", path)
 	error := os.RemoveAll(path)
