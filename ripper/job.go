@@ -13,8 +13,7 @@ const (
 
 func getPathFor(job task.Job, subDir string) string {
 	folderPath := job[JobField_Location]
-	//todo proper calculate path if location is folder or file
-	return fmt.Sprintf("%s%c----deliberateerrorfornow---%s", folderPath, os.PathSeparator, subDir)
+	return fmt.Sprintf("%s%c%s", folderPath, os.PathSeparator, subDir)
 }
 
 func GetTempPathFor(job task.Job, conf *AppConf) string {

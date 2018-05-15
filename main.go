@@ -40,7 +40,7 @@ func main() {
 
 func launch() int {
 	syntax := "[flags] task[...] target[...]"
-	allTasks  := ripper.CreateTasks()
+	allTasks  := CreateTasks()
 	cli.Setup(&syntax, allTasks)
 
 	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
@@ -61,7 +61,7 @@ func launch() int {
 
 	// materialize processing pipeline
 	//todo check required flags & target per task!!!
-	pipe, err := pipeline.Materialize(invokedTasks).WithConfig(conf.Processing, conf, allTasks)
+	pipe, err := pipeline.Materialize(invokedTasks.Flatten()).WithConfig(conf.Processing, conf, allTasks)
 	require.NotFailed(err)
 
 	// ASYNCHRONOUSLY send a processing command for each target to pipeline

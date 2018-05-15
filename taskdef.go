@@ -1,14 +1,15 @@
-package ripper
+package main
 
 import (
 	"go-cli/task"
+	"go-ripper/clean"
 )
 
 const TaskName_Tasks = "tasks"
 
 func CreateTasks() task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
-	taskClean := task.NewTask("clean","cleans specified output folders", cleanHandler)
+	taskClean := task.NewTask("clean","cleans specified output folders", clean.CleanHandler)
 
 	taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", nil)
 	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", nil)
