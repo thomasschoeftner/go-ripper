@@ -60,7 +60,7 @@ func launch() int {
 	require.NotFailed(err)
 
 	// materialize processing pipeline
-	//todo check required flags & target per task!!!
+	//todo check required flags per task!!!
 	pipe, err := pipeline.Materialize(invokedTasks.Flatten()).WithConfig(conf.Processing, conf, allTasks)
 	require.NotFailed(err)
 

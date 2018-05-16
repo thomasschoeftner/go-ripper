@@ -7,9 +7,21 @@ import (
 type AppConf struct {
 	TempDirectoryName   string
 	OutputDirectoryName string
-	Processing          *task.ProcessingConf
-	Omdb                *OmdbConf
+	Processing          *task.ProcessingConfig
+	Scan                *ScanConfigGroup
+	Omdb                *OmdbConfig
 	Tool                *ToolConfig
+
+}
+
+type ScanConfigGroup struct {
+	Video *ScanConfig
+	//TODO add: Audio *ScanConfig?
+}
+
+type ScanConfig struct {
+	IdPattern  string
+	PathElemWithIdPattern string
 }
 
 type ToolConfig struct {
@@ -17,7 +29,7 @@ type ToolConfig struct {
 	Vlc *VlcConf
 }
 
-type OmdbConf struct {
+type OmdbConfig struct {
 	OmdbTokens []string
 	TitleQuery string
 	SeasonQuery string

@@ -3,6 +3,7 @@ package main
 import (
 	"go-cli/task"
 	"go-ripper/clean"
+	"go-ripper/scan"
 )
 
 const TaskName_Tasks = "tasks"
@@ -12,7 +13,7 @@ func CreateTasks() task.TaskSequence {
 	taskClean := task.NewTask("clean","cleans specified output folders", clean.CleanHandler)
 
 	taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", nil)
-	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", nil)
+	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", scan.ScanVideo)
 	taskScan      := task.NewTask("scan","scan folder and direct sub-folders for audio and video input", nil).WithDependencies(taskScanAudio, taskScanVideo)
 
 	taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", nil )
