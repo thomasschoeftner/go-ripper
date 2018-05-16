@@ -10,7 +10,8 @@ const TaskName_Tasks = "tasks"
 
 func CreateTasks() task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
-	taskClean := task.NewTask("clean","cleans specified output folders", clean.CleanHandler)
+	taskCleanTmp := task.NewTask("cleanTmp","cleans temporary work folders", clean.CleanTmpHandler)
+	taskCleanOut := task.NewTask("cleanOut","cleans result output folders", clean.CleanOutHandler)
 
 	taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", nil)
 	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", scan.ScanVideo)
@@ -34,7 +35,7 @@ func CreateTasks() task.TaskSequence {
 
 	return task.LoadTasks(
 		taskTasks,
-		taskClean,
+		taskCleanTmp, taskCleanOut,
 		taskScanAudio, taskScanVideo, taskScan,
 		taskResolveAudio, taskResolveVideo, taskResolve,
 		taskRipAudio, taskRipVideo, taskRip,

@@ -4,27 +4,26 @@ import (
 	"go-cli/pipeline"
 	"fmt"
 	"go-cli/task"
-	"os"
+	"path/filepath"
 )
 
 const (
-	JobField_Location = "location"
+	JobField_Path = "path"
 )
 
-func getPathFor(job task.Job, subDir string) string {
-	folderPath := job[JobField_Location]
-	return fmt.Sprintf("%s%c%s", folderPath, os.PathSeparator, subDir)
-}
+//func GetTempPathFor(job task.Job, conf *AppConf) string {
+//	return getWorkPathFor(job, conf.TempDirectoryName)
+//}
+//
+//func GetOutputPathFor(job task.Job, conf *AppConf) string {
+//	return getWorkPathFor(job, conf.OutputDirectoryName)
+//}
 
-func GetTempPathFor(job task.Job, conf *AppConf) string {
-	return getPathFor(job, conf.TempDirectoryName)
+func GetWorkPathFor(job task.Job, subdir string) string {
+	folder, _ := filepath.Split(job[JobField_Path])
+	return filepath.Join(folder, subdir)
 }
-
-func GetOutputPathFor(job task.Job, conf *AppConf) string {
-	return getPathFor(job, conf.OutputDirectoryName)
-}
-
 
 func ProcessPath(path string) pipeline.Command {
-	return pipeline.Process(map[string]string {JobField_Location : path}, fmt.Sprintf("process multi-media sources at %s", path))
+	return pipeline.Process(map[string]string {JobField_Path: path}, fmt.Sprintf("process multi-media sources at %s", path))
 }
