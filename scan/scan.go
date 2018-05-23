@@ -4,12 +4,14 @@ import (
 	"go-ripper/ripper"
 	"path/filepath"
 	"os"
-	"strconv"
 	"strings"
 	"go-ripper/targetinfo"
+	"fmt"
+	"regexp"
+	"strconv"
 )
 
-func scan(rootPath string, tmp string, out string, kind string, conf *ripper.ScanConfig) ([]*targetinfo.TargetInfo, error) {
+func scan(rootPath string, excludeDirs []string, kind string, conf *ripper.ScanConfig) ([]*targetinfo.TargetInfo, error) {
 	targets := []*targetinfo.TargetInfo{}
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
@@ -25,18 +27,19 @@ func scan(rootPath string, tmp string, out string, kind string, conf *ripper.Sca
 			return err
 		}
 
+		//discard excluded directories
 		folder, file := filepath.Split(path)
-		if strings.Contains(folder, tmp) || strings.Contains(folder, out) { //exclude tmp and out folders
-			return nil
+		for _, dir := range excludeDirs {
+			if strings.Contains(folder, dir) {
+				return nil
+			}
 		}
 
-		id, collection, itemNo, err := getIdCollectionItemNoForFile(path, conf.PathElemWithIdPattern)
+		id, collection, itemNo, err := dissectPath(path, conf)
 		if err != nil {
 			return err
 		}
-
 		if id != nil {
-			//targets = append(targets, *newTarget(folder, file, *id, collection, itemNo))
 			targets = append(targets, targetinfo.From(file, folder, kind, *id, collection,itemNo))
 		}
 
@@ -50,41 +53,82 @@ func scan(rootPath string, tmp string, out string, kind string, conf *ripper.Sca
 	}
 }
 
-func getIdCollectionItemNoForFile(path string, pathElemWithIdPattern string) (*string, *int, *int, error) {
-	pathElems := getLastNPathElements(path, 3)
-	var id *string      //required!!!
-	var collection *int //not required, id only, or id + itemNo is valid
-	var itemNo *int     //sequence number of title/track/episode
+const (
+	placeholder_Id = "id"
+	placeholder_Collection = "collection"
+	placeholder_ItemNo = "itemno"
+)
 
-	for idx, pathElem := range pathElems {
-		containsId, err := filepath.Match(pathElemWithIdPattern, pathElem)
-		if err != nil {
-			return nil, nil, nil, err
+func dissectPath(path string, conf *ripper.ScanConfig) (*string, *int, *int, error) {
+	 for _, pattern := range conf.Patterns {
+	 	expandedPattern := expandPatterns(pattern, conf.IdPattern, conf.CollectionPattern, conf.ItemNoPattern)
+	 	pathTrail := getLastNPathElements(path, strings.Count(expandedPattern, "/") + 1)
+	 	re, err := regexp.Compile(expandedPattern)
+	 	if err != nil {
+	 		return nil, nil, nil, err
 		}
 
-		if containsId { //set id if found and reset other flags
-			id = &pathElems[idx] //TODO revise - only use id part instead of entire string
-			itemNo = nil
-			collection = nil
-		} else if id != nil { //after id was set, set itemNo next
-			if itemNo == nil {
-				no, _ := strconv.Atoi(pathElems[idx]) //TODO revise - calc index from pathName, error handling
-				itemNo = &no
-			} else { //if a 3rd param is specified - shift use 2nd as collection, and 3rd as itemNo
-				collection = itemNo
-				no, _ := strconv.Atoi(pathElems[idx]) //TODO revise - calc index from pathName, error handling
-				itemNo = &no
+		matches := extractParams(re, pathTrail)
+		if matches != nil {
+			if idVal, isDefined := matches[placeholder_Id]; isDefined {
+				id := &idVal
+				var col *int
+				if colVal, isDefined := matches[placeholder_Collection]; isDefined {
+					i, _ := strconv.Atoi(colVal)
+					col = &i
+				}
+				var itemNo *int
+				if itemVal, isDefined := matches[placeholder_ItemNo]; isDefined {
+					i, _ := strconv.Atoi(itemVal)
+					itemNo = &i
+				}
+				return id, col, itemNo, nil
 			}
 		}
-	}
-	return id, collection, itemNo, nil
+	 }
+	return nil, nil, nil, nil
 }
 
-func getLastNPathElements(path string, n int) []string {
-	pathElems := []string{}
-	for i := 0; i < n; i++ {
-		pathElems = append([]string{filepath.Base(path)}, pathElems...) //prepend to slice
-		path = filepath.Dir(path)
+func extractParams(re *regexp.Regexp, path string) map[string]string {
+	results := make(map[string]string)
+	matches := re.FindStringSubmatch(path)
+	if matches == nil {
+		return results
 	}
-	return pathElems
+
+	for idx, name := range re.SubexpNames() {
+		if idx == 0 || len(name) == 0 {
+			continue //ignore first match (contains original string)
+		}
+		results[name] = matches[idx]
+	}
+	return results
+}
+
+func expandPatterns(pattern string, idPattern string, colPattern string, itemNoPattern string) string {
+	expanded := expandPattern(pattern, placeholder_Id, idPattern)
+	expanded = expandPattern(expanded, placeholder_Collection, colPattern)
+	expanded = expandPattern(expanded, placeholder_ItemNo, itemNoPattern)
+	//keep linux file separator!!
+	return expanded
+}
+
+func expandPattern(pattern string, placeholder string, subPattern string) string {
+	replacement := fmt.Sprintf("(?P<%s>%s)", placeholder, subPattern) //e.g. (?P<id>\d*)
+	return strings.Replace(pattern, fmt.Sprintf("<%s>",placeholder), replacement, -1)
+}
+
+func getLastNPathElements(path string, n int) string {
+	pathElems := []string{ }
+
+	path = filepath.Clean(path)
+	for i := 0; i < n; i++ {
+		last := filepath.Base(path)
+		path = filepath.Dir(path)
+
+		pathElems = append([]string{last}, pathElems...)
+	}
+
+	//keep/change to linux file separator!!
+	return strings.Join(pathElems, "/")
 }

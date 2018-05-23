@@ -21,7 +21,9 @@ type ScanConfigGroup struct {
 
 type ScanConfig struct {
 	IdPattern  string
-	PathElemWithIdPattern string
+	CollectionPattern string
+	ItemNoPattern string
+	Patterns []string
 }
 
 type ToolConfig struct {
