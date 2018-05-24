@@ -40,8 +40,8 @@ func main() {
 
 func launch() int {
 	syntax := "[flags] task[...] target[...]"
-	allTasks  := CreateTasks()
-	cli.Setup(&syntax, allTasks)
+	cli.Setup(&syntax, "use task \"tasks\" to display all available tasks:", fmt.Sprintf("  %s tasks\n", os.Args[0]))
+	allTasks  := CreateTasks(*omdbTokenFlags)
 
 	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
 
@@ -125,9 +125,7 @@ func getCliTasksAndTargets(allTasks task.TaskSequence, taskMap task.TaskMap) ([]
 
 func getConfig() *ripper.AppConf {
 	configFile := *configFlag
-	omdbTokens := *omdbTokenFlags
 	conf := ripper.AppConf{}
 	require.NotFailed(config.FromFile(&conf, configFile, map[string]string {}))
-	conf.Omdb.OmdbTokens = omdbTokens
 	return &conf
 }

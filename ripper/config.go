@@ -9,14 +9,12 @@ type AppConf struct {
 	OutputDirectoryName string
 	Processing          *task.ProcessingConfig
 	Scan                *ScanConfigGroup
-	Omdb                *OmdbConfig
+	Resolve             *ResolveConfig
 	Tool                *ToolConfig
-
 }
 
 type ScanConfigGroup struct {
 	Video *ScanConfig
-	//TODO add: Audio *ScanConfig?
 }
 
 type ScanConfig struct {
@@ -26,15 +24,22 @@ type ScanConfig struct {
 	Patterns []string
 }
 
-type ToolConfig struct {
-	Handbrake *HandbrakeConf
-	Vlc *VlcConf
+type ResolveConfig struct {
+	Video *VideoResolveConfig
+}
+
+type VideoResolveConfig struct {
+	Omdb *OmdbConfig
 }
 
 type OmdbConfig struct {
-	OmdbTokens []string
 	TitleQuery string
 	SeasonQuery string
+}
+
+type ToolConfig struct {
+	Handbrake *HandbrakeConf
+	Vlc *VlcConf
 }
 
 type HandbrakeConf struct {

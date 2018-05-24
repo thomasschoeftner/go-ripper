@@ -11,13 +11,14 @@ const (
 	JobField_Path = "path"
 )
 
-//func GetTempPathFor(job task.Job, conf *AppConf) string {
-//	return getWorkPathFor(job, conf.TempDirectoryName)
-//}
-//
+func GetTempPathFor(job task.Job, conf *AppConf) string {
+	return GetWorkPathFor(job, conf.TempDirectoryName)
+}
+
 //func GetOutputPathFor(job task.Job, conf *AppConf) string {
-//	return getWorkPathFor(job, conf.OutputDirectoryName)
+//	return GetWorkPathFor(job, conf.OutputDirectoryName)
 //}
+
 
 func GetWorkPathFor(job task.Job, subdir string) string {
 	folder, _ := filepath.Split(job[JobField_Path])
