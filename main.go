@@ -97,7 +97,7 @@ func handleProcessingEvents(pipe *pipeline.Pipeline) error {
 		} else if isCanceled, reason := event.IsCanceled(); isCanceled {
 			logger.Infof("processing canceled due to reason: %s", reason)
 		} else if isError, err, job := event.IsError(); isError {
-			logger.Errorf("job %v failed with err %s", job, err)
+			logger.Errorf("job %v failed with %s", job, err)
 		} else if isDone, job := event.IsDone(); isDone {
 			logger.Infof("processing job %v is completed", job)
 		} else {

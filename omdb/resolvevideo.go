@@ -3,6 +3,8 @@ package omdb
 import (
 	"go-cli/task"
 	"errors"
+	"go-ripper/ripper"
+	"go-ripper/targetinfo"
 )
 
 var tFactory *tokenFactory
@@ -18,14 +20,25 @@ func ResolveVideo(omdbTokens []string) task.Handler {
 }
 
 func resolveVideo(ctx task.Context) task.HandlerFunc {
-	//conf := ctx.Config.(*ripper.AppConf)
-
 	if tFactory == nil {
 		return errorFunc(errors.New("processing error - omdb-tokens missing"))
 	}
 
-	return func(j task.Job) ([]task.Job, error) {
+	conf := ctx.Config.(*ripper.AppConf)
+	return func(job task.Job) ([]task.Job, error) {
+		file := job[ripper.JobField_Path]
+		id := job[ripper.JobField_TargetId]
+
+		ctx.Printf("processing video file %s\n", file)
+		// read task definition
+		ti, err := targetinfo.Read(ripper.GetTempPathFor(job, conf), id)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx.Printf("    recovered target-info: %s\n", ti.String())
 		//TODO implement
+		//conf.Resolve.Video.Omdb
 		//conf.Resolve.Video.Omdb
 		return nil, nil
 	}

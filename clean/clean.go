@@ -23,12 +23,12 @@ func CleanOutHandler(ctx task.Context) task.HandlerFunc {
 
 func clean(printf commons.FormatPrinter, desc string, job task.Job, subDir string) ([]task.Job, error) {
 	path := ripper.GetWorkPathFor(job, subDir)
-	printf("  cleaning %s from \"%s\"", desc, path)
+	printf("cleaning %s from \"%s\"", desc, path)
 	error := os.RemoveAll(path)
 	if error != nil {
-		printf("  ...failed\n  due to: %s\n", error)
+		printf("...failed\n  due to: %s\n", error)
 	} else {
-		printf("  ...done\n")
+		printf("...done\n")
 	}
 	return []task.Job{job}, error
 }

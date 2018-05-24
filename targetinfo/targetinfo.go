@@ -77,5 +77,5 @@ func (t *TargetInfo) String() string {
 		collection = fmt.Sprintf("%d", t.Collection)
 	}
 
-	return fmt.Sprintf("%s(id=%s, coll=%-5s, itemNo=%-5s, file=%-80s)", t.Kind, t.Id, collection, itemNo, filepath.Join(t.Folder, t.File))
+	return fmt.Sprintf("%s(id=%s, coll=%-5s, itemNo=%-5s, file=%s)", t.Kind, t.Id, collection, itemNo, filepath.Join(t.Folder, t.File))
 }

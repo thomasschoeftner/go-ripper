@@ -9,6 +9,7 @@ import (
 
 const (
 	JobField_Path = "path"
+	JobField_TargetId = "id"
 )
 
 func GetTempPathFor(job task.Job, conf *AppConf) string {
