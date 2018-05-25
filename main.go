@@ -23,13 +23,14 @@ const (
 	cliFlagOmdbTokens          = "omdbtoken"
 	cliFlagConfigFile          = "config"
 	cliFlagWithoutDependencies = "without-dependencies"
-
+	cliFlagLazy                = "lazy"
 	ApplicationName            = "go-ripper"
 )
 
 
 
 var verbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBoolean().WithDefault(false)
+var lazy = cli.FromFlag(cliFlagLazy, "execute task only if no output from previous execution is available").GetBoolean().WithDefault(true)
 var omdbTokenFlags  = cli.FromFlag(cliFlagOmdbTokens, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(cliFlagOmdbTokens).GetArray().WithDefault()
 var configFlag = cli.FromFlag(cliFlagConfigFile,"the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault(ApplicationName + ".conf")
 var runWithoutDependencies = cli.FromFlag(cliFlagWithoutDependencies, "run specified tasks without their dependencies").GetBoolean().WithDefault(false)
@@ -61,7 +62,11 @@ func launch() int {
 
 	// materialize processing pipeline
 	//todo check required flags per task!!!
-	pipe, err := pipeline.Materialize(invokedTasks.Flatten()).WithConfig(conf.Processing, conf, allTasks)
+	tasksToRun := invokedTasks
+	if !(*runWithoutDependencies) {
+		tasksToRun = invokedTasks.Flatten()
+	}
+	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *lazy)
 	require.NotFailed(err)
 
 	// ASYNCHRONOUSLY send a processing command for each target to pipeline
