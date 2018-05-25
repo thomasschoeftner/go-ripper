@@ -1,4 +1,4 @@
-package omdb
+package metainfo
 
 import (
 	"go-cli/task"
@@ -29,20 +29,21 @@ func resolveVideo(ctx task.Context) task.HandlerFunc {
 		file := job[ripper.JobField_Path]
 		id := job[ripper.JobField_TargetId]
 
-		ctx.Printf("processing video file %s\n", file)
+		ctx.Printf("process video %s\n", file)
+		printf := ctx.Printf.WithIndent(2)
 		// read task definition
 		ti, err := targetinfo.Read(ripper.GetTempPathFor(job, conf), id)
 		if err != nil {
 			return nil, err
 		}
+		printf("recovered target-info: %s\n", ti.String())
 
-		ctx.Printf("    recovered target-info: %s\n", ti.String())
 		//TODO implement
-		//conf.Resolve.Video.Omdb
 		//conf.Resolve.Video.Omdb
 		return nil, nil
 	}
 }
+
 
 func errorFunc(reason error) task.HandlerFunc{
 	return func(task.Job) ([]task.Job, error) {
