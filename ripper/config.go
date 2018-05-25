@@ -29,12 +29,14 @@ type ResolveConfig struct {
 }
 
 type VideoResolveConfig struct {
+	ImageSource string //possible values: series | episode
 	Omdb *OmdbConfig
 }
 
 type OmdbConfig struct {
 	TitleQuery string
 	SeasonQuery string
+	EpisodeQuery string
 }
 
 type ToolConfig struct {
