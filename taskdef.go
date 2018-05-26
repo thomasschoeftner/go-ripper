@@ -4,12 +4,12 @@ import (
 	"go-cli/task"
 	"go-ripper/clean"
 	"go-ripper/scan"
-	"go-ripper/omdb"
+	"go-ripper/metainfo"
 )
 
 const TaskName_Tasks = "tasks"
 
-func CreateTasks(omdbTokens []string) task.TaskSequence {
+func CreateTasks(vmiqf metainfo.VideoMetaInfoQueryFactory) task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
 	taskCleanTmp := task.NewTask("cleanTmp","cleans temporary work folders", clean.CleanTmpHandler)
 	taskCleanOut := task.NewTask("cleanOut","cleans result output folders", clean.CleanOutHandler)
@@ -19,7 +19,7 @@ func CreateTasks(omdbTokens []string) task.TaskSequence {
 	taskScan      := task.NewTask("scan","scan folder and direct sub-folders for audio and video input", nil).WithDependencies(/*taskScanAudio,*/ taskScanVideo)
 
 	//taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", nil )
-	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", omdb.ResolveVideo(omdbTokens))
+	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", metainfo.ResolveVideo(vmiqf))
 	taskResolve      := task.NewTask("resolve","resolve & download audio and video meta-info from various sources", nil).WithDependencies(taskScan, /*taskResolveAudio, */ taskResolveVideo)
 
 	//taskRipAudio := task.NewTask("ripAudio","digitalize (\"rip\") audio", nil)

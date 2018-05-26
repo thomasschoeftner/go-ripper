@@ -33,13 +33,13 @@ type TestMetaInfoQuery struct { //is also an io.ReadCloser
 	reader io.Reader
 }
 
-func (tq *TestMetaInfoQuery) invoke() (io.ReadCloser, error) {
+func (tq *TestMetaInfoQuery) Invoke() (io.ReadCloser, error) {
 	tq.stillOpen = true
 	tq.reader = strings.NewReader(tq.message+tq.toAppend)
 	return tq, nil
 }
 
-func (tq *TestMetaInfoQuery) convert(raw []byte) (MetaInfo, error) {
+func (tq *TestMetaInfoQuery) Convert(raw []byte) (MetaInfo, error) {
 	return &TestMetaInfo{string(raw)}, nil
 }
 

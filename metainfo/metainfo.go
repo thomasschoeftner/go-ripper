@@ -20,13 +20,13 @@ func is(metaInfo MetaInfo, kind multiMediaType) bool {
 }
 
 
-type metaInfoQuery interface {
-	invoke() (io.ReadCloser, error)
-	convert(raw []byte) (MetaInfo, error)
+type MetaInfoQuery interface {
+	Invoke() (io.ReadCloser, error)
+	Convert(raw []byte) (MetaInfo, error)
 }
 
-func Get(miq metaInfoQuery) (MetaInfo, error) {
-	readCloser, err := miq.invoke()
+func Get(miq MetaInfoQuery) (MetaInfo, error) {
+	readCloser, err := miq.Invoke()
 	if err != nil {
 		return nil, err
 	}
@@ -37,5 +37,5 @@ func Get(miq metaInfoQuery) (MetaInfo, error) {
 		return nil, err
 	}
 
-	return miq.convert(raw)
+	return miq.Convert(raw)
 }

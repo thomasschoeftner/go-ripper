@@ -13,6 +13,7 @@ import (
 	"go-cli/require"
 	"errors"
 	"go-cli/cli"
+	"go-ripper/omdb"
 )
 
 const (
@@ -42,7 +43,13 @@ func main() {
 func launch() int {
 	syntax := "[flags] task[...] target[...]"
 	cli.Setup(&syntax, "use task \"tasks\" to display all available tasks:", fmt.Sprintf("  %s tasks\n", os.Args[0]))
-	allTasks  := CreateTasks(*omdbTokenFlags)
+
+	// read config
+	conf := getConfig()
+	vmiqf, err := omdb.NewOmdbVideoQueryFactory(conf.Resolve.Video.Omdb, *omdbTokenFlags)
+	require.NotFailed(err)
+
+	allTasks  := CreateTasks(vmiqf)
 
 	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
 
@@ -52,9 +59,6 @@ func launch() int {
 
 	// read command line params (flags & args)
 	taskNames, targets := getCliTasksAndTargets(allTasks, taskMap)
-
-	// read config
-	conf := getConfig()
 
 	// calculate tasks to be invoked
 	invokedTasks, err := taskMap.GetTasksForNames(taskNames...)

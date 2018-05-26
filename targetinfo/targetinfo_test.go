@@ -6,51 +6,90 @@ import (
 	"os"
 	"path/filepath"
 	"go-cli/test"
+	"fmt"
 )
 
-var ti = TargetInfo{"f.g", "/a/b/c", "test", "tt987654321", 1, 0}
+var singleTitle = TargetInfo{"f.g", "/a/b/c", "test", "tt987654321", 0, 0}
+var partitionedTitle = TargetInfo{"f.g", "/a/b/c", "test", "tt987654321", 0, 2}
+var singleCollectionItem = TargetInfo{"f.g", "/a/b/c", "test", "tt987654321", 3, 12}
 
 func setup(t *testing.T) string {
 	systemTempDir := "" //defaults to tmp dir in linux, windows, etc.
 	dir, err := ioutil.TempDir(systemTempDir, "go-test")
-	if err != nil {
-		t.Error(err)
-	}
+	test.CheckError(t,err)
 	return dir
 }
 
 func teardown(t *testing.T, dir string) {
 	err := os.RemoveAll(dir)
-	if err != nil {
-		t.Error(err)
-	}
+	test.CheckError(t,err)
 }
 
 
 func TestSaveJson(t *testing.T) {
-	dir := setup(t)
-	defer teardown(t, dir)
-	test.CheckError(t, Save(dir, &ti))
+	t.Run("save single singleTitle", func(t *testing.T) {
+		ti := singleTitle
+		dir := setup(t)
+		defer teardown(t, dir)
+		_, err := Save(dir, &ti)
+		test.CheckError(t, err)
 
-	f := filepath.Join(dir, ti.Id)
-	info, err := os.Stat(f)
-	test.CheckError(t, err)
+		fname := ti.Id
+		f := filepath.Join(dir, fname)
+		info, err := os.Stat(f)
+		test.CheckError(t, err)
 
-	if info.Size() == 0 {
-		t.Errorf("target file \"%s\" must not be empty", f)
-	}
+		if info.Size() == 0 {
+			t.Errorf("target file \"%s\" must not be empty", f)
+		}
+	})
+
+	t.Run("save singleTitle part", func(t *testing.T) {
+		ti := partitionedTitle
+		dir := setup(t)
+		defer teardown(t, dir)
+		_, err := Save(dir, &ti)
+		test.CheckError(t, err)
+
+		fname := fmt.Sprintf("%s.%d", ti.Id, ti.ItemNo)
+		f := filepath.Join(dir, fname)
+		info, err := os.Stat(f)
+		test.CheckError(t, err)
+
+		if info.Size() == 0 {
+			t.Errorf("target file \"%s\" must not be empty", f)
+		}
+	})
+
+	t.Run("save series singleCollectionItem", func(t *testing.T) {
+		ti := singleCollectionItem
+		dir := setup(t)
+		defer teardown(t, dir)
+		_, err := Save(dir, &ti)
+		test.CheckError(t, err)
+
+		fname := fmt.Sprintf("%s.%d.%d", ti.Id, ti.Collection, ti.ItemNo)
+		f := filepath.Join(dir, fname)
+		info, err := os.Stat(f)
+		test.CheckError(t, err)
+
+		if info.Size() == 0 {
+			t.Errorf("target file \"%s\" must not be empty", f)
+		}
+	})
 }
 
 func TestReadJson(t *testing.T) {
 	dir := setup(t)
 	defer teardown(t, dir)
 
-	test.CheckError(t, Save(dir, &ti))
-	read, err := Read(dir, ti.Id)
+	_, err := Save(dir, &singleCollectionItem)
+	test.CheckError(t, err)
+	read, err := Read(filepath.Join(dir, singleCollectionItem.fileName()))
 	test.CheckError(t, err)
 
-	if *read != ti {
-		t.Errorf("targetinfo does not match:\n  to json   %v\n  from json %v", ti, *read)
+	if *read != singleCollectionItem {
+		t.Errorf("targetinfo does not match:\n  to json   %v\n  from json %v", singleCollectionItem, *read)
 	}
 }
 
@@ -58,16 +97,19 @@ func TestOverwriteJsonFile(t *testing.T) {
 	dir := setup(t)
 	defer teardown(t, dir)
 
-	test.CheckError(t, Save(dir, &ti))
+	ti := singleTitle
+	_, err := Save(dir, &ti)
+	test.CheckError(t, err)
 	newId := "tt12345"
 	newKind := "changed"
 	ti.Id = newId
 	ti.Kind = newKind
 
 	//overwrite
-	test.CheckError(t, Save(dir, &ti))
+	_, err = Save(dir, &ti)
+	test.CheckError(t, err)
 
-	read, err := Read(dir, ti.Id)
+	read, err := Read(filepath.Join(dir, ti.Id))
 	test.CheckError(t, err)
 
 	if read.Id != newId {
@@ -78,23 +120,8 @@ func TestOverwriteJsonFile(t *testing.T) {
 	}
 }
 
-func TestReadUnmatchingFileNameAndId(t *testing.T) {
-	dir := setup(t)
-	defer teardown(t, dir)
-
-	//rename file to create difference btw. contained target-id and target-id in filename
-	test.CheckError(t, Save(dir, &ti))
-	newFileId := "tt666"
-	test.CheckError(t, os.Rename(filepath.Join(dir, ti.Id), filepath.Join(dir, newFileId)))
-
-	_, err := Read(dir, newFileId)
-	if err == nil {
-		t.Errorf("unmatching IDs in file-name and -contents not detected during read:\n  file=%s\n  json=%s", newFileId, ti.Id)
-	}
-}
-
 func TestSaveNilTargetInfo(t *testing.T) {
-	err := Save(".", nil)
+	_, err := Save(".", nil)
 	if err == nil {
 		t.Error("expected error when saving nil TargetInfo")
 	}

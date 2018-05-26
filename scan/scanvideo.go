@@ -13,10 +13,10 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 	excludeDirs := []string { conf.TempDirectoryName, conf.OutputDirectoryName}
 
 	return func (job task.Job) ([]task.Job, error) {
-		path := job[ripper.JobField_Path]
+		scanPath := job[ripper.JobField_Path]
 
-		ctx.Printf("scanning contents of \"%s\" (ignoring temp \"%s\" and output \"%s\")\n", path, conf.TempDirectoryName, conf.OutputDirectoryName)
-		targets, err := scan(path, excludeDirs, "video", conf.Scan.Video)
+		ctx.Printf("scanning contents of \"%s\" (ignoring temp \"%s\" and output \"%s\")\n", scanPath, conf.TempDirectoryName, conf.OutputDirectoryName)
+		targets, err := scan(scanPath, excludeDirs, "video", conf.Scan.Video)
 		if err != nil {
 			return nil, err
 		}
@@ -30,11 +30,17 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 			if err != nil {
 				return nil, err
 			}
-			targetinfo.Save(tmpFolder, target)
+
+			fileName, err := targetinfo.Save(tmpFolder, target)
+			if err != nil {
+				//TODO check if error should be ignored
+				return nil, err
+			}
+
+			//TODO fix sequenceNo (in case they start with 0)
 
 			//create new Job
-			newJob := job.WithParam(ripper.JobField_Path, filepath.Join(target.Folder, target.File)).
-				WithParam(ripper.JobField_TargetId, target.Id)
+			newJob := job.WithParam(ripper.JobField_Path, *fileName)
 			jobs = append(jobs, newJob)
 			ctx.Printf("  %s\n", target)
 		}

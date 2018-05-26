@@ -15,7 +15,7 @@ type TargetInfo struct {
 	Kind       string `json:"kind"` //type of target (e.g. audio, video)
 	Id         string `json:"id"` //id for name resolve
 	Collection int    `json:"collection"` //Season#, CD#, etc.
-	ItemNo     int    `json:"itemno"` //track#, episode#
+	ItemNo     int    `json:"itemno"` //track#, singleCollectionItem#
 }
 
 func From(file string, folder string, kind string, id string, collection *int, itemNo *int) *TargetInfo {
@@ -32,9 +32,8 @@ func From(file string, folder string, kind string, id string, collection *int, i
 	return &TargetInfo{file, folder, kind, id, c, i}
 }
 
-func Read(tmpFolder string, id string) (*TargetInfo, error) {
-	targetFile := filepath.Join(tmpFolder, id)
-	raw, err := ioutil.ReadFile(targetFile)
+func Read(targetInfoFile string) (*TargetInfo, error) {
+	raw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err
 	}
@@ -46,36 +45,42 @@ func Read(tmpFolder string, id string) (*TargetInfo, error) {
 		return nil, err
 	}
 
-	if id != ti.Id {
-		return nil, errors.New(fmt.Sprintf("read error: id in filename (%s) and json (%s) do not match", id, ti.Id))
-	}
-
 	return &ti, nil
 }
 
-func Save(tmpFolder string, ti *TargetInfo) error {
+func Save(tmpFolder string, ti *TargetInfo) (*string, error) {
 	if ti == nil {
-		return errors.New("target info is nil")
+		return nil, errors.New("target info is nil")
 	}
 
 	bytes, err := json.Marshal(ti)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	targetFile := filepath.Join(tmpFolder, ti.Id)
+	targetFile := filepath.Join(tmpFolder, ti.fileName())
 	err = ioutil.WriteFile(targetFile, bytes, os.ModePerm)
-	return err
+	return &targetFile, err
 }
 
-func (t *TargetInfo) String() string {
+func (ti *TargetInfo) fileName() string {
+	if ti.Collection != 0 && ti.ItemNo != 0 {
+		return fmt.Sprintf("%s.%d.%d", ti.Id, ti.Collection, ti.ItemNo)
+	} else if ti.ItemNo != 0 {
+		return fmt.Sprintf("%s.%d", ti.Id, ti.ItemNo)
+	} else {
+		return ti.Id
+	}
+}
+
+func (ti *TargetInfo) String() string {
 	itemNo := "undef"
-	if t.ItemNo != 0 {
-		itemNo = fmt.Sprintf("%d", t.ItemNo)
+	if ti.ItemNo != 0 {
+		itemNo = fmt.Sprintf("%d", ti.ItemNo)
 	}
 	collection := "undef"
-	if t.Collection != 0 {
-		collection = fmt.Sprintf("%d", t.Collection)
+	if ti.Collection != 0 {
+		collection = fmt.Sprintf("%d", ti.Collection)
 	}
 
-	return fmt.Sprintf("%s(id=%s, coll=%-5s, itemNo=%-5s, file=%s)", t.Kind, t.Id, collection, itemNo, filepath.Join(t.Folder, t.File))
+	return fmt.Sprintf("%s(id=%s, coll=%-5s, itemNo=%-5s, file=%s)", ti.Kind, ti.Id, collection, itemNo, filepath.Join(ti.Folder, ti.File))
 }

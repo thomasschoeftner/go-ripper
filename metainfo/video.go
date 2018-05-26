@@ -1,5 +1,11 @@
 package metainfo
 
+
+type VideoMetaInfoQueryFactory interface {
+	NewTitleQuery(id string) MetaInfoQuery
+	NewEpisodeQuery(id string, season int, episode int) MetaInfoQuery
+}
+
 type VideoMetaInfo struct {
 	Id       string   //omdb: imdbID
 	Title    string   //omdb: Title
