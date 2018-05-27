@@ -6,6 +6,7 @@ import (
 	"go-cli/config"
 	"go-cli/test"
 	"fmt"
+	"path/filepath"
 )
 
 func loadConfig(json string) (*ripper.AppConf, error) {
@@ -49,7 +50,7 @@ func validateNumeric(desc string) func (t *testing.T, expected *int, found *int)
 var validateCollection = validateNumeric("collection")
 var validateItemNo = validateNumeric("itemno")
 
-func executeAndValidate(desc string, t *testing.T,  conf *ripper.AppConf, path string, expectedId *string, expectedCol *int, expectedItemNo *int) {
+func dissectPathAndValidate(desc string, t *testing.T,  conf *ripper.AppConf, path string, expectedId *string, expectedCol *int, expectedItemNo *int) {
 	t.Run(desc , func(t *testing.T) {
 		id, col, item, err := dissectPath(path, conf.Scan.Video)
 		test.CheckError(t, err)
@@ -74,13 +75,13 @@ func TestExtractIdOnly(t *testing.T) {
 	test.CheckError(t, err)
 
 	{
-		executeAndValidate("id missing", t, conf, "/sepp/hat/gelbe/eier/ttxyz123.abc", nil, nil, nil)
+		dissectPathAndValidate("id missing", t, conf, "/sepp/hat/gelbe/eier/ttxyz123.abc", nil, nil, nil)
 	}
 
 	{
 		expectedId := "tt122345"
 		path := fmt.Sprintf("/sepp/hat/gelbe/eier/%s.abc", expectedId)
-		executeAndValidate("id found", t, conf, path, &expectedId, nil, nil)
+		dissectPathAndValidate("id found", t, conf, path, &expectedId, nil, nil)
 	}
 }
 
@@ -102,11 +103,11 @@ func TestExtractIdItemno(t *testing.T) {
 		expectedId := "tt3453645"
 		expectedItemNo := 13
 		path := fmt.Sprintf("/sepp/hat/gelbe/eier/%s-name/%d-title", expectedId, expectedItemNo)
-		executeAndValidate("id and itemno found", t, conf, path, &expectedId, nil, &expectedItemNo)
+		dissectPathAndValidate("id and itemno found", t, conf, path, &expectedId, nil, &expectedItemNo)
 	}
 
 	{
-		executeAndValidate("id not found", t, conf, "/sepp/hat/gelbe/eier/ttabcdef/666-title", nil, nil, nil)
+		dissectPathAndValidate("id not found", t, conf, "/sepp/hat/gelbe/eier/ttabcdef/666-title", nil, nil, nil)
 	}
 }
 
@@ -128,7 +129,7 @@ func TestExtractIdColItemNo(t *testing.T) {
 	expectedCol := 678
 	expectedItemNo := 32
 	path := fmt.Sprintf("sepp/hat/gelbe/eier/name-%s/s%d/e%d-itemname.txt", expectedId, expectedCol, expectedItemNo)
-	executeAndValidate("id, col, and itemno found", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
+	dissectPathAndValidate("id, col, and itemno found", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
 }
 
 func TestColAndItemNoInFilename(t *testing.T) {
@@ -150,7 +151,7 @@ func TestColAndItemNoInFilename(t *testing.T) {
 		expectedItemNo := 10
 
 		path := fmt.Sprintf("sepp/hat/gelbe/eier/%s-title/s%de%d", expectedId, expectedCol, expectedItemNo)
-		executeAndValidate("collection and itemno in filename", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
+		dissectPathAndValidate("collection and itemno in filename", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
 	}
 }
 
@@ -173,7 +174,7 @@ func TestEliminateLeadingZeroes(t *testing.T) {
 	expectedItemNo := 56
 
 	path := fmt.Sprintf("sepp/hat/gelbe/eier/%s-name/00%d/e000%d-itemname.txt", expectedId, expectedCol, expectedItemNo)
-	executeAndValidate("eliminate leading 0s in numbers", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
+	dissectPathAndValidate("eliminate leading 0s in numbers", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
 }
 
 func TestExtractWithMultiplePatternOptions(t *testing.T) {
@@ -196,14 +197,14 @@ func TestExtractWithMultiplePatternOptions(t *testing.T) {
 	test.CheckError(t, err)
 	{
 		expectedId := "tt74658"
-		executeAndValidate("id found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s.abc", expectedId), &expectedId, nil, nil)
+		dissectPathAndValidate("id found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s.abc", expectedId), &expectedId, nil, nil)
 	}
 
 	{
 		expectedId := "tt74659"
 		expectedCol := 12
 		expectedItemNo := 17
-		executeAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/%d.abc", expectedId, expectedCol, expectedItemNo), &expectedId, &expectedCol, &expectedItemNo)
+		dissectPathAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/%d.abc", expectedId, expectedCol, expectedItemNo), &expectedId, &expectedCol, &expectedItemNo)
 
 	}
 
@@ -211,14 +212,9 @@ func TestExtractWithMultiplePatternOptions(t *testing.T) {
 		expectedId := "tt74657"
 		expectedCol := 19
 		expectedItemNo := 117
-		executeAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/title %d.abc", expectedId, expectedCol, expectedItemNo), &expectedId, &expectedCol, &expectedItemNo)
+		dissectPathAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/title %d.abc", expectedId, expectedCol, expectedItemNo), &expectedId, &expectedCol, &expectedItemNo)
 	}
 }
-
-//func TestDetectInvalidPatterns(t *testing.T) {
-//
-//	t.Error("TODO - implement me")
-//}
 
 func TestGetLastNPathElements(t *testing.T) {
 	{
@@ -245,6 +241,47 @@ func TestGetLastNPathElements(t *testing.T) {
 		last2 := getLastNPathElements(path, 2)
 		if last2 != expected {
 			t.Errorf("getting last 2 path elements from %s - expected %s, but got %s", path, expected, last2)
+		}
+	}
+}
+
+func TestIncrementItemNo(t *testing.T) {
+	conf, err := loadConfig(`
+{
+ "scan" : {
+   "video" : {
+     "idPattern" : "tt\\d+",
+     "collectionPattern": "\\d+",
+     "itemNoPattern" : "\\d+",
+     "patterns" : [
+       "<id>.*/season\\s<collection>/<itemno>.*",
+       "<id>.*"]
+   }
+ }
+}`)
+	test.CheckError(t, err)
+	path, _ := filepath.Abs(filepath.Join(".", "testdata"))
+	targetInfos, err := scan(path, []string{".out"}, "video", conf.Scan.Video)
+	test.CheckError(t, err)
+
+	expected := map[int]map[string]int {
+		2 : {"0.mkv":1, "1.txt":2, "2.a.b.c":3, "3":4},
+		4 : {"1.txt":1, "2.a.b.c":2, "3":3}}
+	if len(targetInfos) != 7 {
+		t.Errorf("scaning %s yielded unexpected number of relevant files - expected %d, but got %d", path, 7, len(targetInfos))
+	}
+	for _, ti := range targetInfos {
+		if collection, found := expected[ti.Collection]; !found {
+			t.Errorf("unexpected collection %d extracted from path %s", ti.Collection, filepath.Join(ti.Folder, ti.File))
+		} else {
+			if itemNo, found := collection[ti.File]; !found {
+				t.Errorf("unexpected file %s extracted from path %s", ti.File, filepath.Join(ti.Folder, ti.File))
+			} else {
+				if ti.ItemNo != itemNo {
+					t.Errorf("extracted itemNo %d from path %s, but expected itemNo %d", ti.ItemNo, filepath.Join(ti.Folder, ti.File), itemNo)
+				}
+			}
+
 		}
 	}
 }

@@ -37,8 +37,6 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 				return nil, err
 			}
 
-			//TODO fix sequenceNo (in case they start with 0)
-
 			//create new Job
 			newJob := job.WithParam(ripper.JobField_Path, *fileName)
 			jobs = append(jobs, newJob)
