@@ -245,7 +245,7 @@ func TestGetLastNPathElements(t *testing.T) {
 	}
 }
 
-func TestIncrementItemNo(t *testing.T) {
+func TestScan(t *testing.T) {
 	conf, err := loadConfig(`
 {
  "scan" : {
@@ -264,21 +264,24 @@ func TestIncrementItemNo(t *testing.T) {
 	targetInfos, err := scan(path, []string{".out"}, "video", conf.Scan.Video)
 	test.CheckError(t, err)
 
-	expected := map[int]map[string]int {
-		2 : {"0.mkv":1, "1.txt":2, "2.a.b.c":3, "3":4},
+	movie := "tt987654321"
+	series := map[int]map[string]int {
+		2 : {"0.mkv":0, "1.txt":1, "2.a.b.c":2, "4":4}, //TODO change to logical numbering
 		4 : {"1.txt":1, "2.a.b.c":2, "3":3}}
-	if len(targetInfos) != 7 {
-		t.Errorf("scaning %s yielded unexpected number of relevant files - expected %d, but got %d", path, 7, len(targetInfos))
+	if len(targetInfos) != 8 {
+		t.Errorf("scaning %s yielded unexpected number of relevant files - series %d, but got %d", path, 7, len(targetInfos))
 	}
 	for _, ti := range targetInfos {
-		if collection, found := expected[ti.Collection]; !found {
-			t.Errorf("unexpected collection %d extracted from path %s", ti.Collection, filepath.Join(ti.Folder, ti.File))
+		if collection, found := series[ti.Collection]; !found {
+			if ti.Id != movie {
+				t.Errorf("unexpected collection %d extracted from path %s", ti.Collection, filepath.Join(ti.Folder, ti.File))
+			}
 		} else {
 			if itemNo, found := collection[ti.File]; !found {
 				t.Errorf("unexpected file %s extracted from path %s", ti.File, filepath.Join(ti.Folder, ti.File))
 			} else {
 				if ti.ItemNo != itemNo {
-					t.Errorf("extracted itemNo %d from path %s, but expected itemNo %d", ti.ItemNo, filepath.Join(ti.Folder, ti.File), itemNo)
+					t.Errorf("extracted itemNo %d from path %s, but should be itemNo %d", ti.ItemNo, filepath.Join(ti.Folder, ti.File), itemNo)
 				}
 			}
 

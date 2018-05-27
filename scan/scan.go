@@ -14,7 +14,6 @@ import (
 func scan(rootPath string, excludeDirs []string, kind string, conf *ripper.ScanConfig) ([]*targetinfo.TargetInfo, error) {
 	targets := []*targetinfo.TargetInfo{}
 
-	itemNoOffsets := map[string]int {} //folder->int offset for itemNo
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		defer println()
 
@@ -38,15 +37,6 @@ func scan(rootPath string, excludeDirs []string, kind string, conf *ripper.ScanC
 			}
 		}
 		id, collection, itemNo, err := dissectPath(path, conf)
-
-		//fix sequenceNo (in case they start with 0)
-		if itemNo != nil {
-			if *itemNo == 0 {
-				//filename sequence starts with 0 -> add offset
-				itemNoOffsets[folder] = 1
-			}
-			*itemNo = *itemNo + itemNoOffsets[folder]
-		}
 
 		if err != nil {
 			return err
