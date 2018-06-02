@@ -16,19 +16,9 @@ func loadConfig(json string) (*ripper.AppConf, error) {
 	return &conf, err
 }
 
-
-func validateId(t *testing.T, expected *string, found *string) {
-	if expected == nil {
-		if found != nil {
-			t.Errorf("error matching id - expected none, but found \"%s\"", *found)
-		}
-	} else {
-		if found == nil {
-			t.Errorf("error matching id - expected \"%s\", but found none", *expected)
-		} else if *expected != *found {
-			t.Errorf("error matching id - expected \"%s\", but found \"%s\"", *expected, *found)
-		}
-
+func validateId(t *testing.T, expected string, found string) {
+	if expected != found {
+		t.Errorf("error matching id - expected \"%s\", but found \"%s\"", expected, found)
 	}
 }
 
@@ -50,15 +40,26 @@ func validateNumeric(desc string) func (t *testing.T, expected *int, found *int)
 var validateCollection = validateNumeric("collection")
 var validateItemNo = validateNumeric("itemno")
 
-func dissectPathAndValidate(desc string, t *testing.T,  conf *ripper.AppConf, path string, expectedId *string, expectedCol *int, expectedItemNo *int) {
+func dissectPathAndValidate(desc string, t *testing.T,  conf *ripper.AppConf, path string, expectedId string, expectedCol *int, expectedItemNo *int) {
 	t.Run(desc , func(t *testing.T) {
-		id, col, item, err := dissectPath(path, conf.Scan.Video)
+		result, err := dissectPath(path, conf.Scan.Video)
 		test.CheckError(t, err)
-		validateId(t, expectedId, id)
-		validateCollection(t, expectedCol, col)
-		validateItemNo(t, expectedItemNo, item)
+		validateId(t, expectedId, result.Id)
+		validateCollection(t, expectedCol, result.Collection)
+		validateItemNo(t, expectedItemNo, result.ItemNo)
 	})
 }
+
+func dissectPathAndValidateNoMatch(desc string, t *testing.T,  conf *ripper.AppConf, path string) {
+	t.Run(desc , func(t *testing.T) {
+		result, err := dissectPath(path, conf.Scan.Video)
+		test.CheckError(t, err)
+		if result != nil {
+			t.Errorf("error matching path - expected no match, but got %s", result.Id)
+		}
+	})
+}
+
 
 func TestExtractIdOnly(t *testing.T) {
 	conf, err := loadConfig(`
@@ -79,13 +80,13 @@ func TestExtractIdOnly(t *testing.T) {
 	test.CheckError(t, err)
 
 	{
-		dissectPathAndValidate("id missing", t, conf, "/sepp/hat/gelbe/eier/ttxyz123.abc", nil, nil, nil)
+		dissectPathAndValidateNoMatch("id missing", t, conf, "/sepp/hat/gelbe/eier/ttxyz123.abc")
 	}
 
 	{
 		expectedId := "tt122345"
 		path := fmt.Sprintf("/sepp/hat/gelbe/eier/%s.abc", expectedId)
-		dissectPathAndValidate("id found", t, conf, path, &expectedId, nil, nil)
+		dissectPathAndValidate("id found", t, conf, path, expectedId, nil, nil)
 	}
 }
 
@@ -110,11 +111,11 @@ func TestExtractIdItemno(t *testing.T) {
 		expectedId := "tt3453645"
 		expectedItemNo := 13
 		path := fmt.Sprintf("/sepp/hat/gelbe/eier/%s-name/%d-title", expectedId, expectedItemNo)
-		dissectPathAndValidate("id and itemno found", t, conf, path, &expectedId, nil, &expectedItemNo)
+		dissectPathAndValidate("id and itemno found", t, conf, path, expectedId, nil, &expectedItemNo)
 	}
 
 	{
-		dissectPathAndValidate("id not found", t, conf, "/sepp/hat/gelbe/eier/ttabcdef/666-title", nil, nil, nil)
+		dissectPathAndValidateNoMatch("id not found", t, conf, "/sepp/hat/gelbe/eier/ttabcdef/666-title")
 	}
 }
 
@@ -139,7 +140,7 @@ func TestExtractIdColItemNo(t *testing.T) {
 	expectedCol := 678
 	expectedItemNo := 32
 	path := fmt.Sprintf("sepp/hat/gelbe/eier/name-%s/s%d/e%d-itemname.txt", expectedId, expectedCol, expectedItemNo)
-	dissectPathAndValidate("id, col, and itemno found", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
+	dissectPathAndValidate("id, col, and itemno found", t, conf, path, expectedId, &expectedCol, &expectedItemNo)
 }
 
 func TestColAndItemNoInFilename(t *testing.T) {
@@ -164,7 +165,7 @@ func TestColAndItemNoInFilename(t *testing.T) {
 		expectedItemNo := 10
 
 		path := fmt.Sprintf("sepp/hat/gelbe/eier/%s-title/s%de%d", expectedId, expectedCol, expectedItemNo)
-		dissectPathAndValidate("collection and itemno in filename", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
+		dissectPathAndValidate("collection and itemno in filename", t, conf, path, expectedId, &expectedCol, &expectedItemNo)
 	}
 }
 
@@ -190,7 +191,7 @@ func TestEliminateLeadingZeroes(t *testing.T) {
 	expectedItemNo := 56
 
 	path := fmt.Sprintf("sepp/hat/gelbe/eier/%s-name/00%d/e000%d-itemname.txt", expectedId, expectedCol, expectedItemNo)
-	dissectPathAndValidate("eliminate leading 0s in numbers", t, conf, path, &expectedId, &expectedCol, &expectedItemNo)
+	dissectPathAndValidate("eliminate leading 0s in numbers", t, conf, path, expectedId, &expectedCol, &expectedItemNo)
 }
 
 func TestExtractWithMultiplePatternOptions(t *testing.T) {
@@ -216,14 +217,14 @@ func TestExtractWithMultiplePatternOptions(t *testing.T) {
 	test.CheckError(t, err)
 	{
 		expectedId := "tt74658"
-		dissectPathAndValidate("id found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s.abc", expectedId), &expectedId, nil, nil)
+		dissectPathAndValidate("id found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s.abc", expectedId), expectedId, nil, nil)
 	}
 
 	{
 		expectedId := "tt74659"
 		expectedCol := 12
 		expectedItemNo := 17
-		dissectPathAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/%d.abc", expectedId, expectedCol, expectedItemNo), &expectedId, &expectedCol, &expectedItemNo)
+		dissectPathAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/%d.abc", expectedId, expectedCol, expectedItemNo), expectedId, &expectedCol, &expectedItemNo)
 
 	}
 
@@ -231,7 +232,7 @@ func TestExtractWithMultiplePatternOptions(t *testing.T) {
 		expectedId := "tt74657"
 		expectedCol := 19
 		expectedItemNo := 117
-		dissectPathAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/title %d.abc", expectedId, expectedCol, expectedItemNo), &expectedId, &expectedCol, &expectedItemNo)
+		dissectPathAndValidate("all found", t, conf, fmt.Sprintf("/sepp/hat/gelbe/eier/%s/%d/title %d.abc", expectedId, expectedCol, expectedItemNo), expectedId, &expectedCol, &expectedItemNo)
 	}
 }
 
@@ -349,42 +350,44 @@ func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[
 	test.CheckError(t, err)
 
 	path, _ := filepath.Abs(filepath.Join(".", testDataFolder))
-	targetInfos, err := scan(path, "video", conf.IgnoreFolderPrefix, conf.Scan.Video)
+	results, err := scan(path, conf.IgnoreFolderPrefix, conf.Scan.Video)
 	test.CheckError(t, err)
 
-	for _, ti := range targetInfos {
-		fmt.Printf("%v\n", *ti)
+	for _, result := range results  {
+		fmt.Printf("%v\n", *result)
 	}
 
-	expectedNoOfItems := len(expectedMovies)
+	expectedNoOfMatches := len(expectedMovies)
 	for _, season := range expectedEpisodes {
-		expectedNoOfItems = expectedNoOfItems + len(season)
+		expectedNoOfMatches = expectedNoOfMatches + len(season)
 	}
 
-	if len(targetInfos) == expectedNoOfItems + 1 {
+	if len(results) == expectedNoOfMatches+ 1 {
 		t.Errorf("scaning %s yielded unexpected number of relevant files - .hidden folder should not be searched", path)
-	} else if len(targetInfos) != expectedNoOfItems {
-		t.Errorf("scaning %s yielded unexpected number of relevant files - expected %d, but got %d", path, expectedNoOfItems, len(targetInfos))
+	} else if len(results) != expectedNoOfMatches {
+		t.Errorf("scaning %s yielded unexpected number of relevant files - expected %d, but got %d", path, expectedNoOfMatches, len(results))
 	}
 
-	for _, ti := range targetInfos {
+	for _, result := range results {
+		s := 0
+		if result.Collection !=  nil {
+			s = *result.Collection
+		}
 
-		if collection, isEpisode := expectedEpisodes[ti.Collection]; ti.Collection == 0 || !isEpisode {
-			if !idFoundIn(ti.Id, expectedMovies) {
-				t.Errorf("unexpected video %d extracted from path %s", ti.Collection, filepath.Join(ti.Folder, ti.File))
+		if season, seasonFound := expectedEpisodes[s]; s == 0 || !seasonFound {
+			if !idFoundIn(result.Id, expectedMovies) {
+				t.Errorf("unexpected video %s extracted from path %s", result.Id, filepath.Join(result.Folder, result.File))
 			}
 		} else {
-			if itemNo, found := collection[ti.File]; !found {
-				t.Errorf("unexpected file %s extracted from path %s", ti.File, filepath.Join(ti.Folder, ti.File))
+			if episode, episodeFound := season[result.File]; !episodeFound {
+				t.Errorf("unexpected file %s extracted from path %s", result.File, filepath.Join(result.Folder, result.File))
 			} else {
-				if ti.ItemNo != itemNo {
-					t.Errorf("extracted itemNo %d from path %s, but should be itemNo %d", ti.ItemNo, filepath.Join(ti.Folder, ti.File), itemNo)
+				if episode != *result.ItemNo {
+					t.Errorf("extracted itemNo %d from path %s, but should be itemNo %d", *result.ItemNo, filepath.Join(result.Folder, result.File), episode)
 				}
 			}
-
 		}
 	}
-
 }
 
 func idFoundIn(id string, ids []string) bool {

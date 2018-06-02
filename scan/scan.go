@@ -5,14 +5,21 @@ import (
 	"path/filepath"
 	"os"
 	"strings"
-	"go-ripper/targetinfo"
 	"fmt"
 	"regexp"
 	"strconv"
 )
 
-func scan(rootPath string, kind string, igoreFolderPrefix string, conf *ripper.ScanConfig) ([]*targetinfo.TargetInfo, error) {
-	targets := []*targetinfo.TargetInfo{}
+type scanResult struct {
+	Folder     string
+	File       string
+	Id         string
+	Collection *int
+	ItemNo     *int
+}
+
+func scan(rootPath string, ignoreFolderPrefix string, conf *ripper.ScanConfig) ([]*scanResult, error) {
+	results := []*scanResult{}
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -27,21 +34,20 @@ func scan(rootPath string, kind string, igoreFolderPrefix string, conf *ripper.S
 			return err
 		}
 
-		folder, file := filepath.Split(path)
-
 		//discard excluded directories
+		folder, _ := filepath.Split(path)
 		folderName := filepath.Base(folder)
-		if strings.HasPrefix(folderName, igoreFolderPrefix) {
+		if strings.HasPrefix(folderName, ignoreFolderPrefix) {
 			return nil
 		}
 
-		id, collection, itemNo, err := dissectPath(path, conf)
+		result, err := dissectPath(path, conf)
 
 		if err != nil {
 			return err
 		}
-		if id != nil {
-			targets = append(targets, targetinfo.From(file, folder, kind, *id, collection, itemNo))
+		if result != nil {
+			results = append(results, result)
 		}
 
 		return nil
@@ -50,7 +56,7 @@ func scan(rootPath string, kind string, igoreFolderPrefix string, conf *ripper.S
 	if err != nil {
 		return nil, err
 	} else {
-		return targets, nil
+		return results, nil
 	}
 }
 
@@ -60,34 +66,35 @@ const (
 	placeholder_ItemNo = "itemno"
 )
 
-func dissectPath(path string, conf *ripper.ScanConfig) (*string, *int, *int, error) {
+func dissectPath(path string, conf *ripper.ScanConfig) (*scanResult, error) {
 	 for _, pattern := range conf.Patterns {
 	 	expandedPattern := expandPatterns(pattern, conf.IdPattern, conf.CollectionPattern, conf.ItemNoPattern)
 	 	pathTrail := getLastNPathElements(path, strings.Count(expandedPattern, "/") + 1) //folder depth + file nameee
 	 	re, err := regexp.Compile(expandedPattern)
 	 	if err != nil {
-	 		return nil, nil, nil, err
+	 		return nil, err
 		}
 
 		matches := extractParams(re, pathTrail)
 		if matches != nil {
-			if idVal, isDefined := matches[placeholder_Id]; isDefined {
-				id := &idVal
-				var col *int
-				if colVal, isDefined := matches[placeholder_Collection]; isDefined {
-					i, _ := strconv.Atoi(colVal)
-					col = &i
+			if id, isDefined := matches[placeholder_Id]; isDefined {
+				var collection *int
+				if collectionVal, isDefined := matches[placeholder_Collection]; isDefined {
+					i, _ := strconv.Atoi(collectionVal)
+					collection = &i
 				}
 				var itemNo *int
 				if itemVal, isDefined := matches[placeholder_ItemNo]; isDefined {
 					i, _ := strconv.Atoi(itemVal)
 					itemNo = &i
 				}
-				return id, col, itemNo, nil
+				folder, file := filepath.Split(path)
+				return &scanResult{Folder: folder, File: file, Id: id, Collection: collection, ItemNo: itemNo}, nil
+
 			}
 		}
 	 }
-	return nil, nil, nil, nil
+	return nil, nil
 }
 
 func extractParams(re *regexp.Regexp, path string) map[string]string {

@@ -7,48 +7,108 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 )
 
-type TargetInfo struct {
-	File       string `json:"file"` //target file name
-	Folder     string `json:"folder"` //folder containing target file
-	Kind       string `json:"kind"` //type of target (e.g. audio, video)
-	Id         string `json:"id"` //id for name resolve
-	Collection int    `json:"collection"` //Season#, CD#, etc.
-	ItemNo     int    `json:"itemno"` //track#, singleCollectionItem#
+const (
+	TARGETINFO_VIDEO   = "v"
+	TARGETINFO_EPISODE = "e"
+)
+
+type TargetInfo interface {
+	fmt.Stringer
+	GetFile() string
+	GetFolder() string
+	GetType() string
+	GetId() string
+	fileName() string
 }
 
-func From(file string, folder string, kind string, id string, collection *int, itemNo *int) *TargetInfo {
-	c := 0
-	if collection != nil {
-		c = *collection
-	}
-
-	i := 0
-	if itemNo != nil {
-		i = *itemNo
-	}
-
-	return &TargetInfo{file, folder, kind, id, c, i}
+type Video struct {
+	File   string `json:"file"`
+	Folder string `json:"folder"`
+	Id     string `json:"id"`
 }
 
-func Read(targetInfoFile string) (*TargetInfo, error) {
+type Episode struct {
+	Video
+	Season     int `json:"season"`
+	Episode    int `json:"episode"`
+	ItemSeqNo  int `json:"itemseqno"`
+	ItemsTotal int `json:"itemstotal"`
+}
+
+func (v *Video) GetFile() string {
+	return v.File
+}
+
+func (v *Video) GetFolder() string {
+	return v.Folder
+}
+
+func (v *Video) GetType() string {
+	return TARGETINFO_VIDEO
+}
+
+func (v *Video) GetId() string {
+	return v.Id
+}
+
+func (v *Video) fileName() string {
+	return fmt.Sprintf("%s%s", v.GetType(), v.Id)
+}
+
+func (v *Video) String() string {
+	return fmt.Sprintf("video   (id=%s, file=%s)", v.Id, filepath.Join(v.Folder, v.File))
+}
+
+func (e *Episode) GetType() string {
+	return TARGETINFO_EPISODE
+}
+
+func (e *Episode) fileName() string {
+	return fmt.Sprintf("%s%s.%d.%d", e.GetType(), e.Id, e.Season, e.Episode)
+}
+
+func (e *Episode) String() string {
+	return fmt.Sprintf("episode (id=%s, season=%-4d, episode=%-4d, item#=%-4d, totalItems=%-4d, file=%s)", e.Id, e.Season, e.Episode, e.ItemSeqNo, e.ItemsTotal, filepath.Join(e.Folder, e.File))
+}
+
+
+func NewVideo(file string, folder string, id string) *Video {
+	return &Video{File: file, Folder: folder, Id: id}
+}
+
+func NewEpisode(file string, folder string, id string, season int, episode int, itemSeqNo int, itemsTotal int) *Episode {
+	return &Episode{Video: *NewVideo(file, folder, id), Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
+}
+
+func Read(targetInfoFile string) (TargetInfo, error) {
 	raw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err
 	}
 	jsonString := string(raw[:])
 
-	ti := TargetInfo{}
+	_, f := filepath.Split(targetInfoFile)
+	var ti TargetInfo
+	if strings.HasPrefix(f, TARGETINFO_VIDEO) {
+		ti = &Video{}
+	} else if strings.HasPrefix(f, TARGETINFO_EPISODE) {
+		ti = &Episode{}
+	} else {
+		return nil, errors.New(fmt.Sprintf("target info file suggests invalid target info type: %s ", f))
+	}
+
 	err = json.Unmarshal([]byte(jsonString), &ti)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ti, nil
+	return ti, nil
 }
 
-func Save(tmpFolder string, ti *TargetInfo) (*string, error) {
+func Save(tmpFolder string, ti TargetInfo) (*string, error) {
 	if ti == nil {
 		return nil, errors.New("target info is nil")
 	}
@@ -60,27 +120,4 @@ func Save(tmpFolder string, ti *TargetInfo) (*string, error) {
 	targetFile := filepath.Join(tmpFolder, ti.fileName())
 	err = ioutil.WriteFile(targetFile, bytes, os.ModePerm)
 	return &targetFile, err
-}
-
-func (ti *TargetInfo) fileName() string {
-	if ti.Collection != 0 && ti.ItemNo != 0 {
-		return fmt.Sprintf("%s.%d.%d", ti.Id, ti.Collection, ti.ItemNo)
-	} else if ti.ItemNo != 0 {
-		return fmt.Sprintf("%s.%d", ti.Id, ti.ItemNo)
-	} else {
-		return ti.Id
-	}
-}
-
-func (ti *TargetInfo) String() string {
-	itemNo := "undef"
-	if ti.ItemNo != 0 {
-		itemNo = fmt.Sprintf("%d", ti.ItemNo)
-	}
-	collection := "undef"
-	if ti.Collection != 0 {
-		collection = fmt.Sprintf("%d", ti.Collection)
-	}
-
-	return fmt.Sprintf("%s(id=%s, coll=%-5s, itemNo=%-5s, file=%s)", ti.Kind, ti.Id, collection, itemNo, filepath.Join(ti.Folder, ti.File))
 }

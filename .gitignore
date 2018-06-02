@@ -16,3 +16,6 @@
 #IDEA files
 *.iml
 .idea
+
+#Test artifacts
+.tmp

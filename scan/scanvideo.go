@@ -6,16 +6,25 @@ import (
 	"go-ripper/files"
 	"go-ripper/targetinfo"
 	"path/filepath"
+	"errors"
+	"fmt"
 )
 
 func ScanVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
+	conf.AppendIgnorePrefix()
 
 	return func (job task.Job) ([]task.Job, error) {
 		scanPath := job[ripper.JobField_Path]
 
 		ctx.Printf("scanning contents of \"%s\" (ignoring temp \"%s\" and output \"%s\")\n", scanPath, conf.TempDirectoryName, conf.OutputDirectoryName)
-		targets, err := scan(scanPath, "video", conf.IgnoreFolderPrefix, conf.Scan.Video)
+		scanResults, err := scan(scanPath, conf.IgnoreFolderPrefix, conf.Scan.Video)
+		if err != nil {
+			return nil, err
+		}
+
+		//convert scanResults to TargetInfos
+		targets, err := toTargetInfos(scanResults)
 		if err != nil {
 			return nil, err
 		}
@@ -24,7 +33,7 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 		ctx.Printf("found %d targets:\n", len(targets))
 		for _, target := range targets {
 			//write TargetInfo to tmp folder
-			tmpFolder := filepath.Join(target.Folder, conf.TempDirectoryName)
+			tmpFolder := filepath.Join(target.GetFolder(), conf.TempDirectoryName)
 			err = files.CheckOrCreateFolder(tmpFolder)
 			if err != nil {
 				return nil, err
@@ -43,4 +52,47 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 		}
 		return jobs, nil
 	}
+}
+
+
+
+func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
+	var targetInfos []targetinfo.TargetInfo
+	episodeCount := map[string]map[int]int{}
+
+	for _, r := range results {
+		if r.Collection != nil {
+			series := r.Id
+			path := filepath.Join(r.Folder, r.File)
+			season := *r.Collection
+			if r.ItemNo == nil {
+				return nil, errors.New(fmt.Sprintf("invalid episode found - season# is set (%d), but episode# is missing in file %s", season, path))
+			}
+			episode := *r.ItemNo
+
+
+			seasons := episodeCount[series]
+			if seasons == nil {
+				seasons = map[int]int {}
+				episodeCount[series] = seasons
+			}
+			cnt := seasons[season] + 1
+			seasons[season] = cnt
+
+			episodeInfo := targetinfo.NewEpisode(r.File, r.Folder, r.Id, season, episode, cnt, 0)
+			targetInfos = append(targetInfos, episodeInfo)
+		} else { //single video
+			targetInfos = append(targetInfos, targetinfo.NewVideo(r.File, r.Folder, r.Id))
+		}
+	}
+
+	//finally update all total # of episodes for all episodes
+	for _, ti := range targetInfos {
+		if targetinfo.TARGETINFO_EPISODE == ti.GetType() {
+			e := ti.(*targetinfo.Episode)
+			e.ItemsTotal = episodeCount[e.Id][e.Season]
+		}
+	}
+
+	return targetInfos, nil
 }

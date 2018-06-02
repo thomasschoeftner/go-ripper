@@ -28,7 +28,7 @@ func ResolveVideo(queryFactory VideoMetaInfoQueryFactory) task.Handler {
 
 			//todo check if already handled (lazy)
 			//todo issue proper queries
-			metaInfo, err := Get(queryFactory.NewTitleQuery(ti.Id))
+			metaInfo, err := Get(queryFactory.NewTitleQuery(ti.GetId()))
 			println(metaInfo)
 
 			//TODO persist meta-info in file
