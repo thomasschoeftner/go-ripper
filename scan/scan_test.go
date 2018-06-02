@@ -63,8 +63,12 @@ func dissectPathAndValidate(desc string, t *testing.T,  conf *ripper.AppConf, pa
 func TestExtractIdOnly(t *testing.T) {
 	conf, err := loadConfig(`
 {
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
   "scan" : {
     "video" : {
+      "ignoreFolderPrefix" : ".",
       "idPattern" : "tt\\d+",
       "collectionPattern": "\\d+",
       "itemNoPattern" : "\\d+",
@@ -88,6 +92,9 @@ func TestExtractIdOnly(t *testing.T) {
 func TestExtractIdItemno(t *testing.T) {
 	conf, err := loadConfig(`
 {
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -114,14 +121,17 @@ func TestExtractIdItemno(t *testing.T) {
 func TestExtractIdColItemNo(t *testing.T) {
 	conf, err := loadConfig(`
 {
- "scan" : {
-   "video" : {
-     "idPattern" : "tt\\d+",
-     "collectionPattern": "\\d+",
-     "itemNoPattern" : "\\d+",
-     "patterns" : [".*<id>.*/s<collection>/e<itemno>.*"]
-   }
- }
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : [".*<id>.*/s<collection>/e<itemno>.*"]
+    }
+  }
 }`)
 	test.CheckError(t, err)
 
@@ -135,14 +145,17 @@ func TestExtractIdColItemNo(t *testing.T) {
 func TestColAndItemNoInFilename(t *testing.T) {
 	conf, err := loadConfig(`
 {
- "scan" : {
-   "video" : {
-     "idPattern" : "tt\\d+",
-     "collectionPattern": "\\d+",
-     "itemNoPattern" : "\\d+",
-     "patterns" : ["<id>.*/s<collection>e<itemno>.*"]
-   }
- }
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : ["<id>.*/s<collection>e<itemno>.*"]
+    }
+  }
 }`)
 	test.CheckError(t, err)
 	{
@@ -158,14 +171,17 @@ func TestColAndItemNoInFilename(t *testing.T) {
 func TestEliminateLeadingZeroes(t *testing.T) {
 	conf, err := loadConfig(`
 {
- "scan" : {
-   "video" : {
-     "idPattern" : "tt\\d+",
-     "collectionPattern": "\\d+",
-     "itemNoPattern" : "\\d+",
-     "patterns" : ["<id>.*/<collection>.*/e<itemno>.*"]
-   }
- }
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : ["<id>.*/<collection>.*/e<itemno>.*"]
+    }
+  }
 }`)
 	test.CheckError(t, err)
 
@@ -180,19 +196,22 @@ func TestEliminateLeadingZeroes(t *testing.T) {
 func TestExtractWithMultiplePatternOptions(t *testing.T) {
 	conf, err := loadConfig(`
 {
- "scan" : {
-   "video" : {
-     "idPattern" : "tt\\d+",
-     "collectionPattern": "\\d+",
-     "itemNoPattern" : "\\d+",
-     "patterns" : [
-       "<id>.*/s<collection>e<itemno>.*",
-       "<id>.*/<collection>/<itemno>.*",
-       "<id>.*/<collection>/\\D*<itemno>.*",
-       "<id>.*/<itemno>.*",
-       "<id>.*"]
-   }
- }
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : [
+        "<id>.*/s<collection>e<itemno>.*",
+        "<id>.*/<collection>/<itemno>.*",
+        "<id>.*/<collection>/\\D*<itemno>.*",
+        "<id>.*/<itemno>.*",
+        "<id>.*"]
+    }
+  }
 }`)
 	test.CheckError(t, err)
 	{
@@ -245,36 +264,114 @@ func TestGetLastNPathElements(t *testing.T) {
 	}
 }
 
-func TestScan(t *testing.T) {
-	conf, err := loadConfig(`
+
+
+
+func TestScanSingleTitles(t *testing.T) {
+	conf := `
 {
- "scan" : {
-   "video" : {
-     "idPattern" : "tt\\d+",
-     "collectionPattern": "\\d+",
-     "itemNoPattern" : "\\d+",
-     "patterns" : [
-       "<id>.*/season\\s<collection>/<itemno>.*",
-       "<id>.*"]
-   }
- }
-}`)
-	test.CheckError(t, err)
-	path, _ := filepath.Abs(filepath.Join(".", "testdata"))
-	targetInfos, err := scan(path, []string{".out"}, "video", conf.Scan.Video)
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : ["<id>.*/.*","<id>.*"]
+    }
+  }
+}`
+
+	movies := []string{"tt987654321", "tt555", "tt666", "tt34543"}
+	testScanVideos(t, movies, nil, conf, "testdata")
+}
+
+
+func TestScanMixedSinglesAndCollections(t *testing.T) {
+	conf := `
+{
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : [
+        "<id>.*/season\\s<collection>/<itemno>.*",
+        "<id>.*/.*",
+        "<id>.*"]
+    }
+  }
+}`
+	movies := []string{"tt987654321", "tt555", "tt666", "tt34543"}
+	episodes := map[int]map[string]int {
+		2 : {"0.mkv":0, "1.txt":1, "2.a.b.c":2, "4":4}, //TODO change to logical numbering?
+		4 : {"1.txt":1, "2.a.b.c":2, "3":3}}
+	testScanVideos(t, movies, episodes, conf, "testdata")
+}
+
+
+func TestScanDeep(t *testing.T) {
+	conf := `
+{
+  "ignoreFolderPrefix" : ".",
+  "tempDirectoryName" : "tmp",
+  "outputDirectoryName" : "out",
+  "scan" : {
+    "video" : {
+      "idPattern" : "tt\\d+",
+      "collectionPattern": "\\d+",
+      "itemNoPattern" : "\\d+",
+      "patterns" : [
+        "<id>.*/season\\s<collection>/<itemno>.*",
+        "<id>.*/season\\s<collection>/.*/.*/.*/<itemno>.*",
+        "<id>.*/.*",
+        "<id>.*"]
+    }
+  }
+}`
+
+	movies := []string{"tt987654321", "tt555", "tt666", "tt34543"}
+	episodes := map[int]map[string]int {
+		2 : {"0.mkv":0, "1.txt":1, "2.a.b.c":2, "4":4}, //TODO change to logical numbering
+		4 : {"1.txt":1, "2.a.b.c":2, "3":3},
+		7 : {"6.mkv":6, "7.a.b.c":7, "8":8}}
+
+	testScanVideos(t, movies, episodes, conf, "testdata")
+}
+
+
+func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[int]map[string]int, confStr string, testDataFolder string) {
+	conf, err := loadConfig(confStr)
 	test.CheckError(t, err)
 
-	movie := "tt987654321"
-	series := map[int]map[string]int {
-		2 : {"0.mkv":0, "1.txt":1, "2.a.b.c":2, "4":4}, //TODO change to logical numbering
-		4 : {"1.txt":1, "2.a.b.c":2, "3":3}}
-	if len(targetInfos) != 8 {
-		t.Errorf("scaning %s yielded unexpected number of relevant files - series %d, but got %d", path, 7, len(targetInfos))
-	}
+	path, _ := filepath.Abs(filepath.Join(".", testDataFolder))
+	targetInfos, err := scan(path, "video", conf.IgnoreFolderPrefix, conf.Scan.Video)
+	test.CheckError(t, err)
+
 	for _, ti := range targetInfos {
-		if collection, found := series[ti.Collection]; !found {
-			if ti.Id != movie {
-				t.Errorf("unexpected collection %d extracted from path %s", ti.Collection, filepath.Join(ti.Folder, ti.File))
+		fmt.Printf("%v\n", *ti)
+	}
+
+	expectedNoOfItems := len(expectedMovies)
+	for _, season := range expectedEpisodes {
+		expectedNoOfItems = expectedNoOfItems + len(season)
+	}
+
+	if len(targetInfos) == expectedNoOfItems + 1 {
+		t.Errorf("scaning %s yielded unexpected number of relevant files - .hidden folder should not be searched", path)
+	} else if len(targetInfos) != expectedNoOfItems {
+		t.Errorf("scaning %s yielded unexpected number of relevant files - expected %d, but got %d", path, expectedNoOfItems, len(targetInfos))
+	}
+
+	for _, ti := range targetInfos {
+
+		if collection, isEpisode := expectedEpisodes[ti.Collection]; ti.Collection == 0 || !isEpisode {
+			if !idFoundIn(ti.Id, expectedMovies) {
+				t.Errorf("unexpected video %d extracted from path %s", ti.Collection, filepath.Join(ti.Folder, ti.File))
 			}
 		} else {
 			if itemNo, found := collection[ti.File]; !found {
@@ -287,4 +384,14 @@ func TestScan(t *testing.T) {
 
 		}
 	}
+
+}
+
+func idFoundIn(id string, ids []string) bool {
+	for _, m := range ids {
+		if m == id {
+			return true
+		}
+	}
+	return false
 }

@@ -10,13 +10,12 @@ import (
 
 func ScanVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
-	excludeDirs := []string { conf.TempDirectoryName, conf.OutputDirectoryName}
 
 	return func (job task.Job) ([]task.Job, error) {
 		scanPath := job[ripper.JobField_Path]
 
 		ctx.Printf("scanning contents of \"%s\" (ignoring temp \"%s\" and output \"%s\")\n", scanPath, conf.TempDirectoryName, conf.OutputDirectoryName)
-		targets, err := scan(scanPath, excludeDirs, "video", conf.Scan.Video)
+		targets, err := scan(scanPath, "video", conf.IgnoreFolderPrefix, conf.Scan.Video)
 		if err != nil {
 			return nil, err
 		}

@@ -5,6 +5,7 @@ import (
 )
 
 type AppConf struct {
+	IgnoreFolderPrefix  string
 	TempDirectoryName   string
 	OutputDirectoryName string
 	Processing          *task.ProcessingConfig
@@ -29,7 +30,6 @@ type ResolveConfig struct {
 }
 
 type VideoResolveConfig struct {
-	ImageSource string //possible values: series | episode
 	Omdb *OmdbConfig
 }
 

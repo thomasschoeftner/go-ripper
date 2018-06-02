@@ -11,12 +11,10 @@ import (
 	"strconv"
 )
 
-func scan(rootPath string, excludeDirs []string, kind string, conf *ripper.ScanConfig) ([]*targetinfo.TargetInfo, error) {
+func scan(rootPath string, kind string, igoreFolderPrefix string, conf *ripper.ScanConfig) ([]*targetinfo.TargetInfo, error) {
 	targets := []*targetinfo.TargetInfo{}
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		defer println()
-
 		if err != nil {
 			return err
 		}
@@ -29,13 +27,14 @@ func scan(rootPath string, excludeDirs []string, kind string, conf *ripper.ScanC
 			return err
 		}
 
-		//discard excluded directories
 		folder, file := filepath.Split(path)
-		for _, dir := range excludeDirs {
-			if strings.Contains(folder, dir) {
-				return nil
-			}
+
+		//discard excluded directories
+		folderName := filepath.Base(folder)
+		if strings.HasPrefix(folderName, igoreFolderPrefix) {
+			return nil
 		}
+
 		id, collection, itemNo, err := dissectPath(path, conf)
 
 		if err != nil {
@@ -64,7 +63,7 @@ const (
 func dissectPath(path string, conf *ripper.ScanConfig) (*string, *int, *int, error) {
 	 for _, pattern := range conf.Patterns {
 	 	expandedPattern := expandPatterns(pattern, conf.IdPattern, conf.CollectionPattern, conf.ItemNoPattern)
-	 	pathTrail := getLastNPathElements(path, strings.Count(expandedPattern, "/") + 1)
+	 	pathTrail := getLastNPathElements(path, strings.Count(expandedPattern, "/") + 1) //folder depth + file nameee
 	 	re, err := regexp.Compile(expandedPattern)
 	 	if err != nil {
 	 		return nil, nil, nil, err

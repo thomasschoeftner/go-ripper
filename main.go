@@ -14,6 +14,7 @@ import (
 	"errors"
 	"go-cli/cli"
 	"go-ripper/omdb"
+	"strings"
 )
 
 const (
@@ -136,5 +137,18 @@ func getConfig() *ripper.AppConf {
 	configFile := *configFlag
 	conf := ripper.AppConf{}
 	require.NotFailed(config.FromFile(&conf, configFile, map[string]string {}))
+
+	// hardcode ignore-prefix on temp and output dirs to avoid configuration issues
+	conf.TempDirectoryName = appendIgnorePrefix(conf.TempDirectoryName, conf)
+	conf.OutputDirectoryName = appendIgnorePrefix(conf.OutputDirectoryName, conf)
+
 	return &conf
+}
+
+func appendIgnorePrefix(s string, conf ripper.AppConf) string {
+	if strings.HasPrefix(s, conf.IgnoreFolderPrefix) {
+		return s
+	} else {
+		return fmt.Sprintf("%s%s", conf.IgnoreFolderPrefix, s)
+	}
 }
