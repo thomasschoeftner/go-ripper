@@ -2,34 +2,17 @@ package ripper
 
 import (
 	"go-cli/task"
-	"strings"
-	"fmt"
 )
 
 type AppConf struct {
 	IgnoreFolderPrefix  string
-	TempDirectoryName   string
-	OutputDirectoryName string
+	WorkDirectory       string
+	MetaInfoRepo        string
 	Processing          *task.ProcessingConfig
 	Scan                *ScanConfigGroup
 	Resolve             *ResolveConfig
 	Tool                *ToolConfig
 }
-
-func (conf *AppConf) AppendIgnorePrefix() {
-	// hardcode ignore-prefix on temp and output dirs to avoid configuration issues
-	conf.TempDirectoryName = conf.appendIgnorePrefix(conf.TempDirectoryName)
-	conf.OutputDirectoryName = conf.appendIgnorePrefix(conf.OutputDirectoryName)
-}
-
-func (conf *AppConf) appendIgnorePrefix(s string) string {
-	if strings.HasPrefix(s, conf.IgnoreFolderPrefix) {
-		return s
-	} else {
-		return fmt.Sprintf("%s%s", conf.IgnoreFolderPrefix, s)
-	}
-}
-
 
 type ScanConfigGroup struct {
 	Video *ScanConfig

@@ -17,9 +17,6 @@ import (
 )
 
 const (
-	exit_success = 0
-	exit_failure = 1
-
 	cliFlagVerbose             = "verbose"
 	cliFlagOmdbTokens          = "omdbtoken"
 	cliFlagConfigFile          = "config"
@@ -28,13 +25,10 @@ const (
 	ApplicationName            = "go-ripper"
 )
 
-
-
 var verbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBoolean().WithDefault(false)
 var lazy = cli.FromFlag(cliFlagLazy, "execute task only if no output from previous execution is available").GetBoolean().WithDefault(true)
 var omdbTokenFlags  = cli.FromFlag(cliFlagOmdbTokens, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(cliFlagOmdbTokens).GetArray().WithDefault()
 var configFlag = cli.FromFlag(cliFlagConfigFile,"the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault(ApplicationName + ".conf")
-var runWithoutDependencies = cli.FromFlag(cliFlagWithoutDependencies, "run specified tasks without their dependencies").GetBoolean().WithDefault(false)
 
 func main() {
 	os.Exit(launch())
@@ -46,30 +40,27 @@ func launch() int {
 
 	// read config
 	conf := getConfig()
+
+	//init tasks
 	vmiqf, err := omdb.NewOmdbVideoQueryFactory(conf.Resolve.Video.Omdb, *omdbTokenFlags)
 	require.NotFailed(err)
-
+	require.NotNil(vmiqf, "video metainfo factory is nil")
 	allTasks  := CreateTasks(vmiqf)
 
 	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
 
 	// create task Tree
-	taskMap, errs := task.ValidateTasks(allTasks)
-	require.NoneFailed(errs)
+	taskMap, err := task.ValidateTasks(allTasks)
+	require.NotFailed(err)
 
 	// read command line params (flags & args)
-	taskNames, targets := getCliTasksAndTargets(allTasks, taskMap)
+	taskNames, targets := getCliTasksAndTargets(taskMap)
 
 	// calculate tasks to be invoked
-	invokedTasks, err := taskMap.GetTasksForNames(taskNames...)
+	tasksToRun, err := taskMap.CompileTasksForNamesCompact(taskNames...)
 	require.NotFailed(err)
 
 	// materialize processing pipeline
-	//todo check required flags per task!!!
-	tasksToRun := invokedTasks
-	if !(*runWithoutDependencies) {
-		tasksToRun = invokedTasks.Flatten()
-	}
 	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *lazy)
 	require.NotFailed(err)
 
@@ -79,7 +70,7 @@ func launch() int {
 	err = handleProcessingEvents(pipe)
 	require.NotFailed(err)
 
-	return exit_success
+	return 0
 }
 
 func fillPipelineAndClose(pipe *pipeline.Pipeline, targets []string) {
@@ -116,7 +107,7 @@ func handleProcessingEvents(pipe *pipeline.Pipeline) error {
 	return nil
 }
 
-func getCliTasksAndTargets(allTasks task.TaskSequence, taskMap task.TaskMap) ([]string, []string) {
+func getCliTasksAndTargets(taskMap task.TaskMap) ([]string, []string) {
 	taskNames, targets, err := cli.ParseCommandLineArguments(taskMap.TaskNamesDefined())
 	errStr := ""
 	if err != nil {
@@ -136,7 +127,5 @@ func getConfig() *ripper.AppConf {
 	configFile := *configFlag
 	conf := ripper.AppConf{}
 	require.NotFailed(config.FromFile(&conf, configFile, map[string]string {}))
-
-	conf.AppendIgnorePrefix()
 	return &conf
 }
