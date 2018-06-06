@@ -5,26 +5,30 @@ import (
 	"fmt"
 	"go-cli/task"
 	"path/filepath"
+	"strings"
 )
 
 const (
-	JobField_Path = "path"
-	//JobField_TargetId = "id"
+	JobField_Path = "path" //location of target file
 )
 
-func GetTempPathFor(job task.Job, conf *AppConf) string {
-	return GetWorkPathFor(job, conf.TempDirectoryName)
-}
-
-
-//func GetOutputPathFor(job task.Job, conf *AppConf) string {
-//	return GetWorkPathFor(job, conf.OutputDirectoryName)
-//}
-
-
-func GetWorkPathFor(job task.Job, subdir string) string {
+func GetWorkPathFor(workDir string, job task.Job) (string, error) {
 	folder, _ := filepath.Split(job[JobField_Path])
-	return filepath.Join(folder, subdir)
+
+	targetPath, err := filepath.Abs(folder)
+	if err !=  nil {
+		return "", err
+	}
+
+	drive := fmt.Sprintf("%s%c", filepath.VolumeName(targetPath), filepath.Separator)
+	relativeToDrive, err := filepath.Rel(drive, targetPath)
+	if err != nil {
+		return "", err
+	}
+
+	//driveletter will be empty string in linux
+	driveletter := strings.Replace(filepath.VolumeName(targetPath), ":", "", 1)
+	return filepath.Join(workDir, driveletter, relativeToDrive), nil
 }
 
 func ProcessPath(path string) pipeline.Command {
