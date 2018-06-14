@@ -5,29 +5,36 @@ import (
 	"go-ripper/clean"
 	"go-ripper/scan"
 	"go-ripper/metainfo"
+	"errors"
 )
 
 const TaskName_Tasks = "tasks"
 
+func NotImplementedYetHandler(ctx task.Context) task.HandlerFunc {
+	return func (job task.Job) ([]task.Job, error) {
+		return nil, errors.New("not implemented yet")
+	}
+}
+
 func CreateTasks(vmiqf metainfo.VideoMetaInfoQueryFactory) task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
-	taskCleanTmp := task.NewTask("cleanTmp","cleans temporary work folders", clean.CleanTmpHandler)
-	taskCleanOut := task.NewTask("cleanOut","cleans result output folders", clean.CleanOutHandler)
+	taskClean := task.NewTask("clean","cleans work folder for specified target path", clean.CleanHandler)
 
 	//taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", nil)
 	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", scan.ScanVideo)
 	taskScan      := task.NewTask("scan","scan folder and direct sub-folders for audio and video input", nil).WithDependencies(/*taskScanAudio,*/ taskScanVideo)
 
 	//taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", nil )
-	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", metainfo.ResolveVideo(vmiqf))
+	resolveHandler, _ := metainfo.ResolveVideo(vmiqf)
+	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", resolveHandler)
 	taskResolve      := task.NewTask("resolve","resolve & download audio and video meta-info from various sources", nil).WithDependencies(taskScan, /*taskResolveAudio, */ taskResolveVideo)
 
 	//taskRipAudio := task.NewTask("ripAudio","digitalize (\"rip\") audio", nil)
-	taskRipVideo := task.NewTask("ripVideo","digitalize (\"rip\") video", nil)
+	taskRipVideo := task.NewTask("ripVideo","digitalize (\"rip\") video", NotImplementedYetHandler)
 	taskRip      := task.NewTask("rip","digitalize (\"rip\") audio and video", nil).WithDependencies(taskResolve, /*taskRipAudio, */ taskRipVideo)
 
 	//taskTagAudio := task.NewTask("tagAudio","apply meta-info from local file to audio", nil)
-	taskTagVideo := task.NewTask("tagVideo","apply meta-info from local file to video", nil)
+	taskTagVideo := task.NewTask("tagVideo","apply meta-info from local file to video", NotImplementedYetHandler)
 	taskTag      := task.NewTask("tag","apply meta-info from local file to audio and video", nil).WithDependencies(taskRip, /* taskTagAudio, */ taskTagVideo)
 
 	//taskAudio  := task.NewTask("audio","process all audio files in folder and direct sub-folders", nil).WithDependencies(taskScanAudio, taskResolveAudio, taskRipAudio, taskTagAudio)
@@ -36,7 +43,7 @@ func CreateTasks(vmiqf metainfo.VideoMetaInfoQueryFactory) task.TaskSequence {
 
 	return task.LoadTasks(
 		taskTasks,
-		taskCleanTmp, taskCleanOut,
+		taskClean,
 		/* taskScanAudio, */ taskScanVideo, taskScan,
 		/* taskResolveAudio, */ taskResolveVideo, taskResolve,
 		/* taskRipAudio, */ taskRipVideo, taskRip,
