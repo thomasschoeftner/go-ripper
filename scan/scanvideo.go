@@ -12,13 +12,12 @@ import (
 
 func ScanVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
-	conf.AppendIgnorePrefix()
 
 	return func (job task.Job) ([]task.Job, error) {
 		scanPath := job[ripper.JobField_Path]
 
-		ctx.Printf("scanning contents of \"%s\" (ignoring temp \"%s\" and output \"%s\")\n", scanPath, conf.TempDirectoryName, conf.OutputDirectoryName)
-		scanResults, err := scan(scanPath, conf.IgnoreFolderPrefix, conf.Scan.Video)
+		ctx.Printf("scanning contents of \"%s\"", scanPath)
+		scanResults, err := scan(scanPath, conf.IgnorePrefix, conf.Scan.Video)
 		if err != nil {
 			return nil, err
 		}
@@ -32,16 +31,20 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 		jobs := []task.Job{}
 		ctx.Printf("found %d targets:\n", len(targets))
 		for _, target := range targets {
-			//write TargetInfo to tmp folder
-			tmpFolder := filepath.Join(target.GetFolder(), conf.TempDirectoryName)
-			err = files.CheckOrCreateFolder(tmpFolder)
+			//write TargetInfo to work folder
+			workDir, err := ripper.GetWorkPathForTargetFileFolder(conf.WorkDirectory, target.GetFolder())
 			if err != nil {
 				return nil, err
 			}
 
-			fileName, err := targetinfo.Save(tmpFolder, target)
+			files.CreateFolderStructure(workDir)
 			if err != nil {
-				//TODO check if error should be ignored
+				return nil, err
+			}
+
+			fileName, err := targetinfo.Save(workDir, target)
+			if err != nil {
+				//TODO check if error should be ignored - in a worst case the target file will be missing
 				return nil, err
 			}
 

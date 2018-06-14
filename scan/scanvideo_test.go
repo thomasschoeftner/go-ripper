@@ -12,9 +12,8 @@ import (
 func TestScanVideo(t *testing.T) {
 	confStr := `
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
