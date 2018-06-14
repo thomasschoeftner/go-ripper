@@ -23,7 +23,7 @@ func TestClean(t *testing.T) {
 	job := task.Job{ripper.JobField_Path : targetPath}
 
 	//create target files
-	workPath := assert.StringNotError(ripper.GetWorkPathFor(workDir, job))
+	workPath := assert.StringNotError(ripper.GetWorkPathForJob(workDir, job))
 	assert.NotError(files.CreateFolderStructure(workPath))
 	assert.NotError(files.CreateFolderStructure(filepath.Join(workPath, targetFile + ".abc"))) //create sub-folder with "dangerous" name
 

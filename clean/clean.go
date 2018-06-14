@@ -18,14 +18,14 @@ func CleanHandler(ctx task.Context) task.HandlerFunc {
 
 func clean(printf commons.FormatPrinter, desc string, job task.Job, workDir string) ([]task.Job, error) {
 	result := []task.Job{job}
-	path, err := ripper.GetWorkPathFor(workDir, job)
+	path, err := ripper.GetWorkPathForJob(workDir, job)
 	if err != nil {
 		return result, err
 	}
 
-	_, fName := filepath.Split(ripper.GetTargetFilePathForm(job))
+	_, fName := filepath.Split(ripper.GetTargetFileFromJob(job))
 	filePattern := filepath.Join(path, fName) + "*"
-	printf("cleaning %s of \"%s\" (%s)\n", desc, ripper.GetTargetFilePathForm(job), filePattern)
+	printf("cleaning %s related to target \"%s\"\n", desc, ripper.GetTargetFileFromJob(job))
 	filesToDelete, err := filepath.Glob(filePattern)
 	for _, f := range filesToDelete {
 		printf("  deleting file: %s\n", f)
