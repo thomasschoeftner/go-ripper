@@ -24,6 +24,6 @@ func TestGetWorkPathForFile(t *testing.T) {
 
 	expectedWorkPath := filepath.Join(workDir, strings.Replace(drive, ":", "", 1), filepath.Dir(pathPart))
 	assert := test.AssertOn(t)
-	workPath := assert.StringNotError(GetWorkPathFor(workDir, job))
+	workPath := assert.StringNotError(GetWorkPathForJob(workDir, job))
 	assert.StringsEqual(expectedWorkPath, workPath)
 }
