@@ -2,7 +2,6 @@ package targetinfo
 
 import (
 	"testing"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"go-cli/test"
@@ -15,15 +14,11 @@ var video = NewVideo("f.g", "/a/b/c", "test")
 var episode = NewEpisode("f.g", "/a/b/c", "tt987654321", 3, 12, 12, 24)
 
 func setup(t *testing.T) string {
-	systemTempDir := "" //defaults to tmp dir in linux, windows, etc.
-	dir, err := ioutil.TempDir(systemTempDir, "go-test")
-	test.CheckError(t,err)
-	return dir
+	return test.MkTempFolder(t)
 }
 
 func teardown(t *testing.T, dir string) {
-	err := os.RemoveAll(dir)
-	test.CheckError(t,err)
+	test.RmTempFolder(t, dir)
 }
 
 

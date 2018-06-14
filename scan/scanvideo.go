@@ -58,7 +58,6 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 }
 
 
-
 func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 	var targetInfos []targetinfo.TargetInfo
 	episodeCount := map[string]map[int]int{}
@@ -72,7 +71,6 @@ func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 				return nil, errors.New(fmt.Sprintf("invalid episode found - season# is set (%d), but episode# is missing in file %s", season, path))
 			}
 			episode := *r.ItemNo
-
 
 			seasons := episodeCount[series]
 			if seasons == nil {

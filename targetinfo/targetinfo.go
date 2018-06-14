@@ -108,7 +108,7 @@ func Read(targetInfoFile string) (TargetInfo, error) {
 	return ti, nil
 }
 
-func Save(tmpFolder string, ti TargetInfo) (*string, error) {
+func Save(workFolder string, ti TargetInfo) (*string, error) {
 	if ti == nil {
 		return nil, errors.New("target info is nil")
 	}
@@ -117,7 +117,7 @@ func Save(tmpFolder string, ti TargetInfo) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	targetFile := filepath.Join(tmpFolder, ti.fileName())
+	targetFile := filepath.Join(workFolder, ti.fileName())
 	err = ioutil.WriteFile(targetFile, bytes, os.ModePerm)
 	return &targetFile, err
 }
