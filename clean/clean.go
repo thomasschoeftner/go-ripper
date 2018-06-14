@@ -33,9 +33,7 @@ func clean(printf commons.FormatPrinter, desc string, job task.Job, workDir stri
 	}
 
 	if err != nil {
-		printf("...failed\n  due to: %s\n", err)
-	} else {
-		printf("...done\n")
+		printf("cleaning failed\n  due to: %s\n", err)
 	}
 	return result, err
 }

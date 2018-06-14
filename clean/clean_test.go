@@ -32,24 +32,19 @@ func TestClean(t *testing.T) {
 	jsonFile  := assert.StringNotError(createFile(filepath.Join(workPath, targetFile + ".json"), []byte{}))
 	otherFile := assert.StringNotError(createFile(filepath.Join(workPath, "something.else"), []byte{}))
 
-	assert.TrueNotError("target file was not created")(fileExists(tFile))
-	assert.TrueNotError("similar file in sub-folder was not created")(fileExists(similarFile))
-	assert.TrueNotError("json file was not created")(fileExists(jsonFile))
-	assert.TrueNotError("unrelated file was not created")(fileExists(otherFile))
+	assert.TrueNotError("target file was not created")(files.Exists(tFile))
+	assert.TrueNotError("similar file in sub-folder was not created")(files.Exists(similarFile))
+	assert.TrueNotError("json file was not created")(files.Exists(jsonFile))
+	assert.TrueNotError("unrelated file was not created")(files.Exists(otherFile))
 
 	clean(commons.Printf, "test clean", job,  workDir)
 
-	assert.FalseNotError("target file was not deleted")(fileExists(targetFile))
-	assert.FalseNotError("json file was not deleted")(fileExists(jsonFile))
-	assert.TrueNotError("similar file in sub-folder was deleted")(fileExists(similarFile))
-	assert.TrueNotError("unrelated file was deleted")(fileExists(otherFile))
+	assert.FalseNotError("target file was not deleted")(files.Exists(targetFile))
+	assert.FalseNotError("json file was not deleted")(files.Exists(jsonFile))
+	assert.TrueNotError("similar file in sub-folder was deleted")(files.Exists(similarFile))
+	assert.TrueNotError("unrelated file was deleted")(files.Exists(otherFile))
 }
 
 func createFile(path string, content []byte) (string, error) {
 	return path, ioutil.WriteFile(path, content, os.ModePerm)
-}
-
-func fileExists(path string) (bool, error) {
-	exists, _, err := files.Exists(path)
-	return exists, err
 }
