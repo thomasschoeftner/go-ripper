@@ -12,17 +12,16 @@ const (
 	JobField_Path = "path" //location of target file
 )
 
-func GetTargetFileForm(job task.Job) string {
+func GetTargetFileFromJob(job task.Job) string {
 	return job[JobField_Path]
 }
 
 func GetWorkPathForJob(workDir string, job task.Job) (string, error) {
-	return GetWorkPathForTargetFile(workDir, GetTargetFileForm(job))
+	folder, _ := filepath.Split(GetTargetFileFromJob(job))
+	return GetWorkPathForTargetFileFolder(workDir, folder)
 }
 
-func GetWorkPathForTargetFile(workDir string, filePath string) (string, error) {
-	folder, _ := filepath.Split(filePath)
-
+func GetWorkPathForTargetFileFolder(workDir, folder string) (string, error) {
 	targetPath, err := filepath.Abs(folder)
 	if err !=  nil {
 		return "", err
