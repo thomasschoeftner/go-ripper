@@ -1,11 +1,11 @@
 package clean
 
 import (
-	"os"
 	"go-cli/task"
 	"go-ripper/ripper"
 	"go-cli/commons"
 	"path/filepath"
+	"os"
 )
 
 func CleanHandler(ctx task.Context) task.HandlerFunc {
@@ -18,22 +18,26 @@ func CleanHandler(ctx task.Context) task.HandlerFunc {
 
 func clean(printf commons.FormatPrinter, desc string, job task.Job, workDir string) ([]task.Job, error) {
 	result := []task.Job{job}
-	path, err := ripper.GetWorkPathForJob(workDir, job)
+	workPath, err := ripper.GetWorkPathForJob(workDir, job)
 	if err != nil {
 		return result, err
 	}
 
-	_, fName := filepath.Split(ripper.GetTargetFileFromJob(job))
-	filePattern := filepath.Join(path, fName) + "*"
-	printf("cleaning %s related to target \"%s\"\n", desc, ripper.GetTargetFileFromJob(job))
-	filesToDelete, err := filepath.Glob(filePattern)
-	for _, f := range filesToDelete {
-		printf("  deleting file: %s\n", f)
-		os.Remove(f)
-	}
+	targetPath:= ripper.GetTargetFileFromJob(job)
+	_, targetFile := filepath.Split(targetPath)
+	filePattern := filepath.Join(workPath, targetFile) + "*"
 
+	printf("cleaning %s related to target \"%s\" (matching %s)\n", desc, targetPath, filePattern)
+
+	filesToDelete, err := filepath.Glob(filePattern)
 	if err != nil {
 		printf("cleaning failed\n  due to: %s\n", err)
+	} else {
+		for _, f := range filesToDelete {
+			printf("  deleting file: %s\n", f)
+			os.Remove(f)
+		}
+		printf("all artifacts removed\n")
 	}
 	return result, err
 }
