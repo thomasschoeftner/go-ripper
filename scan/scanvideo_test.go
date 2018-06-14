@@ -7,13 +7,16 @@ import (
 	"go-cli/test"
 	"go-ripper/ripper"
 	"go-ripper/targetinfo"
+	"path/filepath"
 )
 
 func TestScanVideo(t *testing.T) {
+	workDir := test.MkTempFolder(t)
+	//defer test.RmTempFolder(t, workDir)
 	confStr := `
 {
   "ignorePrefix" : ".",
-  "workDirectory" : "tmp",
+  "workDirectory" : "` + filepath.ToSlash(workDir) + `",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -27,6 +30,8 @@ func TestScanVideo(t *testing.T) {
     }
   }
 }`
+
+println(confStr)
 
 	conf, err := loadConfig(confStr)
 	test.CheckError(t, err)
