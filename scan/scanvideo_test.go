@@ -12,7 +12,7 @@ import (
 
 func TestScanVideo(t *testing.T) {
 	workDir := test.MkTempFolder(t)
-	//defer test.RmTempFolder(t, workDir)
+	defer test.RmTempFolder(t, workDir)
 	confStr := `
 {
   "ignorePrefix" : ".",
