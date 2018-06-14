@@ -5,30 +5,37 @@ import (
 	"go-cli/task"
 	"go-ripper/ripper"
 	"go-cli/commons"
+	"path/filepath"
 )
 
-func CleanTmpHandler(ctx task.Context) task.HandlerFunc {
+func CleanHandler(ctx task.Context) task.HandlerFunc {
 	return func (job task.Job) ([]task.Job, error) {
 		conf := ctx.Config.(*ripper.AppConf)
-		return clean(ctx.Printf, "temporary data", job, conf.TempDirectoryName)
+		return clean(ctx.Printf, "work data", job, conf.WorkDirectory)
 	}
 }
 
-func CleanOutHandler(ctx task.Context) task.HandlerFunc {
-	return func (job task.Job) ([]task.Job, error) {
-		conf := ctx.Config.(*ripper.AppConf)
-		return clean(ctx.Printf, "output data", job, conf.OutputDirectoryName)
-	}
-}
 
-func clean(printf commons.FormatPrinter, desc string, job task.Job, subDir string) ([]task.Job, error) {
-	path := ripper.GetWorkPathFor(job, subDir)
-	printf("cleaning %s from \"%s\"", desc, path)
-	error := os.RemoveAll(path)
-	if error != nil {
-		printf("...failed\n  due to: %s\n", error)
+func clean(printf commons.FormatPrinter, desc string, job task.Job, workDir string) ([]task.Job, error) {
+	result := []task.Job{job}
+	path, err := ripper.GetWorkPathFor(workDir, job)
+	if err != nil {
+		return result, err
+	}
+
+	_, fName := filepath.Split(ripper.GetTargetFilePathForm(job))
+	filePattern := filepath.Join(path, fName) + "*"
+	printf("cleaning %s of \"%s\" (%s)\n", desc, ripper.GetTargetFilePathForm(job), filePattern)
+	filesToDelete, err := filepath.Glob(filePattern)
+	for _, f := range filesToDelete {
+		printf("  deleting file: %s\n", f)
+		os.Remove(f)
+	}
+
+	if err != nil {
+		printf("...failed\n  due to: %s\n", err)
 	} else {
 		printf("...done\n")
 	}
-	return []task.Job{job}, error
+	return result, err
 }

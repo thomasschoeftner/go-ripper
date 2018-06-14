@@ -5,13 +5,13 @@ import (
 )
 
 type AppConf struct {
-	IgnoreFolderPrefix  string
-	WorkDirectory       string
-	MetaInfoRepo        string
-	Processing          *task.ProcessingConfig
-	Scan                *ScanConfigGroup
-	Resolve             *ResolveConfig
-	Tool                *ToolConfig
+	IgnorePrefix  string
+	WorkDirectory string
+	MetaInfoRepo  string
+	Processing    *task.ProcessingConfig
+	Scan          *ScanConfigGroup
+	Resolve       *ResolveConfig
+	Tool          *ToolConfig
 }
 
 type ScanConfigGroup struct {

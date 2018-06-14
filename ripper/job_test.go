@@ -15,16 +15,15 @@ func TestGetWorkPathForFile(t *testing.T) {
 	} else {
 		drive = "c:/"
 	}
-	pathPart := "testdata/a/b/c/x.y"
+	filePart := "x.y"
+	pathPart := "testdata/a/b/c/" + filePart
 
 	workDir := ".workdir"
 	targetPath := drive + pathPart
 	job := task.Job{JobField_Path : targetPath}
 
 	expectedWorkPath := filepath.Join(workDir, strings.Replace(drive, ":", "", 1), filepath.Dir(pathPart))
-	workPath, err := GetWorkPathFor(workDir, job)
-	test.CheckError(t, err)
-	if expectedWorkPath != workPath {
-		t.Errorf("expected work path\n  %s\n but got\n  %s", expectedWorkPath, workPath)
-	}
+	assert := test.AssertOn(t)
+	workPath := assert.StringNotError(GetWorkPathFor(workDir, job))
+	assert.StringsEqual(expectedWorkPath, workPath)
 }
