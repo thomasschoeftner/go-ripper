@@ -64,12 +64,10 @@ func dissectPathAndValidateNoMatch(desc string, t *testing.T,  conf *ripper.AppC
 func TestExtractIdOnly(t *testing.T) {
 	conf, err := loadConfig(`
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
-      "ignoreFolderPrefix" : ".",
       "idPattern" : "tt\\d+",
       "collectionPattern": "\\d+",
       "itemNoPattern" : "\\d+",
@@ -93,9 +91,8 @@ func TestExtractIdOnly(t *testing.T) {
 func TestExtractIdItemno(t *testing.T) {
 	conf, err := loadConfig(`
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -122,9 +119,8 @@ func TestExtractIdItemno(t *testing.T) {
 func TestExtractIdColItemNo(t *testing.T) {
 	conf, err := loadConfig(`
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -146,9 +142,8 @@ func TestExtractIdColItemNo(t *testing.T) {
 func TestColAndItemNoInFilename(t *testing.T) {
 	conf, err := loadConfig(`
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -172,9 +167,8 @@ func TestColAndItemNoInFilename(t *testing.T) {
 func TestEliminateLeadingZeroes(t *testing.T) {
 	conf, err := loadConfig(`
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -197,9 +191,8 @@ func TestEliminateLeadingZeroes(t *testing.T) {
 func TestExtractWithMultiplePatternOptions(t *testing.T) {
 	conf, err := loadConfig(`
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -271,9 +264,8 @@ func TestGetLastNPathElements(t *testing.T) {
 func TestScanSingleTitles(t *testing.T) {
 	conf := `
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -292,9 +284,8 @@ func TestScanSingleTitles(t *testing.T) {
 func TestScanMixedSinglesAndCollections(t *testing.T) {
 	conf := `
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -318,9 +309,8 @@ func TestScanMixedSinglesAndCollections(t *testing.T) {
 func TestScanDeep(t *testing.T) {
 	conf := `
 {
-  "ignoreFolderPrefix" : ".",
-  "tempDirectoryName" : "tmp",
-  "outputDirectoryName" : "out",
+  "ignorePrefix" : ".",
+  "workDirectory" : "tmp",
   "scan" : {
     "video" : {
       "idPattern" : "tt\\d+",
@@ -350,7 +340,7 @@ func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[
 	test.CheckError(t, err)
 
 	path, _ := filepath.Abs(filepath.Join(".", testDataFolder))
-	results, err := scan(path, conf.IgnoreFolderPrefix, conf.Scan.Video)
+	results, err := scan(path, conf.IgnorePrefix, conf.Scan.Video)
 	test.CheckError(t, err)
 
 	for _, result := range results  {
@@ -388,6 +378,37 @@ func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[
 			}
 		}
 	}
+}
+
+func TestExclusion(t *testing.T) {
+	const ignorePrefix = "."
+	t.Run("do not ignore ordinary files", func(t *testing.T) {
+		path := "a/b/c.d"
+		if shouldIgnore(path, ignorePrefix, []string{}) {
+			t.Errorf("expected file \"%s\" not to be ignored, but is", path)
+		}
+	})
+
+	t.Run("ignore file", func(t *testing.T) {
+		path := "a/b/.c.d"
+		if !shouldIgnore(path, ignorePrefix, []string{}) {
+			t.Errorf("expected file \"%s\" to be ignored, but is not", path)
+		}
+	})
+
+	t.Run("ignore folder", func(t *testing.T) {
+		path := "a/.b/c.d"
+		if !shouldIgnore(path, ignorePrefix, []string{}) {
+			t.Errorf("expected folder content \"%s\" to be ignored, but is not", path)
+		}
+	})
+
+	t.Run("ignore ignored sub-folder", func(t *testing.T) {
+		path := "a/.b/c/d/e.f"
+		if !shouldIgnore(path, ignorePrefix, []string{"a/.b"}) {
+			t.Errorf("expected folder content \"%s\" to be ignored, but is not", path)
+		}
+	})
 }
 
 func idFoundIn(id string, ids []string) bool {

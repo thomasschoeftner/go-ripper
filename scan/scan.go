@@ -18,8 +18,9 @@ type scanResult struct {
 	ItemNo     *int
 }
 
-func scan(rootPath string, ignoreFolderPrefix string, conf *ripper.ScanConfig) ([]*scanResult, error) {
+func scan(rootPath string, ignorePrefix string, conf *ripper.ScanConfig) ([]*scanResult, error) {
 	results := []*scanResult{}
+	ignoredFolders := []string{}
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -29,15 +30,13 @@ func scan(rootPath string, ignoreFolderPrefix string, conf *ripper.ScanConfig) (
 			return nil
 		}
 
-		path, err = filepath.Abs(path)
-		if err != nil {
-			return err
-		}
+		//always assume we got absolute path!!
+		//path, err = filepath.Abs(path)
+		//if err != nil {
+		//	return err
+		//}
 
-		//discard excluded directories
-		folder, _ := filepath.Split(path)
-		folderName := filepath.Base(folder)
-		if strings.HasPrefix(folderName, ignoreFolderPrefix) {
+		if shouldIgnore(path, ignorePrefix, ignoredFolders) {
 			return nil
 		}
 
@@ -59,6 +58,30 @@ func scan(rootPath string, ignoreFolderPrefix string, conf *ripper.ScanConfig) (
 		return results, nil
 	}
 }
+
+func shouldIgnore(path string, ignorePrefix string, ignoredFolders []string) bool {
+	folder, file := filepath.Split(path)
+	//discard excluded files
+	if strings.HasPrefix(file, ignorePrefix) {
+		return true
+	}
+
+	//discard excluded directories
+	folderName := filepath.Base(folder)
+	if strings.HasPrefix(folderName, ignorePrefix) {
+		ignoredFolders = append(ignoredFolders, folder)
+		return true
+	}
+
+	//discard sub-directories of excluded directories
+	for _, ignored := range ignoredFolders {
+		if strings.HasPrefix(folder, ignored) {
+			return true
+		}
+	}
+	return false
+}
+
 
 const (
 	placeholder_Id = "id"
