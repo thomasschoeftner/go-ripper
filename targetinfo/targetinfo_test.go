@@ -5,31 +5,21 @@ import (
 	"os"
 	"path/filepath"
 	"go-cli/test"
-	"fmt"
-	"strings"
-	"strconv"
 )
 
 var video = NewVideo("f.g", "/a/b/c", "test")
 var episode = NewEpisode("f.g", "/a/b/c", "tt987654321", 3, 12, 12, 24)
 
-func setup(t *testing.T) string {
-	return test.MkTempFolder(t)
-}
-
-func teardown(t *testing.T, dir string) {
-	test.RmTempFolder(t, dir)
-}
-
-
 func TestSaveJson(t *testing.T) {
 	t.Run("save single video", func(t *testing.T) {
 		ti := video
-		dir := setup(t)
-		defer teardown(t, dir)
-		_, err := Save(dir, ti)
+		dir := test.MkTempFolder(t)
+		defer test.RmTempFolder(t, dir)
+
+		err := Save(dir, ti)
 		test.CheckError(t, err)
-		f := filepath.Join(dir, TARGETINFO_VIDEO + ti.Id)
+		f := filepath.Join(dir, fileName(ti))
+
 		info, err := os.Stat(f)
 		test.CheckError(t, err)
 
@@ -41,13 +31,13 @@ func TestSaveJson(t *testing.T) {
 
 	t.Run("save series episode", func(t *testing.T) {
 		ti := episode
-		dir := setup(t)
-		defer teardown(t, dir)
-		_, err := Save(dir, ti)
+		dir := test.MkTempFolder(t)
+		defer test.RmTempFolder(t, dir)
+
+		err := Save(dir, ti)
 		test.CheckError(t, err)
 
-		fname := fmt.Sprintf("%s%s.%d.%d", TARGETINFO_EPISODE, ti.Id, ti.Season, ti.Episode)
-		f := filepath.Join(dir, fname)
+		f := filepath.Join(dir, fileName(ti))
 		info, err := os.Stat(f)
 		test.CheckError(t, err)
 
@@ -58,13 +48,13 @@ func TestSaveJson(t *testing.T) {
 }
 
 func TestReadJson(t *testing.T) {
-	dir := setup(t)
-	defer teardown(t, dir)
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
 
-	_, err := Save(dir, episode)
+	err := Save(dir, episode)
 	test.CheckError(t, err)
 
-	read, err := Read(filepath.Join(dir, episode.fileName()))
+	read, err := Read(filepath.Join(dir, fileName(episode)))
 	test.CheckError(t, err)
 
 	readEpisode := read.(*Episode)
@@ -75,46 +65,16 @@ func TestReadJson(t *testing.T) {
 
 
 func TestSaveNilTargetInfo(t *testing.T) {
-	_, err := Save(".", nil)
+	err := Save(".", nil)
 	if err == nil {
 		t.Error("expected error when saving nil TargetInfo")
 	}
 }
 
 func TestCorrectFileNames(t *testing.T) {
-	t.Run("video file name", func(t *testing.T) {
-		media := video
-		fname := media.fileName()
-		if !strings.HasPrefix(fname, TARGETINFO_VIDEO) {
-			t.Errorf("video filename %s is missing prefix %s", fname, TARGETINFO_VIDEO)
-		}
-		id := strings.Replace(fname, TARGETINFO_VIDEO, "", 1)
-		if media.Id != id {
-			t.Errorf("video filename %s contains incorrect id %s - expected id %s", fname, id, media.Id)
-		}
-	})
-
-	t.Run("episode file name", func(t *testing.T) {
-		media := episode
-		fname := media.fileName()
-		if !strings.HasPrefix(fname, TARGETINFO_EPISODE) {
-			t.Errorf("episode filename %s is missing prefix %s", fname, TARGETINFO_EPISODE)
-		}
-		fragments := strings.Split(fname, ".")
-		id := strings.Replace(fragments[0], TARGETINFO_EPISODE, "", 1)
-		if media.Id != id {
-			t.Errorf("episode filename %s contains incorrect id %s - expected %s", fname, id, media.Id)
-		}
-		season, err := strconv.Atoi(fragments[1])
-		test.CheckError(t, err)
-		if media.Season != season {
-			t.Errorf("episode filename %s contains incorrect season# %d - expected %d", fname, season, media.Season)
-		}
-
-		episode, err := strconv.Atoi(fragments[2])
-		test.CheckError(t, err)
-		if media.Episode != episode {
-			t.Errorf("expisode filename %s contains incorrect episode# %d - expected %d", fname, episode, media.Episode)
-		}
-	})
+	fname := fileName(video)
+	expectedFilName := video.GetFile() + "." + targetinfo_filetype
+	if expectedFilName != fname {
+		t.Errorf("video filename %s does not match expected file name %s", fname, expectedFilName)
+	}
 }

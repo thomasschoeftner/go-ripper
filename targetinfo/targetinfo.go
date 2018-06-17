@@ -7,12 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"strings"
 )
 
+const targetinfo_filetype = "targetinfo"
+
 const (
-	TARGETINFO_VIDEO   = "v"
-	TARGETINFO_EPISODE = "e"
+	TARGETINFO_TYPE_VIDEO   = "video"
+	TARGETINFO_TPYE_EPISODE = "episode"
 )
 
 type TargetInfo interface {
@@ -21,19 +22,29 @@ type TargetInfo interface {
 	GetFolder() string
 	GetType() string
 	GetId() string
-	fileName() string
 }
 
+func fileName(ti TargetInfo) string {
+	return fmt.Sprintf("%s.%s", ti.GetFile(), targetinfo_filetype)
+}
+
+type Typed struct {
+	Type string `json:"type"`
+}
+
+
 type Video struct {
+	Typed
 	File   string `json:"file"`
 	Folder string `json:"folder"`
 	Id     string `json:"id"`
 }
 
 type Episode struct {
+	//Typed
 	Video
-	Season     int `json:"season"`
-	Episode    int `json:"episode"`
+	Season     int    `json:"season"`
+	Episode    int    `json:"episode"`
 	ItemSeqNo  int `json:"itemseqno"`
 	ItemsTotal int `json:"itemstotal"`
 }
@@ -47,15 +58,11 @@ func (v *Video) GetFolder() string {
 }
 
 func (v *Video) GetType() string {
-	return TARGETINFO_VIDEO
+	return TARGETINFO_TYPE_VIDEO
 }
 
 func (v *Video) GetId() string {
 	return v.Id
-}
-
-func (v *Video) fileName() string {
-	return fmt.Sprintf("%s%s", v.GetType(), v.Id)
 }
 
 func (v *Video) String() string {
@@ -63,11 +70,7 @@ func (v *Video) String() string {
 }
 
 func (e *Episode) GetType() string {
-	return TARGETINFO_EPISODE
-}
-
-func (e *Episode) fileName() string {
-	return fmt.Sprintf("%s%s.%d.%d", e.GetType(), e.Id, e.Season, e.Episode)
+	return TARGETINFO_TPYE_EPISODE
 }
 
 func (e *Episode) String() string {
@@ -76,48 +79,53 @@ func (e *Episode) String() string {
 
 
 func NewVideo(file string, folder string, id string) *Video {
-	return &Video{File: file, Folder: folder, Id: id}
+	return &Video{Typed: Typed{ Type: TARGETINFO_TYPE_VIDEO}, File: file, Folder: folder, Id: id}
 }
 
 func NewEpisode(file string, folder string, id string, season int, episode int, itemSeqNo int, itemsTotal int) *Episode {
-	return &Episode{Video: *NewVideo(file, folder, id), Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
+	vid := NewVideo(file, folder, id)
+	vid.Type = TARGETINFO_TPYE_EPISODE
+	return &Episode{/*Typed: Typed { Type: TARGETINFO_TPYE_EPISODE},*/ Video: *vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
 }
 
 func Read(targetInfoFile string) (TargetInfo, error) {
-	raw, err := ioutil.ReadFile(targetInfoFile)
+	jsonRaw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err
 	}
-	jsonString := string(raw[:])
+	//jsonString := raw[:]
 
-	_, f := filepath.Split(targetInfoFile)
+	//1. get type
+	typed := Typed{}
+	err = json.Unmarshal(jsonRaw, &typed)
+
 	var ti TargetInfo
-	if strings.HasPrefix(f, TARGETINFO_VIDEO) {
+	switch typed.Type {
+	case TARGETINFO_TYPE_VIDEO:
 		ti = &Video{}
-	} else if strings.HasPrefix(f, TARGETINFO_EPISODE) {
+	case TARGETINFO_TPYE_EPISODE:
 		ti = &Episode{}
-	} else {
-		return nil, errors.New(fmt.Sprintf("target info file suggests invalid target info type: %s ", f))
+	default:
+		return nil, errors.New(fmt.Sprintf("target info file contains invalid target info type: \"%s\"", typed.Type))
 	}
 
-	err = json.Unmarshal([]byte(jsonString), &ti)
+	err = json.Unmarshal(jsonRaw, &ti)
 	if err != nil {
 		return nil, err
 	}
-
 	return ti, nil
 }
 
-func Save(workFolder string, ti TargetInfo) (*string, error) {
+func Save(workFolder string, ti TargetInfo) error {
 	if ti == nil {
-		return nil, errors.New("target info is nil")
+		return errors.New("target info is nil")
 	}
 
-	bytes, err := json.Marshal(ti)
+	bytes, err := json.MarshalIndent(ti, "", "  ")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	targetFile := filepath.Join(workFolder, ti.fileName())
+	targetFile := filepath.Join(workFolder, fileName(ti))
 	err = ioutil.WriteFile(targetFile, bytes, os.ModePerm)
-	return &targetFile, err
+	return nil
 }
