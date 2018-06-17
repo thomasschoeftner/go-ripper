@@ -31,8 +31,6 @@ func TestScanVideo(t *testing.T) {
   }
 }`
 
-println(confStr)
-
 	conf, err := loadConfig(confStr)
 	test.CheckError(t, err)
 	ctx := task.Context{nil, conf, commons.Printf, false}

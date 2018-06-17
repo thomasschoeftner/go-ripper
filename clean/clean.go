@@ -27,17 +27,17 @@ func clean(printf commons.FormatPrinter, desc string, job task.Job, workDir stri
 	_, targetFile := filepath.Split(targetPath)
 	filePattern := filepath.Join(workPath, targetFile) + "*"
 
-	printf("cleaning %s related to target \"%s\" (matching %s)\n", desc, targetPath, filePattern)
+	printf("cleaning %s related to target \"%s\"\n", desc, targetPath)
 
 	filesToDelete, err := filepath.Glob(filePattern)
 	if err != nil {
-		printf("cleaning failed\n  due to: %s\n", err)
+		printf("  cleaning failed\n  due to: %s\n", err)
 	} else {
 		for _, f := range filesToDelete {
 			printf("  deleting file: %s\n", f)
 			os.Remove(f)
 		}
-		printf("all artifacts removed\n")
+		printf("  all artifacts removed\n")
 	}
 	return result, err
 }

@@ -14,6 +14,7 @@ import (
 	"errors"
 	"go-cli/cli"
 	"go-ripper/omdb"
+	"path/filepath"
 )
 
 const (
@@ -120,7 +121,14 @@ func getCliTasksAndTargets(taskMap task.TaskMap) ([]string, []string) {
 		targets = append(targets, ".")
 	}
 	require.True(len(targets) != 0, "no target(s) specified")
-	return taskNames, targets
+
+	absoluteTargetPaths := make([]string, 0, len(targets))
+	for _, t := range targets {
+		abs, err := filepath.Abs(t)
+		require.NotFailed(err)
+		absoluteTargetPaths = append(absoluteTargetPaths, abs)
+	}
+	return taskNames, absoluteTargetPaths
 }
 
 func getConfig() *ripper.AppConf {

@@ -42,14 +42,14 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 				return nil, err
 			}
 
-			fileName, err := targetinfo.Save(workDir, target)
+			err = targetinfo.Save(workDir, target)
 			if err != nil {
 				//TODO check if error should be ignored - in a worst case the target file will be missing
 				return nil, err
 			}
 
 			//create new Job
-			newJob := job.WithParam(ripper.JobField_Path, *fileName)
+			newJob := job.WithParam(ripper.JobField_Path, filepath.Join(target.GetFolder(), target.GetFile()))
 			jobs = append(jobs, newJob)
 			ctx.Printf("  %s\n", target)
 		}
@@ -89,7 +89,7 @@ func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 
 	//finally update all total # of episodes for all episodes
 	for _, ti := range targetInfos {
-		if targetinfo.TARGETINFO_EPISODE == ti.GetType() {
+		if targetinfo.TARGETINFO_TPYE_EPISODE == ti.GetType() {
 			e := ti.(*targetinfo.Episode)
 			e.ItemsTotal = episodeCount[e.Id][e.Season]
 		}
