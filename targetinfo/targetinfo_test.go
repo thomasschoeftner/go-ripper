@@ -54,7 +54,7 @@ func TestReadJson(t *testing.T) {
 	err := Save(dir, episode)
 	test.CheckError(t, err)
 
-	read, err := Read(filepath.Join(dir, fileName(episode)))
+	read, err := Read(dir, episode.File)
 	test.CheckError(t, err)
 
 	readEpisode := read.(*Episode)

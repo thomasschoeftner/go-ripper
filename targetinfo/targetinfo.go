@@ -25,7 +25,11 @@ type TargetInfo interface {
 }
 
 func fileName(ti TargetInfo) string {
-	return fmt.Sprintf("%s.%s", ti.GetFile(), targetinfo_filetype)
+	return appendFileExtension(ti.GetFile())
+}
+
+func appendFileExtension(targetFileName string) string {
+	return fmt.Sprintf("%s.%s", targetFileName, targetinfo_filetype)
 }
 
 type Typed struct {
@@ -88,7 +92,8 @@ func NewEpisode(file string, folder string, id string, season int, episode int, 
 	return &Episode{/*Typed: Typed { Type: TARGETINFO_TPYE_EPISODE},*/ Video: *vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
 }
 
-func Read(targetInfoFile string) (TargetInfo, error) {
+func Read(workFolder string, targetFileNeme string) (TargetInfo, error) {
+	targetInfoFile := filepath.Join(workFolder, appendFileExtension(targetFileNeme))
 	jsonRaw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err
