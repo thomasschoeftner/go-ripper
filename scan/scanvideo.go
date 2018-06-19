@@ -83,7 +83,7 @@ func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 			episodeInfo := targetinfo.NewEpisode(r.File, r.Folder, r.Id, season, episode, cnt, 0)
 			targetInfos = append(targetInfos, episodeInfo)
 		} else { //single video
-			targetInfos = append(targetInfos, targetinfo.NewVideo(r.File, r.Folder, r.Id))
+			targetInfos = append(targetInfos, targetinfo.NewMovie(r.File, r.Folder, r.Id))
 		}
 	}
 
