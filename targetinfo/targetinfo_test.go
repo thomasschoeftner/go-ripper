@@ -7,7 +7,7 @@ import (
 	"go-cli/test"
 )
 
-var video = NewVideo("f.g", "/a/b/c", "test")
+var video = NewMovie("f.g", "/a/b/c", "test")
 var episode = NewEpisode("f.g", "/a/b/c", "tt987654321", 3, 12, 12, 24)
 
 func TestSaveJson(t *testing.T) {
@@ -54,7 +54,7 @@ func TestReadJson(t *testing.T) {
 	err := Save(dir, episode)
 	test.CheckError(t, err)
 
-	read, err := Read(dir, episode.File)
+	read, err := read(dir, episode.File)
 	test.CheckError(t, err)
 
 	readEpisode := read.(*Episode)

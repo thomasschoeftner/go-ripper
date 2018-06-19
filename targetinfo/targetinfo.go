@@ -7,12 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"go-ripper/ripper"
 )
 
 const targetinfo_filetype = "targetinfo"
 
 const (
-	TARGETINFO_TYPE_VIDEO   = "video"
+	TARGETINFO_TYPE_MOVIE   = "movie"
 	TARGETINFO_TPYE_EPISODE = "episode"
 )
 
@@ -37,7 +38,7 @@ type Typed struct {
 }
 
 
-type Video struct {
+type Movie struct {
 	Typed
 	File   string `json:"file"`
 	Folder string `json:"folder"`
@@ -46,31 +47,31 @@ type Video struct {
 
 type Episode struct {
 	//Typed
-	Video
-	Season     int    `json:"season"`
-	Episode    int    `json:"episode"`
+	Movie
+	Season     int `json:"season"`
+	Episode    int `json:"episode"`
 	ItemSeqNo  int `json:"itemseqno"`
 	ItemsTotal int `json:"itemstotal"`
 }
 
-func (v *Video) GetFile() string {
-	return v.File
+func (m *Movie) GetFile() string {
+	return m.File
 }
 
-func (v *Video) GetFolder() string {
-	return v.Folder
+func (m *Movie) GetFolder() string {
+	return m.Folder
 }
 
-func (v *Video) GetType() string {
-	return TARGETINFO_TYPE_VIDEO
+func (m *Movie) GetType() string {
+	return TARGETINFO_TYPE_MOVIE
 }
 
-func (v *Video) GetId() string {
-	return v.Id
+func (m *Movie) GetId() string {
+	return m.Id
 }
 
-func (v *Video) String() string {
-	return fmt.Sprintf("video   (id=%s, file=%s)", v.Id, filepath.Join(v.Folder, v.File))
+func (m *Movie) String() string {
+	return fmt.Sprintf("movie   (id=%s, file=%s)", m.Id, filepath.Join(m.Folder, m.File))
 }
 
 func (e *Episode) GetType() string {
@@ -82,18 +83,40 @@ func (e *Episode) String() string {
 }
 
 
-func NewVideo(file string, folder string, id string) *Video {
-	return &Video{Typed: Typed{ Type: TARGETINFO_TYPE_VIDEO}, File: file, Folder: folder, Id: id}
+func NewMovie(file string, folder string, id string) *Movie {
+	return &Movie{Typed: Typed{ Type: TARGETINFO_TYPE_MOVIE}, File: file, Folder: folder, Id: id}
+}
+
+func IsMovie(ti TargetInfo) bool {
+	return TARGETINFO_TYPE_MOVIE == ti.GetType()
 }
 
 func NewEpisode(file string, folder string, id string, season int, episode int, itemSeqNo int, itemsTotal int) *Episode {
-	vid := NewVideo(file, folder, id)
+	vid := NewMovie(file, folder, id)
 	vid.Type = TARGETINFO_TPYE_EPISODE
-	return &Episode{/*Typed: Typed { Type: TARGETINFO_TPYE_EPISODE},*/ Video: *vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
+	return &Episode{/*Typed: Typed { Type: TARGETINFO_TPYE_EPISODE},*/ Movie: *vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
 }
 
-func Read(workFolder string, targetFileNeme string) (TargetInfo, error) {
-	targetInfoFile := filepath.Join(workFolder, appendFileExtension(targetFileNeme))
+func IsEpisode(ti TargetInfo) bool {
+	return TARGETINFO_TPYE_EPISODE == ti.GetType()
+}
+
+
+// read TargetInfo for specific target file (input file)
+func ForTarget(workDir string, targetPath string) (TargetInfo, error) {
+	targetFolder, targetFile := filepath.Split(targetPath)
+
+	workDir, err := ripper.GetWorkPathForTargetFileFolder(workDir, targetFolder)
+	if err != nil {
+		return nil, err
+	}
+
+	return read(workDir, targetFile)
+}
+
+// read TargetInfo with specific filename
+func read(workFolder string, fileName string) (TargetInfo, error) {
+	targetInfoFile := filepath.Join(workFolder, appendFileExtension(fileName))
 	jsonRaw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err
@@ -106,14 +129,15 @@ func Read(workFolder string, targetFileNeme string) (TargetInfo, error) {
 
 	var ti TargetInfo
 	switch typed.Type {
-	case TARGETINFO_TYPE_VIDEO:
-		ti = &Video{}
+	case TARGETINFO_TYPE_MOVIE:
+		ti = &Movie{}
 	case TARGETINFO_TPYE_EPISODE:
 		ti = &Episode{}
 	default:
 		return nil, errors.New(fmt.Sprintf("target info file contains invalid target info type: \"%s\"", typed.Type))
 	}
 
+	//2. get complete target-info
 	err = json.Unmarshal(jsonRaw, &ti)
 	if err != nil {
 		return nil, err
