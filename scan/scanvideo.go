@@ -35,7 +35,7 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 			if err != nil {
 				return nil, err
 			}
-			
+
 			err = targetinfo.Save(workDir, target)
 			if err != nil {
 				//TODO check if error should be ignored - in a worst case the target file will be missing
