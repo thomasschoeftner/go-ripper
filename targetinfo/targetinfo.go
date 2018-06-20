@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"path/filepath"
 	"go-ripper/ripper"
+	"go-ripper/files"
 )
 
-const targetinfo_filetype = "targetinfo"
+const targetinfo_file_extension = "targetinfo"
 
 const (
 	TARGETINFO_TYPE_MOVIE   = "movie"
@@ -30,7 +31,7 @@ func fileName(ti TargetInfo) string {
 }
 
 func appendFileExtension(targetFileName string) string {
-	return fmt.Sprintf("%s.%s", targetFileName, targetinfo_filetype)
+	return fmt.Sprintf("%s.%s", targetFileName, targetinfo_file_extension)
 }
 
 type Typed struct {
@@ -115,13 +116,12 @@ func ForTarget(workDir string, targetPath string) (TargetInfo, error) {
 }
 
 // read TargetInfo with specific filename
-func read(workFolder string, fileName string) (TargetInfo, error) {
-	targetInfoFile := filepath.Join(workFolder, appendFileExtension(fileName))
+func read(workFolder string, targetFileName string) (TargetInfo, error) {
+	targetInfoFile := filepath.Join(workFolder, appendFileExtension(targetFileName))
 	jsonRaw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err
 	}
-	//jsonString := raw[:]
 
 	//1. get type
 	typed := Typed{}
@@ -150,6 +150,10 @@ func Save(workFolder string, ti TargetInfo) error {
 		return errors.New("target info is nil")
 	}
 
+	err := files.CreateFolderStructure(workFolder)
+	if err != nil {
+		return err
+	}
 	bytes, err := json.MarshalIndent(ti, "", "  ")
 	if err != nil {
 		return err

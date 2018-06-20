@@ -73,7 +73,7 @@ func TestSaveNilTargetInfo(t *testing.T) {
 
 func TestCorrectFileNames(t *testing.T) {
 	fname := fileName(video)
-	expectedFilName := video.GetFile() + "." + targetinfo_filetype
+	expectedFilName := video.GetFile() + "." + targetinfo_file_extension
 	if expectedFilName != fname {
 		t.Errorf("video filename %s does not match expected file name %s", fname, expectedFilName)
 	}
