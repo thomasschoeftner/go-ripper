@@ -2,6 +2,8 @@ package files
 
 import (
 	"os"
+	"strings"
+	"path/filepath"
 )
 
 func Exists(path string) (bool, error) {
@@ -22,4 +24,8 @@ func CreateFolder(folder string) error {
 
 func CreateFolderStructure(folder string) error {
 	return os.MkdirAll(folder, os.ModePerm)
+}
+
+func Extension(filePath string) string {
+	return strings.Replace(filepath.Ext(filePath), ".", "", 1)
 }
