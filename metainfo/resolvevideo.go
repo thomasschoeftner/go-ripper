@@ -8,13 +8,14 @@ import (
 	"go-ripper/files"
 )
 
-func ResolveVideo(metaInfo VideoMetaInfoSource) (task.Handler, error) {
-	if metaInfo == nil {
-		return nil, errors.New("unable to create ResolveVideo Handler without movie metainfo fetcher (nil)")
+func ResolveVideo(metaInfoSrc VideoMetaInfoSource) (task.Handler, error) {
+	if metaInfoSrc == nil {
+		return nil, errors.New("unable to create ResolveVideo Handler without movieTi metainfo fetcher (nil)")
 	}
 
 	return func (ctx task.Context) task.HandlerFunc {
 		conf := ctx.Config.(*ripper.AppConf)
+		findOrFetcher := findOrFetch(metaInfoSrc, conf, ctx.RunLazy)
 
 		return func(job task.Job) ([]task.Job, error) {
 			target := ripper.GetTargetFileFromJob(job)
@@ -29,9 +30,9 @@ func ResolveVideo(metaInfo VideoMetaInfoSource) (task.Handler, error) {
 			printf("recovered target-info: %s\n", ti.String())
 
 			if targetinfo.IsEpisode(ti) {
-				err = resolveEpisode(metaInfo, ti.(*targetinfo.Episode), conf, ctx.RunLazy)
+				err = resolveEpisode(findOrFetcher, ti.(*targetinfo.Episode))
 			} else if targetinfo.IsMovie(ti) {
-				err = resolveMovie(metaInfo, ti.(*targetinfo.Movie), conf, ctx.RunLazy)
+				err = resolveMovie(findOrFetcher, ti.(*targetinfo.Movie))
 			} else {
 				//ignore other target-info types (e.g audio)
 			}
@@ -44,102 +45,116 @@ func ResolveVideo(metaInfo VideoMetaInfoSource) (task.Handler, error) {
 	}, nil
 }
 
-func resolveMovie(metaInfo VideoMetaInfoSource, movie *targetinfo.Movie, conf *ripper.AppConf, lazy bool) error {
-	var info *MovieMetaInfo
-	metaInfFile := MovieFileName(conf.MetaInfoRepo, movie.Id)
-	if needToResolve(metaInfFile, lazy) {
-		mmi, err := metaInfo.FetchMovieInfo(movie.Id)
-		if err != nil {
-			return err
-		}
-		err = SaveMetaInfoFile(metaInfFile, mmi)
-		if err != nil {
-			return err
-		}
-		info = mmi
-	} else {
-		mmi := &MovieMetaInfo{}
-		err := ReadMetaInfoFile(metaInfFile, mmi)
-		if err != nil {
-			return err
-		}
-		info = mmi
+func resolveMovie(findOrFetch *findOrFetcher, ti *targetinfo.Movie) error {
+	movie, err := findOrFetch.movie(ti)
+	if err != nil {
+		return err
 	}
-
-	return findOrFetchImage(metaInfo, info.Id, info.Poster, conf, lazy)
+	return findOrFetch.image(movie.Id, movie.Poster)
 }
 
-
-func resolveEpisode(metaInfo VideoMetaInfoSource, ti *targetinfo.Episode, conf *ripper.AppConf, lazy bool) error {
-	series, err := findOrFetchSeries(metaInfo, ti, conf, lazy)
+func resolveEpisode(findOrFetch *findOrFetcher, ti *targetinfo.Episode) error {
+	series, err := findOrFetch.series(ti)
 	if err != nil {
 		return err
 	}
 
 	//for now - assume each season is complete!!!
-	//for later: TODO correct episode numbering
-	//_, err = findOrFetchSeason(metaInfo, ti, conf, lazy)
+	//for later: TODO correct episodeTi numbering
+	//_, err = findOrFetchSeason(metaInfoSource, ti, conf, lazy)
 	//if err != nil {
 	//	return err
 	//}
 	ti.Episode = ti.ItemSeqNo
-	targetinfo.Save(conf.WorkDirectory, ti)
+	targetinfo.Save(findOrFetch.conf.WorkDirectory, ti)
 
-	err = findOrFetchEpisode(metaInfo, ti, conf, lazy)
+	_, err = findOrFetch.episode(ti)
 	if err != nil {
 		return err
 	}
 
-	return findOrFetchImage(metaInfo, series.Id, series.Poster, conf, lazy)
+	return findOrFetch.image(series.Id, series.Poster)
 }
 
-func findOrFetchImage(metaInfo VideoMetaInfoSource, id string, imageUri string, conf *ripper.AppConf, lazy bool) error {
-	imageFile := ImageFileName(conf.MetaInfoRepo, id, files.Extension(imageUri))
-	if !needToResolve(imageFile, lazy) {
+
+
+func findOrFetch(metaInfo VideoMetaInfoSource, conf *ripper.AppConf, lazy bool) *findOrFetcher {
+	return &findOrFetcher{metaInfoSource: metaInfo, conf: conf, lazy: lazy}
+}
+type findOrFetcher struct {
+	metaInfoSource VideoMetaInfoSource
+	conf           *ripper.AppConf
+	lazy           bool
+}
+
+type fetchFunc func() (MetaInfo, error)
+func (ff *findOrFetcher) doResolve(metaInfo MetaInfo, metaInfoFileName string, doFetch fetchFunc) (MetaInfo, error) {
+	if ff.needToResolve(metaInfoFileName, ff.lazy) {
+		 mi, err := doFetch()
+		if err == nil {
+			err = SaveMetaInfo(metaInfoFileName, mi)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return mi, nil
+	} else {
+		err := ReadMetaInfo(metaInfoFileName, metaInfo)
+		if err != nil {
+			return nil, err
+		}
+		return metaInfo, nil
+	}
+}
+
+func (ff * findOrFetcher) movie(ti *targetinfo.Movie) (*MovieMetaInfo, error) {
+	mi, err := ff.doResolve(&MovieMetaInfo{}, MovieFileName(ff.conf.MetaInfoRepo, ti.Id), func() (MetaInfo, error) {
+		return ff.metaInfoSource.FetchMovieInfo(ti.Id)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return mi.(*MovieMetaInfo), nil
+}
+
+func (ff * findOrFetcher) series(ti *targetinfo.Episode) (*SeriesMetaInfo, error) {
+	mi, err := ff.doResolve(&SeriesMetaInfo{}, SeriesFileName(ff.conf.MetaInfoRepo, ti.Id), func() (MetaInfo, error) {
+		return ff.metaInfoSource.FetchSeriesInfo(ti.Id)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return mi.(*SeriesMetaInfo), nil
+}
+
+func (ff *findOrFetcher) episode(ti *targetinfo.Episode) (*EpisodeMetaInfo, error) {
+	mi, err := ff.doResolve(&EpisodeMetaInfo{}, EpisodeFileName(ff.conf.MetaInfoRepo, ti.Id, ti.Season, ti.Episode), func() (MetaInfo, error) {
+		return ff.metaInfoSource.FetchEpisodeInfo(ti.Id, ti.Season, ti.Episode)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return mi.(*EpisodeMetaInfo), nil
+}
+
+
+func (ff * findOrFetcher) image(id string, imageUri string) error {
+	imageFile := ImageFileName(ff. conf.MetaInfoRepo, id, files.Extension(imageUri))
+	if !ff.needToResolve(imageFile, ff.lazy) {
 		return nil
 	}
-	imgData, err := metaInfo.FetchImage(imageUri)
+	imgData, err := ff.metaInfoSource.FetchImage(imageUri)
 	if err != nil {
 		return err
 	}
-	return SaveMetaInfoImage(imageFile, imgData)
+	return SaveImage(imageFile, imgData)
 }
 
-func findOrFetchSeries(metaInfo VideoMetaInfoSource, ti *targetinfo.Episode, conf *ripper.AppConf, lazy bool) (*SeriesMetaInfo, error) {
-	seriesFile := SeriesFileName(conf.MetaInfoRepo, ti.Id)
-	if needToResolve(seriesFile, lazy) {
-		series, err := metaInfo.FetchSeriesInfo(ti.Id)
-		if err != nil {
-			return nil, err
-		}
-		err = SaveMetaInfoFile(seriesFile, series)
-		if err != nil {
-			return nil, err
-		}
-		return series, nil
-	} else {
-		series := &SeriesMetaInfo{}
-		err := ReadMetaInfoFile(seriesFile, series)
-		if err != nil {
-			return nil, err
-		}
-		return series, nil
+func (ff *findOrFetcher) needToResolve(metaInfFile string, lazy bool) bool {
+	if !lazy {
+		return true
 	}
-}
-
-func findOrFetchEpisode(metaInfo VideoMetaInfoSource, ti *targetinfo.Episode, conf *ripper.AppConf, lazy bool) error {
-	episodeFile := EpisodeFileName(conf.MetaInfoRepo, ti.Id, ti.Season, ti.Episode)
-	if needToResolve(episodeFile, lazy) {
-		episode, err := metaInfo.FetchEpisodeInfo(ti.Id, ti.Season, ti.Episode)
-		if err == nil {
-			err = SaveMetaInfoFile(episodeFile, episode)
-		}
-		return err
-	}
-	return nil
-}
-
-func needToResolve(metaInfFile string, lazy bool) bool {
 	alreadyExists, _ := files.Exists(metaInfFile)
-	return !(lazy && alreadyExists)
+	return !alreadyExists
 }

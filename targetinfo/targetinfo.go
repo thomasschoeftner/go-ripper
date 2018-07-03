@@ -89,7 +89,7 @@ func NewMovie(file string, folder string, id string) *Movie {
 }
 
 func IsMovie(ti TargetInfo) bool {
-	return TARGETINFO_TYPE_MOVIE == ti.GetType()
+	return ti != nil && TARGETINFO_TYPE_MOVIE == ti.GetType()
 }
 
 func NewEpisode(file string, folder string, id string, season int, episode int, itemSeqNo int, itemsTotal int) *Episode {
@@ -99,7 +99,7 @@ func NewEpisode(file string, folder string, id string, season int, episode int, 
 }
 
 func IsEpisode(ti TargetInfo) bool {
-	return TARGETINFO_TPYE_EPISODE == ti.GetType()
+	return ti != nil && TARGETINFO_TPYE_EPISODE == ti.GetType()
 }
 
 
