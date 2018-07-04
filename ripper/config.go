@@ -34,8 +34,8 @@ type VideoResolveConfig struct {
 }
 
 type OmdbConfig struct {
-	TitleQuery string
-	SeasonQuery string
+	MovieQuery string
+	SeriesQuery string
 	EpisodeQuery string
 }
 

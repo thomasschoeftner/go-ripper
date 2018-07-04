@@ -2,14 +2,14 @@ package omdb
 
 import (
 	"testing"
-	"go-ripper/ripper"
 	"strings"
+	"go-ripper/ripper"
 )
 
 var allTokens = []string {"sepp", "hat", "gelbe", "eier"}
 var conf = ripper.OmdbConfig {
-	TitleQuery: "https://www.omdbapi.com/?apikey={omdbtoken}&i={imdbid}",
-	SeasonQuery: "https://www.omdbapi.com/?apikey={omdbtoken}&i={imdbid}&Season={seasonNo}",
+	MovieQuery:   "https://www.omdbapi.com/?apikey={omdbtoken}&i={imdbid}",
+	SeriesQuery:  "https://www.omdbapi.com/?apikey={omdbtoken}&i={imdbid}",
 	EpisodeQuery: "https://www.omdbapi.com/?apikey={omdbtoken}&i={imdbid}&Season={seasonNo}&Episode={episodeNo}"}
 
 func TestRoundRobinTokenUsage(t *testing.T) {
@@ -17,7 +17,7 @@ func TestRoundRobinTokenUsage(t *testing.T) {
 	if err != nil {
 		t.Errorf("omdb token tFactory failed unexpectedly due to %v", err)
 	}
-	tokens := f.(*OmdbVideoQueryFactory)
+	tokens := f.(*OmdbVideoMetaInfoSource)
 	validateToken(t, allTokens[0], tokens.nextToken())
 	validateToken(t, allTokens[1], tokens.nextToken())
 	validateToken(t, allTokens[2], tokens.nextToken())
@@ -55,7 +55,7 @@ func TestNilConfig(t *testing.T) {
 }
 
 func TestReplaceVars(t *testing.T) {
-	url := replaceVars(conf.TitleQuery, map[string]string {
+	url := replaceUrlVars(conf.MovieQuery, map[string]string {
 		urlpattern_omdbtoken : "sepp",
 		urlpattern_imdbid : "hatgelbeeier"})
 	if strings.Contains(url, "omdbtoken") ||
