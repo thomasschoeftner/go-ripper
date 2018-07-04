@@ -11,7 +11,7 @@ import (
 	"bytes"
 )
 
-func setupFindOrFetcher(assert *test.Assertion,  movie *MovieMetaInfo, series *SeriesMetaInfo, episode *EpisodeMetaInfo, images map[string][]byte) (string, *ripper.AppConf) {
+func setupFindOrFetcher(assert *test.Assertion, movie *MovieMetaInfo, series *SeriesMetaInfo, episode *EpisodeMetaInfo, images map[string][]byte) (string, *ripper.AppConf) {
 		dir := test.MkTempFolder(assert.T)
 		conf := &ripper.AppConf{}
 
@@ -32,7 +32,6 @@ func setupFindOrFetcher(assert *test.Assertion,  movie *MovieMetaInfo, series *S
 		}
 		if images != nil {
 			for f, image := range images {
-				println(f, image)
 				var imgFileName string
 				if movie != nil && movie.Poster == f {
 					imgFileName = ImageFileName(repoDir, movie.Id, files.Extension(movie.Poster))
@@ -53,13 +52,13 @@ func teardownFindOrFetcher(assert *test.Assertion, dir string) {
 }
 
 func TestFindOrFetchMovie(t *testing.T) {
-	testFindOrFetch := func(lazy bool, preexisingMovie *MovieMetaInfo) func(*testing.T) {
+	testFindOrFetch := func(lazy bool, preexisingMovie *MovieMetaInfo, noNeedToResolveMovie bool) func(*testing.T) {
 		return func(t *testing.T) {
 			assert := test.AssertOn(t)
 			dir, conf := setupFindOrFetcher(assert, preexisingMovie, nil, nil, nil)
 			defer teardownFindOrFetcher(assert, dir)
 
-			noNeedToResolveMovie := lazy && preexisingMovie != nil && preexisingMovie.Id == movieTi.Id
+			//noNeedToResolveMovie := lazy && preexisingMovie != nil && preexisingMovie.Id == movieTi.Id
 
 			miSrc := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
 			fof := findOrFetch(miSrc, conf, lazy)
@@ -85,55 +84,63 @@ func TestFindOrFetchMovie(t *testing.T) {
 	existingMovie := MovieMetaInfo{IdInfo: IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
 
 
-	t.Run("eager without pre-existing meta-info files", testFindOrFetch(false, nil))
-	t.Run("lazy without pre-existing meta-info files", testFindOrFetch(true, nil))
-	t.Run("eager with pre-existing meta-info files", testFindOrFetch(false, &existingMovie))
-	t.Run("lazy with pre-existing meta-info files", testFindOrFetch(true, &existingMovie))
+	t.Run("eager without pre-existing meta-info files", testFindOrFetch(false, nil, false))
+	t.Run("lazy without pre-existing meta-info files", testFindOrFetch(true, nil, false))
+	t.Run("eager with pre-existing meta-info files", testFindOrFetch(false, &existingMovie, false))
+	t.Run("lazy with pre-existing meta-info files", testFindOrFetch(true, &existingMovie, true))
 }
 
 func TestFindOrFetchImage(t *testing.T) {
-	testFindOrFetch := func(lazy bool, existingImages map[string][]byte) func(t *testing.T){
+	testFindOrFetch := func(lazy bool, existingMovie *MovieMetaInfo, existingImages map[string][]byte, noNeedToResolveImage bool) func(t *testing.T){
 		return func (t *testing.T) {
 			assert := test.AssertOn(t)
-			dir, conf := setupFindOrFetcher(assert, nil, nil, nil, nil)
+			dir, conf := setupFindOrFetcher(assert, existingMovie, nil, nil, existingImages)
 			defer teardownFindOrFetcher(assert, dir)
 
-			noNeedToResolveImage := lazy && existingImages != nil && existingImages[movieMi.Poster] != nil && len(existingImages[movieMi.Poster]) > 0
+			//noNeedToResolveImage := lazy && existingImages != nil && existingImages[movieMi.Poster] != nil && len(existingImages[movieMi.Poster]) > 0
 
 			miSrc := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
 			fof := findOrFetch(miSrc, conf, lazy)
 
 			imgFileName := ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.Extension(movieMi.Poster))
 
-			_, err := ReadImage(imgFileName)
-			assert.ExpectError("expected image file not to exist")(err)
 			assert.NotError(fof.image(movieMi.Id, movieMi.Poster))
 			img, err := ReadImage(imgFileName)
 			assert.NotError(err)
 
 			if noNeedToResolveImage {
-				assertImagesEqual(assert, existingImages[movieMi.Poster], img)
-			} else {
-				assertImagesEqual(assert, imageMi[movieMi.Poster], img)
-			}
-			if noNeedToResolveImage {
+				assertImagesEqual(assert, existingImages[existingMovie.Poster], img)
 				assert.True("image was unnecessarily fetched")(0 == len(miSrc.imagesFetched))
 			} else {
+				assertImagesEqual(assert, imageMi[movieMi.Poster], img)
 				assert.True("image was not fetched")(1 == len(miSrc.imagesFetched))
+				assert.StringsEqual(movieMi.Poster, miSrc.imagesFetched[0])
 			}
-			assert.StringsEqual(movieMi.Poster, miSrc.imagesFetched[0])
 		}
 	}
-	existingImages := map[string][]byte{"aeaaos.jpg": []byte{12, 13, 14, 15}}
+	existingMovie := MovieMetaInfo{IdInfo: IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
+	existingImages := map[string][]byte{existingMovie.Poster: {12, 13, 14, 15}}
 
-	t.Run("eager without pre-existing image", testFindOrFetch(false, nil))
-	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil))
-	t.Run("eager with pre-existing image", testFindOrFetch(false, existingImages))
-	t.Run("lazy with pre-existing image", testFindOrFetch(true, existingImages))
+	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, nil, false))
+	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, nil, false))
+	t.Run("eager with pre-existing image", testFindOrFetch(false, &existingMovie, existingImages, false))
+	t.Run("lazy with pre-existing image", testFindOrFetch(true, &existingMovie, existingImages, true))
 }
 
 //func TestFindOrFetchSeries(t *testing.T) {
+//	testFindOrFetch := func(lazy bool, existingSeries *SeriesMetaInfo) func(t *testing.T) {
+//		return func(t *testing.T) {
+//		}
+//	}
 //
+//	existingSeries := SeriesMetaInfo{
+//		//TODO
+//	}
+//
+//	t.Run("eager without pre-existing image", testFindOrFetch(false, nil))
+//	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil))
+//	t.Run("eager with pre-existing image", testFindOrFetch(false, &existingSeries))
+//	t.Run("lazy with pre-existing image", testFindOrFetch(true, &existingSeries))
 //}
 //
 //func TestFindOrFetchEpisode(t *testing.T) {
