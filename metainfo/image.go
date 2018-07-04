@@ -16,7 +16,7 @@ const (
 type Image []byte
 
 func ImageFileName(repoPath string, id string, extension string) string {
-	return filepath.Join(repoPath, SUBDIR_IMAGES, fmt.Sprintf("%s.%s", id, extension))
+	return filepath.ToSlash(filepath.Join(repoPath, SUBDIR_IMAGES, fmt.Sprintf("%s.%s", id, extension)))
 }
 
 func ReadImage(filePath string) (Image, error) {
