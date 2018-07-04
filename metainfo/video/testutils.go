@@ -1,8 +1,9 @@
-package metainfo
+package video
 
 import (
 	"errors"
 	"fmt"
+	"go-ripper/metainfo"
 )
 
 type testVideoMetaInfoSource struct {
@@ -59,7 +60,7 @@ func (f *testVideoMetaInfoSource) FetchEpisodeInfo(id string, season int, episod
 
 }
 
-func (f *testVideoMetaInfoSource) FetchImage(location string) (Image, error) {
+func (f *testVideoMetaInfoSource) FetchImage(location string) (metainfo.Image, error) {
 	var img []byte
 	var err error
 

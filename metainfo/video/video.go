@@ -1,8 +1,9 @@
-package metainfo
+package video
 
 import (
 	"path/filepath"
 	"fmt"
+	"go-ripper/metainfo"
 )
 
 const (
@@ -20,12 +21,12 @@ type VideoMetaInfoSource interface {
 	FetchMovieInfo(id string) (*MovieMetaInfo, error)
 	FetchSeriesInfo(id string) (*SeriesMetaInfo, error)
 	FetchEpisodeInfo(id string, season int, episode int) (*EpisodeMetaInfo, error)
-	FetchImage(location string) (Image, error)
+	FetchImage(location string) (metainfo.Image, error)
 }
 
 
 type MovieMetaInfo struct {
-	IdInfo
+	metainfo.IdInfo
 	Title string
 	Year int
 	Poster string   //omdb: Poster
@@ -35,7 +36,7 @@ func (m *MovieMetaInfo) GetType() string {
 }
 
 type SeriesMetaInfo struct {
-	IdInfo
+	metainfo.IdInfo
 	Title string
 	Seasons int    //omdb:totalSeasons
 	Year int
@@ -46,7 +47,7 @@ func (s *SeriesMetaInfo) GetType() string {
 }
 
 type EpisodeMetaInfo struct {
-	IdInfo
+	metainfo.IdInfo
 	Title string
 	Episode int //omdb: Episode
 	Season int //omdb: Season
@@ -58,13 +59,13 @@ func (e *EpisodeMetaInfo) GetType() string {
 
 
 func MovieFileName(repoPath string, id string) string {
-	return filepath.Join(repoPath, SUBDIR_MOVIES, fmt.Sprintf("%s.%s", id, METAINF_FILE_EXT))
+	return filepath.Join(repoPath, SUBDIR_MOVIES, fmt.Sprintf("%s.%s", id, metainfo.METAINF_FILE_EXT))
 }
 
 func SeriesFileName(repoPath string, id string) string {
-	return filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%s", id, METAINF_FILE_EXT))
+	return filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%s", id, metainfo.METAINF_FILE_EXT))
 }
 
 func EpisodeFileName(repoPath string, id string, season int, episode int) string {
-	return filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%d.%d.%s", id, season, episode, METAINF_FILE_EXT))
+	return filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%d.%d.%s", id, season, episode, metainfo.METAINF_FILE_EXT))
 }

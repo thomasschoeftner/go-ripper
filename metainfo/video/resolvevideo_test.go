@@ -1,4 +1,4 @@
-package metainfo
+package video
 
 
 import (
@@ -11,6 +11,7 @@ import (
 	"go-cli/config"
 	"path/filepath"
 	"go-ripper/files"
+	"go-ripper/metainfo"
 )
 
 func TestNilVideoFactory(t *testing.T) {
@@ -22,9 +23,9 @@ func TestNilVideoFactory(t *testing.T) {
 var movieTi = targetinfo.NewMovie("movieTi.mp4", "/a/b", "tt123456")
 var episodeTi = targetinfo.NewEpisode("episode1.mp4", "/a/b/c", "tt654321", 3, 2, 4, 7)
 
-var movieMi = MovieMetaInfo{IdInfo: IdInfo{Id: movieTi.Id}, Title: "The awesome adventures of Sepp", Year: 2018, Poster: "taaos.jpg"}
-var seriesMi = SeriesMetaInfo{IdInfo: IdInfo{Id: episodeTi.Id}, Title: "a space oddity", Year: 2017, Seasons: 3, Poster: "aso.png"}
-var episodeMi = EpisodeMetaInfo{IdInfo: IdInfo{Id: episodeTi.Id}, Title: "attack of the raffgrns", Year: 2017, Episode: 4, Season: 3}
+var movieMi = MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "The awesome adventures of Sepp", Year: 2018, Poster: "taaos.jpg"}
+var seriesMi = SeriesMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "a space oddity", Year: 2017, Seasons: 3, Poster: "aso.png"}
+var episodeMi = EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "attack of the raffgrns", Year: 2017, Episode: 4, Season: 3}
 var imageMi = map[string][]byte{movieMi.Poster : []byte{1,2,3,4}, seriesMi.Poster : []byte{5,6,7,8}}
 
 

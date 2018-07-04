@@ -1,4 +1,4 @@
-package metainfo
+package video
 
 import (
 	"go-cli/task"

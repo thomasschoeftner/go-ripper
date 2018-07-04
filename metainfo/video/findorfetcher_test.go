@@ -1,4 +1,4 @@
-package metainfo
+package video
 
 import (
 	"go-cli/test"
@@ -9,6 +9,7 @@ import (
 	"testing"
 	"fmt"
 	"bytes"
+	"go-ripper/metainfo"
 )
 
 func setupFindOrFetcher(assert *test.Assertion, movie *MovieMetaInfo, series *SeriesMetaInfo, episode *EpisodeMetaInfo, images map[string][]byte) (string, *ripper.AppConf) {
@@ -22,25 +23,25 @@ func setupFindOrFetcher(assert *test.Assertion, movie *MovieMetaInfo, series *Se
 
 		// create meta info files if passed
 		if movie != nil {
-			assert.NotError(SaveMetaInfo(MovieFileName(repoDir, movie.Id), movie))
+			assert.NotError(metainfo.SaveMetaInfo(MovieFileName(repoDir, movie.Id), movie))
 		}
 		if series != nil {
-			assert.NotError(SaveMetaInfo(SeriesFileName(repoDir, series.Id), series))
+			assert.NotError(metainfo.SaveMetaInfo(SeriesFileName(repoDir, series.Id), series))
 		}
 		if episode != nil {
-			assert.NotError(SaveMetaInfo(EpisodeFileName(repoDir, episode.Id, episode.Season, episode.Episode), episode))
+			assert.NotError(metainfo.SaveMetaInfo(EpisodeFileName(repoDir, episode.Id, episode.Season, episode.Episode), episode))
 		}
 		if images != nil {
 			for f, image := range images {
 				var imgFileName string
 				if movie != nil && movie.Poster == f {
-					imgFileName = ImageFileName(repoDir, movie.Id, files.Extension(movie.Poster))
+					imgFileName = metainfo.ImageFileName(repoDir, movie.Id, files.Extension(movie.Poster))
 				} else if series != nil && series.Poster == f {
-					imgFileName = ImageFileName(repoDir, series.Id, files.Extension(series.Poster))
+					imgFileName = metainfo.ImageFileName(repoDir, series.Id, files.Extension(series.Poster))
 				} else {
 					assert.T.Fatalf("unknown poster name %s matches neither movie, nor series", f)
 				}
-				assert.NotError(SaveImage(imgFileName, image))
+				assert.NotError(metainfo.SaveImage(imgFileName, image))
 			}
 		}
 
@@ -76,7 +77,7 @@ func TestFindOrFetchMovie(t *testing.T) {
 			}
 		}
 	}
-	existingMovie := MovieMetaInfo{IdInfo: IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
+	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
 
 
 	t.Run("eager without pre-existing meta-info files", testFindOrFetch(false, nil, false))
@@ -95,10 +96,10 @@ func TestFindOrFetchImage(t *testing.T) {
 			miSrc := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
 			fof := findOrFetch(miSrc, conf, lazy)
 
-			imgFileName := ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.Extension(movieMi.Poster))
+			imgFileName := metainfo.ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.Extension(movieMi.Poster))
 
 			assert.NotError(fof.image(movieMi.Id, movieMi.Poster))
-			img, err := ReadImage(imgFileName)
+			img, err := metainfo.ReadImage(imgFileName)
 			assert.NotError(err)
 
 			if noNeedToResolve {
@@ -111,7 +112,7 @@ func TestFindOrFetchImage(t *testing.T) {
 			}
 		}
 	}
-	existingMovie := MovieMetaInfo{IdInfo: IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
+	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
 	existingImages := map[string][]byte{existingMovie.Poster: {12, 13, 14, 15}}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, nil, false))
@@ -145,7 +146,7 @@ func TestFindOrFetchSeries(t *testing.T) {
 			}
 		}
 	}
-	existingSeries := SeriesMetaInfo { IdInfo: IdInfo{episodeTi.Id}, Title: "yet another time waster", Seasons: 7, Year: 2002, Poster: "yatw.png"}
+	existingSeries := SeriesMetaInfo {IdInfo: metainfo.IdInfo{episodeTi.Id}, Title: "yet another time waster", Seasons: 7, Year: 2002, Poster: "yatw.png"}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, false))
 	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, false))
@@ -179,7 +180,7 @@ func TestFindOrFetchEpisode(t *testing.T) {
 		}
 	}
 
-	existingEpisode := EpisodeMetaInfo{IdInfo: IdInfo{Id: episodeTi.Id}, Title: "an earlier attack of the raffgrns", Year: 2008, Episode: episodeTi.Episode, Season: episodeTi.Season}
+	existingEpisode := EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "an earlier attack of the raffgrns", Year: 2008, Episode: episodeTi.Episode, Season: episodeTi.Season}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, false))
 	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, false))
