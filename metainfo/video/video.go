@@ -59,13 +59,13 @@ func (e *EpisodeMetaInfo) GetType() string {
 
 
 func MovieFileName(repoPath string, id string) string {
-	return filepath.Join(repoPath, SUBDIR_MOVIES, fmt.Sprintf("%s.%s", id, metainfo.METAINF_FILE_EXT))
+	return filepath.ToSlash(filepath.Join(repoPath, SUBDIR_MOVIES, fmt.Sprintf("%s.%s", id, metainfo.METAINF_FILE_EXT)))
 }
 
 func SeriesFileName(repoPath string, id string) string {
-	return filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%s", id, metainfo.METAINF_FILE_EXT))
+	return filepath.ToSlash(filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%s", id, metainfo.METAINF_FILE_EXT)))
 }
 
 func EpisodeFileName(repoPath string, id string, season int, episode int) string {
-	return filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%d.%d.%s", id, season, episode, metainfo.METAINF_FILE_EXT))
+	return filepath.ToSlash(filepath.Join(repoPath, SUBDIR_SERIES, fmt.Sprintf("%s.%d.%d.%s", id, season, episode, metainfo.METAINF_FILE_EXT)))
 }
