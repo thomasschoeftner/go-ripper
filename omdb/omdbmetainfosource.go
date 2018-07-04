@@ -76,7 +76,7 @@ func (omdb *OmdbVideoMetaInfoSource) FetchEpisodeInfo(id string, season int, epi
 }
 
 func (omdb *OmdbVideoMetaInfoSource) FetchImage(location string) (metainfo.Image, error) {
-	//TODO implement
+	return httpGet(location)
 }
 
 func replaceUrlVars(template string, keyVals map[string]string) string {
