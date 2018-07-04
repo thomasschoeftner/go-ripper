@@ -20,7 +20,7 @@ func TestNilVideoFactory(t *testing.T) {
 
 
 var movieTi = targetinfo.NewMovie("movieTi.mp4", "/a/b", "tt123456")
-var episodeTi = targetinfo.NewEpisode("episode1.mp4", "/a/b/c", "tt654321", 3, 1, 4, 7)
+var episodeTi = targetinfo.NewEpisode("episode1.mp4", "/a/b/c", "tt654321", 3, 2, 4, 7)
 
 var movieMi = MovieMetaInfo{IdInfo: IdInfo{Id: movieTi.Id}, Title: "The awesome adventures of Sepp", Year: 2018, Poster: "taaos.jpg"}
 var seriesMi = SeriesMetaInfo{IdInfo: IdInfo{Id: episodeTi.Id}, Title: "a space oddity", Year: 2017, Seasons: 3, Poster: "aso.png"}

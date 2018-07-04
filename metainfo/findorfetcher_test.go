@@ -63,18 +63,15 @@ func TestFindOrFetchMovie(t *testing.T) {
 			gotMovie, err := fof.movie(movieTi)
 
 			assert.NotError(err)
-			if noNeedToResolve {
-				assert.False("movie meta-info was unnecessarily fetched")(miSrc.movieFetched)
-			} else {
-				assert.True("movie meta-info was not fetched")(miSrc.movieFetched)
-			}
 			assert.True("movie meta-info image was fetched")(0 == len(miSrc.imagesFetched))
 			assert.False("series was fetched")(miSrc.seriesFetched)
 			assert.False("episode meta-info was fetched")(miSrc.episodeFetched)
 
 			if noNeedToResolve {
+				assert.False("movie meta-info was unnecessarily fetched")(miSrc.movieFetched)
 				assertMoviesEqual(assert, preexisingMovie, gotMovie)
 			} else {
+				assert.True("movie meta-info was not fetched")(miSrc.movieFetched)
 				assertMoviesEqual(assert, &movieMi, gotMovie)
 			}
 		}
@@ -135,18 +132,15 @@ func TestFindOrFetchSeries(t *testing.T) {
 
 			gotSeries, err := fof.series(episodeTi)
 			assert.NotError(err)
-			if noNeedToResolve {
-				assert.False("series meta-info was unnecessarily fetched")(miSrc.seriesFetched)
-			} else {
-				assert.True("series meta-info was not fetched")(miSrc.seriesFetched)
-			}
 			assert.True("series meta-info image was fetched")(0 == len(miSrc.imagesFetched))
 			assert.False("episode was fetched")(miSrc.episodeFetched)
 			assert.False("movie meta-info was fetched")(miSrc.movieFetched)
 
 			if noNeedToResolve {
+				assert.False("series meta-info was unnecessarily fetched")(miSrc.seriesFetched)
 				assertSeriesEqual(assert, existingSeries, gotSeries)
 			} else {
+				assert.True("series meta-info was not fetched")(miSrc.seriesFetched)
 				assertSeriesEqual(assert, &seriesMi, gotSeries)
 			}
 		}
@@ -159,9 +153,39 @@ func TestFindOrFetchSeries(t *testing.T) {
 	t.Run("lazy with pre-existing image", testFindOrFetch(true, &existingSeries, true))
 }
 
-//func TestFindOrFetchEpisode(t *testing.T) {
-//
-//}
+func TestFindOrFetchEpisode(t *testing.T) {
+	testFindOrFetch := func(lazy bool, existingEpisode *EpisodeMetaInfo, noNeedToResolve bool) func(t *testing.T) {
+		return func(t *testing.T) {
+			assert := test.AssertOn(t)
+			dir, conf := setupFindOrFetcher(assert, nil, nil, existingEpisode, nil)
+			defer teardownFindOrFetcher(assert, dir)
+
+			miSrc := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
+			fof := findOrFetch(miSrc, conf, lazy)
+
+			gotEpisode, err := fof.episode(episodeTi)
+			assert.NotError(err)
+			assert.True("episode meta-info image was fetched")(0 == len(miSrc.imagesFetched))
+			assert.False("series was fetched")(miSrc.seriesFetched)
+			assert.False("movie meta-info was fetched")(miSrc.movieFetched)
+			if noNeedToResolve {
+				assert.False("episode meta-info was unnecessarily fetched")(miSrc.episodeFetched)
+				assertEpisodesEqual(assert, existingEpisode, gotEpisode)
+			} else {
+				assert.True("episode meta-info was not fetched")(miSrc.episodeFetched)
+				assertEpisodesEqual(assert, &episodeMi, gotEpisode)
+			}
+
+		}
+	}
+
+	existingEpisode := EpisodeMetaInfo{IdInfo: IdInfo{Id: episodeTi.Id}, Title: "an earlier attack of the raffgrns", Year: 2008, Episode: episodeTi.Episode, Season: episodeTi.Season}
+
+	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, false))
+	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, false))
+	t.Run("eager with pre-existing image", testFindOrFetch(false, &existingEpisode, false))
+	t.Run("lazy with pre-existing image", testFindOrFetch(true, &existingEpisode, true))
+}
 
 
 func assertMoviesEqual(assert *test.Assertion, expected *MovieMetaInfo, got *MovieMetaInfo) {
@@ -182,8 +206,20 @@ func assertSeriesEqual(assert *test.Assertion, expected *SeriesMetaInfo, got *Se
 	if expected == nil || got == nil {
 		assert.FailWith(fmt.Sprintf("did not expect nil for series meta-info (expected %v, got %v", expected, got))
 	}
+	assert.StringsEqual(expected.Title, got.Title)
 	assert.StringsEqual(expected.Id, got.Id)
 	assert.StringsEqual(expected.Poster, got.Poster)
 	assert.IntsEqual(expected.Year, got.Year)
 	assert.IntsEqual(expected.Seasons, got.Seasons)
+}
+
+func assertEpisodesEqual(assert *test.Assertion, expected *EpisodeMetaInfo, got *EpisodeMetaInfo) {
+	if expected == nil || got == nil {
+		assert.FailWith(fmt.Sprintf("did not expect nil for series meta-info (expected %v, got %v", expected, got))
+	}
+	assert.StringsEqual(expected.Id, got.Id)
+	assert.StringsEqual(expected.Title, got.Title)
+	assert.IntsEqual(expected.Year, got.Year)
+	assert.IntsEqual(expected.Season, got.Season)
+	assert.IntsEqual(expected.Episode, got.Episode)
 }

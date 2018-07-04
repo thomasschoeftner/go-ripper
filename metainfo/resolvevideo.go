@@ -130,7 +130,7 @@ func (ff * findOrFetcher) series(ti *targetinfo.Episode) (*SeriesMetaInfo, error
 
 func (ff *findOrFetcher) episode(ti *targetinfo.Episode) (*EpisodeMetaInfo, error) {
 	mi, err := ff.doResolve(&EpisodeMetaInfo{}, EpisodeFileName(ff.conf.MetaInfoRepo, ti.Id, ti.Season, ti.Episode), func() (MetaInfo, error) {
-		return ff.metaInfoSource.FetchEpisodeInfo(ti.Id, ti.Season, ti.Episode)
+		return ff.metaInfoSource.FetchEpisodeInfo(ti.Id, ti.Season, ti.ItemSeqNo)
 	})
 	if err != nil {
 		return nil, err
