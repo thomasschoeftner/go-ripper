@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	omdb_id      = "imdbId"
+	omdb_id      = "imdbid"
 	omdb_title   = "title"
 	omdb_year    = "year"
-	omdb_poster  = "poster!"
+	omdb_poster  = "poster"
 	omdb_seasons = "totalseasons"
 	omdb_season  = "season"
 	omdb_episode = "episode"
@@ -27,12 +27,12 @@ const (
 
 func toMap(raw []byte) (map[string]string, error) {
 	var parsed map[string]string
-	err := json.Unmarshal(raw, parsed)
+	err := json.Unmarshal(raw, &parsed)
 	if err != nil {
 		return nil, err
 	}
 
-	var results map[string]string
+	results := map[string]string {}
 	for k,v := range parsed {
 		results[strings.ToLower(k)] = v
 	}

@@ -64,25 +64,3 @@ func TestReplaceVars(t *testing.T) {
 			t.Errorf("variable replacement failed - result is \"%s\"", url)
 	}
 }
-
-func TestCreateQuery(t *testing.T) {
-	t.Run("create title query", func(t *testing.T) {
-		f, _ := NewOmdbVideoQueryFactory(&conf, allTokens)
-		expectedId := "franzl dauni"
-		q := f.NewTitleQuery(expectedId)
-		oq := q.(*omdbQuery)
-
-		toBeReplaced := []string {"omdbtoken", "imdbid"}
-		if strings.Contains(oq.url, toBeReplaced[0]) || strings.Contains(oq.url, toBeReplaced[1]) {
-			t.Errorf("variable replacement failed still got \"%s\" or \"%s\" in \"%s\"", toBeReplaced[0], toBeReplaced[1], oq.url)
-		}
-		if !strings.Contains(oq.url, expectedId) {
-			t.Errorf("variable replacement failed - missing expected imdbid \"%s\" in \"%s\"", expectedId, oq.url)
-		}
-
-	})
-
-	t.Run("create episode query", func(t *testing.T) {
-
-	})
-}
