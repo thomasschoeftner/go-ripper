@@ -43,7 +43,7 @@ func launch() int {
 	conf := getConfig()
 
 	//init tasks
-	vmiqf, err := omdb.NewOmdbVideoQueryFactory(conf.Resolve.Video.Omdb, *omdbTokenFlags)
+	vmiqf, err := omdb.NewOmdbVideoMetaInfoSource(conf.Resolve.Video.Omdb, *omdbTokenFlags)
 	require.NotFailed(err)
 	require.NotNil(vmiqf, "video metainfo factory is nil")
 	allTasks  := CreateTasks(vmiqf)

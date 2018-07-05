@@ -20,7 +20,7 @@ const (
 	urlpattern_episode   = "episodeNo"
 )
 
-func NewOmdbVideoQueryFactory(conf *ripper.OmdbConfig, availableTokens []string) (video.VideoMetaInfoSource, error) {
+func NewOmdbVideoMetaInfoSource(conf *ripper.OmdbConfig, availableTokens []string) (video.VideoMetaInfoSource, error) {
 	if conf == nil {
 		return nil, errors.New("cannot initialize omdb query factory without OmdbConfig")
 	}

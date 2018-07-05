@@ -13,7 +13,7 @@ var conf = ripper.OmdbConfig {
 	EpisodeQuery: "https://www.omdbapi.com/?apikey={omdbtoken}&i={imdbid}&Season={seasonNo}&Episode={episodeNo}"}
 
 func TestRoundRobinTokenUsage(t *testing.T) {
-	f, err := NewOmdbVideoQueryFactory(&conf, allTokens)
+	f, err := NewOmdbVideoMetaInfoSource(&conf, allTokens)
 	if err != nil {
 		t.Errorf("omdb token tFactory failed unexpectedly due to %v", err)
 	}
@@ -33,14 +33,14 @@ func validateToken(t *testing.T, expected string, got string) {
 
 func TestEmptyTokens(t *testing.T) {
 	t.Run("empty tokens", func(t *testing.T) {
-		f, err := NewOmdbVideoQueryFactory(&conf, []string{})
+		f, err := NewOmdbVideoMetaInfoSource(&conf, []string{})
 		if err == nil || f != nil {
 			t.Errorf("expected creation of omdb meta-info query factor to fail due to missing tokens - did not happen")
 		}
 	})
 
 	t.Run("nil tokens", func(t *testing.T) {
-		f, err := NewOmdbVideoQueryFactory(&conf, nil)
+		f, err := NewOmdbVideoMetaInfoSource(&conf, nil)
 		if err == nil || f != nil {
 			t.Errorf("expected creation of omdb meta-info query factor to fail due to missing tokens - did not happen")
 		}
@@ -48,7 +48,7 @@ func TestEmptyTokens(t *testing.T) {
 }
 
 func TestNilConfig(t *testing.T) {
-	f, err := NewOmdbVideoQueryFactory(nil, []string{"a", "b", "c"})
+	f, err := NewOmdbVideoMetaInfoSource(nil, []string{"a", "b", "c"})
 	if err == nil || f != nil {
 		t.Errorf("expected creation of omdb meta-info query factor to fail due to missing config - did not happen")
 	}

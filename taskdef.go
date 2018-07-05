@@ -4,8 +4,8 @@ import (
 	"go-cli/task"
 	"go-ripper/clean"
 	"go-ripper/scan"
-	"go-ripper/metainfo"
 	"errors"
+	"go-ripper/metainfo/video"
 )
 
 const TaskName_Tasks = "tasks"
@@ -16,7 +16,7 @@ func NotImplementedYetHandler(ctx task.Context) task.HandlerFunc {
 	}
 }
 
-func CreateTasks(vmiqf metainfo.VideoMetaInfoQueryFactory) task.TaskSequence {
+func CreateTasks(vmis video.VideoMetaInfoSource) task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
 	taskClean := task.NewTask("clean","cleans work folder for specified target path", clean.CleanHandler)
 
@@ -25,7 +25,7 @@ func CreateTasks(vmiqf metainfo.VideoMetaInfoQueryFactory) task.TaskSequence {
 	taskScan      := task.NewTask("scan","scan folder and direct sub-folders for audio and video input", nil).WithDependencies(/*taskScanAudio,*/ taskScanVideo)
 
 	//taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", nil )
-	resolveHandler, _ := metainfo.ResolveVideo(vmiqf)
+	resolveHandler, _ := video.ResolveVideo(vmis)
 	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", resolveHandler)
 	taskResolve      := task.NewTask("resolve","resolve & download audio and video meta-info from various sources", nil).WithDependencies(taskScan, /*taskResolveAudio, */ taskResolveVideo)
 
