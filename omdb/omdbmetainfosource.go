@@ -20,16 +20,19 @@ const (
 	urlpattern_episode   = "episodeNo"
 )
 
-func NewOmdbVideoMetaInfoSource(conf *ripper.OmdbConfig, availableTokens []string) (video.VideoMetaInfoSource, error) {
+const CONF_OMDB_RESOLVER = "omdb"
+const PROPERTY_OMDB_TOKENS = "omdbtokens"
+
+func NewOmdbVideoMetaInfoSource(conf *ripper.VideoResolveConfig) (video.VideoMetaInfoSource, error) {
 	if conf == nil {
 		return nil, errors.New("cannot initialize omdb query factory without OmdbConfig")
 	}
-	if len(availableTokens) == 0 {
+	if len(conf.Omdb.OmdbTokens) == 0 {
 		return nil, errors.New("cannot initialize omdb query Factory with empty list of tokens")
 	}
 
-	httpClient := &http.Client{Timeout: time.Second * time.Duration(conf.Timeout)}
-	return &omdbVideoMetaInfoSource{conf: conf, availableTokens: availableTokens, nextTokenIdx: 0, httpClient: httpClient}, nil
+	httpClient := &http.Client{Timeout: time.Second * time.Duration(conf.Omdb.Timeout)}
+	return &omdbVideoMetaInfoSource{conf: conf.Omdb, availableTokens: conf.Omdb.OmdbTokens, nextTokenIdx: 0, httpClient: httpClient}, nil
 }
 
 type omdbVideoMetaInfoSource struct {
@@ -105,4 +108,3 @@ func (omdb *omdbVideoMetaInfoSource) httpGet(url string) ([]byte, error) {
 
 	return raw, nil
 }
-

@@ -30,6 +30,7 @@ type ResolveConfig struct {
 }
 
 type VideoResolveConfig struct {
+	Resolver string
 	Omdb *OmdbConfig
 }
 
@@ -38,6 +39,7 @@ type OmdbConfig struct {
 	MovieQuery string
 	SeriesQuery string
 	EpisodeQuery string
+	OmdbTokens []string
 }
 
 type ToolConfig struct {

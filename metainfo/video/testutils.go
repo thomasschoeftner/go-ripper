@@ -79,6 +79,6 @@ func (f *testVideoMetaInfoSource) FetchImage(location string) (metainfo.Image, e
 
 }
 
-func newVideoMetaInfoSource(movie *MovieMetaInfo, series *SeriesMetaInfo, /*season *SeasonMetaInfo,*/ episode *EpisodeMetaInfo, images map[string][]byte) *testVideoMetaInfoSource {
-	return &testVideoMetaInfoSource{movie: movie, series: series, /*season: season,*/ episode: episode, images: images}
+func newVideoMetaInfoSource(movie *MovieMetaInfo, series *SeriesMetaInfo, episode *EpisodeMetaInfo, images map[string][]byte) *testVideoMetaInfoSource {
+	return &testVideoMetaInfoSource{movie: movie, series: series, episode: episode, images: images}
 }

@@ -1,6 +1,5 @@
 package video
 
-
 import (
 	"testing"
 	"go-cli/test"
@@ -14,12 +13,6 @@ import (
 	"go-ripper/metainfo"
 )
 
-func TestNilVideoFactory(t *testing.T) {
-	_, err := ResolveVideo(nil)
-	test.AssertOn(t).ExpectError("expected error on initializing resolve handler with nil movieTi factory, but got none")(err)
-}
-
-
 var movieTi = targetinfo.NewMovie("movieTi.mp4", "/a/b", "tt123456")
 var episodeTi = targetinfo.NewEpisode("episode1.mp4", "/a/b/c", "tt654321", 3, 2, 4, 7)
 
@@ -27,7 +20,6 @@ var movieMi = MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "The
 var seriesMi = SeriesMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "a space oddity", Year: 2017, Seasons: 3, Poster: "aso.png"}
 var episodeMi = EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "attack of the raffgrns", Year: 2017, Episode: 4, Season: 3}
 var imageMi = map[string][]byte{movieMi.Poster : []byte{1,2,3,4}, seriesMi.Poster : []byte{5,6,7,8}}
-
 
 const confJson = `
 {
@@ -70,11 +62,12 @@ func TestResolveVideo(t *testing.T) {
 	episodeJob := task.Job{}.WithParam(ripper.JobField_Path, filepath.Join(episodeTi.GetFolder(), episodeTi.GetFile()))
 
 	t.Run("movieTi", func (t *testing.T) {
-		// create resolve task
 		miSource := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
-		handler, err := ResolveVideo(miSource)
-		assert.NotError(err)
-		resolve := handler(ctx)
+		NewVideoMetaInfoSource = func(conf *ripper.VideoResolveConfig) (VideoMetaInfoSource, error) {
+			return miSource, nil
+		}
+		resolve := ResolveVideo(ctx)
+		NewVideoMetaInfoSource = nil
 
 		assert := test.AssertOn(t)
 		resultJobs, err := resolve(movieJob)
@@ -87,11 +80,12 @@ func TestResolveVideo(t *testing.T) {
 	})
 
 	t.Run("episodeTi", func (t *testing.T) {
-		// create resolve task
 		miSource := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
-		handler, err := ResolveVideo(miSource)
-		assert.NotError(err)
-		resolve := handler(ctx)
+		NewVideoMetaInfoSource = func(conf *ripper.VideoResolveConfig) (VideoMetaInfoSource, error) {
+			return miSource, nil
+		}
+		resolve := ResolveVideo(ctx)
+		NewVideoMetaInfoSource = nil
 
 		assert := test.AssertOn(t)
 		miSource.episodeFetched = false

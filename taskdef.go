@@ -16,7 +16,7 @@ func NotImplementedYetHandler(ctx task.Context) task.HandlerFunc {
 	}
 }
 
-func CreateTasks(vmis video.VideoMetaInfoSource) task.TaskSequence {
+func CreateTasks() task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
 	taskClean := task.NewTask("clean","cleans work folder for specified target path", clean.CleanHandler)
 
@@ -25,8 +25,7 @@ func CreateTasks(vmis video.VideoMetaInfoSource) task.TaskSequence {
 	taskScan      := task.NewTask("scan","scan folder and direct sub-folders for audio and video input", nil).WithDependencies(/*taskScanAudio,*/ taskScanVideo)
 
 	//taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", nil )
-	resolveHandler, _ := video.ResolveVideo(vmis)
-	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", resolveHandler)
+	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", video.ResolveVideo)
 	taskResolve      := task.NewTask("resolve","resolve & download audio and video meta-info from various sources", nil).WithDependencies(taskScan, /*taskResolveAudio, */ taskResolveVideo)
 
 	//taskRipAudio := task.NewTask("ripAudio","digitalize (\"rip\") audio", nil)

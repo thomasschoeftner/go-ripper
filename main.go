@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"github.com/google/logger"
-	"io/ioutil"
 	"go-cli/config"
 	"go-cli/task"
 	"go-ripper/ripper"
@@ -13,8 +12,10 @@ import (
 	"go-cli/require"
 	"errors"
 	"go-cli/cli"
-	"go-ripper/omdb"
 	"path/filepath"
+	"go-ripper/metainfo/video"
+	"go-ripper/omdb"
+	"io/ioutil"
 )
 
 const (
@@ -38,19 +39,22 @@ func main() {
 func launch() int {
 	syntax := "[flags] task[...] target[...]"
 	cli.Setup(&syntax, "use task \"tasks\" to display all available tasks:", fmt.Sprintf("  %s tasks\n", os.Args[0]))
+	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
 
 	// read config
 	conf := getConfig()
+	conf.Resolve.Video.Omdb.OmdbTokens = *omdbTokenFlags
 
-	//init tasks
-	vmiqf, err := omdb.NewOmdbVideoMetaInfoSource(conf.Resolve.Video.Omdb, *omdbTokenFlags)
-	require.NotFailed(err)
-	require.NotNil(vmiqf, "video metainfo factory is nil")
-	allTasks  := CreateTasks(vmiqf)
-
-	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
+	switch conf.Resolve.Video.Resolver {
+	case omdb.CONF_OMDB_RESOLVER:
+		video.NewVideoMetaInfoSource = omdb.NewOmdbVideoMetaInfoSource
+	default:
+		logger.Fatalf("unknown video resolver configured: %s", conf.Resolve.Video.Resolver)
+	}
+	fmt.Printf("got omdb tokens %v\n", conf.Resolve.Video.Omdb.OmdbTokens) //TODO  remove
 
 	// create task Tree
+	allTasks  := CreateTasks()
 	taskMap, err := task.ValidateTasks(allTasks)
 	require.NotFailed(err)
 
