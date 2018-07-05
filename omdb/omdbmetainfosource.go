@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"net/http"
 	"io/ioutil"
+	"time"
 )
 
 const (
@@ -26,17 +27,20 @@ func NewOmdbVideoQueryFactory(conf *ripper.OmdbConfig, availableTokens []string)
 	if len(availableTokens) == 0 {
 		return nil, errors.New("cannot initialize omdb query Factory with empty list of tokens")
 	}
-	return &OmdbVideoMetaInfoSource{conf: conf, availableTokens: availableTokens, nextTokenIdx: 0}, nil
+
+	httpClient := &http.Client{Timeout: time.Second * time.Duration(conf.Timeout)}
+	return &omdbVideoMetaInfoSource{conf: conf, availableTokens: availableTokens, nextTokenIdx: 0, httpClient: httpClient}, nil
 }
 
-type OmdbVideoMetaInfoSource struct {
+type omdbVideoMetaInfoSource struct {
 	conf *ripper.OmdbConfig
 	availableTokens []string
 	nextTokenIdx int
+	httpClient *http.Client
 }
 
 // round-robin use of omdb tokens
-func (f *OmdbVideoMetaInfoSource) nextToken() string {
+func (f *omdbVideoMetaInfoSource) nextToken() string {
 	token := f.availableTokens[f.nextTokenIdx]
 	noOfTokens := len(f.availableTokens)
 	f.nextTokenIdx = (f.nextTokenIdx + 1) % noOfTokens
@@ -44,39 +48,39 @@ func (f *OmdbVideoMetaInfoSource) nextToken() string {
 }
 
 
-func (omdb *OmdbVideoMetaInfoSource) FetchMovieInfo(id string) (*video.MovieMetaInfo, error) {
+func (omdb *omdbVideoMetaInfoSource) FetchMovieInfo(id string) (*video.MovieMetaInfo, error) {
 	url := replaceUrlVars(omdb.conf.MovieQuery, map[string]string{urlpattern_omdbtoken : omdb.nextToken(), urlpattern_imdbid : id})
-	raw, err := httpGet(url)
+	raw, err := omdb.httpGet(url)
 	if err != nil {
 		return nil, err
 	}
 	return toMovieMetaInfo(raw)
 }
 
-func (omdb *OmdbVideoMetaInfoSource) FetchSeriesInfo(id string) (*video.SeriesMetaInfo, error) {
+func (omdb *omdbVideoMetaInfoSource) FetchSeriesInfo(id string) (*video.SeriesMetaInfo, error) {
 	url := replaceUrlVars(omdb.conf.SeriesQuery, map[string]string{urlpattern_omdbtoken : omdb.nextToken(), urlpattern_imdbid : id})
-	raw, err := httpGet(url)
+	raw, err := omdb.httpGet(url)
 	if err != nil {
 		return nil, err
 	}
 	return toSeriesMetaInfo(raw)
 }
 
-func (omdb *OmdbVideoMetaInfoSource) FetchEpisodeInfo(id string, season int, episode int) (*video.EpisodeMetaInfo, error) {
+func (omdb *omdbVideoMetaInfoSource) FetchEpisodeInfo(id string, season int, episode int) (*video.EpisodeMetaInfo, error) {
 	url := replaceUrlVars(omdb.conf.EpisodeQuery, map[string]string{
 		urlpattern_omdbtoken : omdb.nextToken(),
 		urlpattern_imdbid : id,
 		urlpattern_season : strconv.Itoa(season),
 		urlpattern_episode : strconv.Itoa(episode)})
-	raw, err := httpGet(url)
+	raw, err := omdb.httpGet(url)
 	if err != nil {
 		return nil, err
 	}
 	return toEpisodeMetaInfo(raw)
 }
 
-func (omdb *OmdbVideoMetaInfoSource) FetchImage(location string) (metainfo.Image, error) {
-	return httpGet(location)
+func (omdb *omdbVideoMetaInfoSource) FetchImage(location string) (metainfo.Image, error) {
+	return omdb.httpGet(location)
 }
 
 func replaceUrlVars(template string, keyVals map[string]string) string {
@@ -88,8 +92,8 @@ func replaceUrlVars(template string, keyVals map[string]string) string {
 	return result
 }
 
-func httpGet(url string) ([]byte, error) {
-	httpRsp, err:= http.Get(url)
+func (omdb *omdbVideoMetaInfoSource) httpGet(url string) ([]byte, error) {
+	httpRsp, err:= omdb.httpClient.Get(url)
 	defer httpRsp.Body.Close()
 	if err != nil {
 		return nil, err

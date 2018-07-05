@@ -17,7 +17,7 @@ func TestRoundRobinTokenUsage(t *testing.T) {
 	if err != nil {
 		t.Errorf("omdb token tFactory failed unexpectedly due to %v", err)
 	}
-	tokens := f.(*OmdbVideoMetaInfoSource)
+	tokens := f.(*omdbVideoMetaInfoSource)
 	validateToken(t, allTokens[0], tokens.nextToken())
 	validateToken(t, allTokens[1], tokens.nextToken())
 	validateToken(t, allTokens[2], tokens.nextToken())
