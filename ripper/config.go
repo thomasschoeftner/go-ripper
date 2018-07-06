@@ -36,6 +36,7 @@ type VideoResolveConfig struct {
 
 type OmdbConfig struct {
 	Timeout int
+	Retries int
 	MovieQuery string
 	SeriesQuery string
 	EpisodeQuery string

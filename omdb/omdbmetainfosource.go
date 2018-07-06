@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"time"
+	"encoding/json"
 )
 
 const (
@@ -21,7 +22,6 @@ const (
 )
 
 const CONF_OMDB_RESOLVER = "omdb"
-const PROPERTY_OMDB_TOKENS = "omdbtokens"
 
 func NewOmdbVideoMetaInfoSource(conf *ripper.VideoResolveConfig) (video.VideoMetaInfoSource, error) {
 	if conf == nil {
@@ -52,8 +52,9 @@ func (f *omdbVideoMetaInfoSource) nextToken() string {
 
 
 func (omdb *omdbVideoMetaInfoSource) FetchMovieInfo(id string) (*video.MovieMetaInfo, error) {
-	url := replaceUrlVars(omdb.conf.MovieQuery, map[string]string{urlpattern_omdbtoken : omdb.nextToken(), urlpattern_imdbid : id})
-	raw, err := omdb.httpGet(url)
+	raw, err := httpGet(omdb.httpClient).WithValidation(validateOmdbResponse).WithRetries(omdb.conf.Retries)(func() string {
+		return replaceUrlVars(omdb.conf.MovieQuery, map[string]string{urlpattern_omdbtoken : omdb.nextToken(), urlpattern_imdbid : id})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +62,9 @@ func (omdb *omdbVideoMetaInfoSource) FetchMovieInfo(id string) (*video.MovieMeta
 }
 
 func (omdb *omdbVideoMetaInfoSource) FetchSeriesInfo(id string) (*video.SeriesMetaInfo, error) {
-	url := replaceUrlVars(omdb.conf.SeriesQuery, map[string]string{urlpattern_omdbtoken : omdb.nextToken(), urlpattern_imdbid : id})
-	raw, err := omdb.httpGet(url)
+	raw, err := httpGet(omdb.httpClient).WithValidation(validateOmdbResponse).WithRetries(omdb.conf.Retries)(func() string {
+		return replaceUrlVars(omdb.conf.SeriesQuery, map[string]string{urlpattern_omdbtoken : omdb.nextToken(), urlpattern_imdbid : id})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +72,13 @@ func (omdb *omdbVideoMetaInfoSource) FetchSeriesInfo(id string) (*video.SeriesMe
 }
 
 func (omdb *omdbVideoMetaInfoSource) FetchEpisodeInfo(id string, season int, episode int) (*video.EpisodeMetaInfo, error) {
-	url := replaceUrlVars(omdb.conf.EpisodeQuery, map[string]string{
-		urlpattern_omdbtoken : omdb.nextToken(),
-		urlpattern_imdbid : id,
-		urlpattern_season : strconv.Itoa(season),
-		urlpattern_episode : strconv.Itoa(episode)})
-	raw, err := omdb.httpGet(url)
+	raw, err := httpGet(omdb.httpClient).WithValidation(validateOmdbResponse).WithRetries(omdb.conf.Retries)(func() string {
+		return replaceUrlVars(omdb.conf.EpisodeQuery, map[string]string{
+			urlpattern_omdbtoken: omdb.nextToken(),
+			urlpattern_imdbid:    id,
+			urlpattern_season:    strconv.Itoa(season),
+			urlpattern_episode:   strconv.Itoa(episode)})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +86,11 @@ func (omdb *omdbVideoMetaInfoSource) FetchEpisodeInfo(id string, season int, epi
 }
 
 func (omdb *omdbVideoMetaInfoSource) FetchImage(location string) (metainfo.Image, error) {
-	return omdb.httpGet(location)
+	return httpGet(omdb.httpClient).WithRetries(omdb.conf.Retries)(func() string {
+		return location
+	})
 }
+
 
 func replaceUrlVars(template string, keyVals map[string]string) string {
 	result := template
@@ -95,16 +101,87 @@ func replaceUrlVars(template string, keyVals map[string]string) string {
 	return result
 }
 
-func (omdb *omdbVideoMetaInfoSource) httpGet(url string) ([]byte, error) {
-	httpRsp, err:= omdb.httpClient.Get(url)
-	defer httpRsp.Body.Close()
-	if err != nil {
-		return nil, err
+type urlBuilder func() string
+type httpGetFunc func(urlBuilder) ([]byte, error)
+func httpGet(client *http.Client) httpGetFunc {
+	return func(buildUrl urlBuilder) ([]byte, error) {
+		url := buildUrl()
+		httpRsp, err:= http.Get(url)
+		defer httpRsp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		if httpRsp.StatusCode == 401 {
+			return nil, fmt.Errorf("invalid OMDB token used for URL: %s", url)
+		}
+		if httpRsp.StatusCode != 200 {
+			return nil, fmt.Errorf("received unexpected response code %d when getting %s", httpRsp.StatusCode, url)
+		}
+		raw, err := ioutil.ReadAll(httpRsp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return raw, nil
 	}
-	raw, err := ioutil.ReadAll(httpRsp.Body)
+}
+
+func (hgf httpGetFunc) WithRetries(retries int) httpGetFunc {
+	return func(url urlBuilder) ([]byte, error) {
+		var errs []error
+		v, e := hgf(url)
+		if e == nil {
+			return v, nil
+		}
+		errs = append(errs, e)
+		for i:=0; i<retries; i++ {
+			v, e = hgf(url)
+			if e == nil {
+				return v, nil
+			}
+			errs = append(errs, e)
+		}
+		errMsg := fmt.Sprintf("unable to resolve meta-info after %d tries due to: \n", retries + 1)
+		for _, err := range errs {
+			errMsg = fmt.Sprintf("%s   -%s\n", errMsg, err.Error())
+		}
+		return nil, errors.New(errMsg)
+	}
+}
+
+func (hgf httpGetFunc) WithValidation(validateFunc func(raw []byte) error) httpGetFunc {
+	return func(url urlBuilder) ([]byte, error) {
+		v, e := hgf(url)
+		if e != nil {
+			return nil, e
+		}
+		e = validateFunc(v)
+		if e != nil {
+			return nil, e
+		}
+		return v, nil
+	}
+}
+
+func validateOmdbResponse(raw []byte) error {
+	status := basicOmdbResponse{}
+	err := json.Unmarshal(raw, &status)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return raw, nil
+	if strings.ToLower(status.Response) == "false" {
+		return fmt.Errorf("%s", status.Error)
+	}
+	return nil
+}
+
+type basicOmdbResponse struct {
+	Response string
+	Error string
 }

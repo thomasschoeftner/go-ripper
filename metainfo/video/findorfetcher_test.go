@@ -77,7 +77,7 @@ func TestFindOrFetchMovie(t *testing.T) {
 			}
 		}
 	}
-	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
+	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: "2008", Poster: "aeaaos.jpg"}
 
 
 	t.Run("eager without pre-existing meta-info files", testFindOrFetch(false, nil, false))
@@ -112,7 +112,7 @@ func TestFindOrFetchImage(t *testing.T) {
 			}
 		}
 	}
-	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: 2008, Poster: "aeaaos.jpg"}
+	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: "2008", Poster: "aeaaos.jpg"}
 	existingImages := map[string][]byte{existingMovie.Poster: {12, 13, 14, 15}}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, nil, false))
@@ -146,7 +146,7 @@ func TestFindOrFetchSeries(t *testing.T) {
 			}
 		}
 	}
-	existingSeries := SeriesMetaInfo {IdInfo: metainfo.IdInfo{episodeTi.Id}, Title: "yet another time waster", Seasons: 7, Year: 2002, Poster: "yatw.png"}
+	existingSeries := SeriesMetaInfo {IdInfo: metainfo.IdInfo{episodeTi.Id}, Title: "yet another time waster", Seasons: 7, Year: "2002", Poster: "yatw.png"}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, false))
 	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, false))
@@ -180,7 +180,7 @@ func TestFindOrFetchEpisode(t *testing.T) {
 		}
 	}
 
-	existingEpisode := EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "an earlier attack of the raffgrns", Year: 2008, Episode: episodeTi.Episode, Season: episodeTi.Season}
+	existingEpisode := EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "an earlier attack of the raffgrns", Year: "2008", Episode: episodeTi.Episode, Season: episodeTi.Season}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, false))
 	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, false))
@@ -210,7 +210,7 @@ func assertSeriesEqual(assert *test.Assertion, expected *SeriesMetaInfo, got *Se
 	assert.StringsEqual(expected.Title, got.Title)
 	assert.StringsEqual(expected.Id, got.Id)
 	assert.StringsEqual(expected.Poster, got.Poster)
-	assert.IntsEqual(expected.Year, got.Year)
+	assert.StringsEqual(expected.Year, got.Year)
 	assert.IntsEqual(expected.Seasons, got.Seasons)
 }
 
@@ -220,7 +220,7 @@ func assertEpisodesEqual(assert *test.Assertion, expected *EpisodeMetaInfo, got 
 	}
 	assert.StringsEqual(expected.Id, got.Id)
 	assert.StringsEqual(expected.Title, got.Title)
-	assert.IntsEqual(expected.Year, got.Year)
+	assert.StringsEqual(expected.Year, got.Year)
 	assert.IntsEqual(expected.Season, got.Season)
 	assert.IntsEqual(expected.Episode, got.Episode)
 }

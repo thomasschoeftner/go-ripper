@@ -26,15 +26,15 @@ const (
 )
 
 func toMap(raw []byte) (map[string]string, error) {
-	var parsed map[string]string
+	var parsed map[string]interface{}
 	err := json.Unmarshal(raw, &parsed)
 	if err != nil {
 		return nil, err
 	}
 
 	results := map[string]string {}
-	for k,v := range parsed {
-		results[strings.ToLower(k)] = v
+	for k, v := range parsed {
+		results[strings.ToLower(k)] = fmt.Sprintf("%v", v)
 	}
 	return results, nil
 }
@@ -48,7 +48,7 @@ func toMovieMetaInfo(raw []byte) (*video.MovieMetaInfo, error) {
 
 	kind := values[omdb_type]
 	if omdb_type_movie  != kind {
-		return nil, fmt.Errorf("expected type %s, but got type %s", omdb_type_movie, kind)
+		return nil, fmt.Errorf("mapping omdb-response to movie meta-info failed: expected type %s, but got type %s", omdb_type_movie, kind)
 	}
 
 	movie := &video.MovieMetaInfo{}
@@ -61,7 +61,7 @@ func toMovieMetaInfo(raw []byte) (*video.MovieMetaInfo, error) {
 	if err := assignString(&movie.Title, values, omdb_title); err != nil {
 		return nil, err
 	}
-	if err := assignInt(&movie.Year, values, omdb_year); err != nil {
+	if err := assignString(&movie.Year, values, omdb_year); err != nil {
 		return nil, err
 	}
 	return movie, nil
@@ -75,7 +75,7 @@ func toSeriesMetaInfo(raw []byte) (*video.SeriesMetaInfo, error) {
 
 	kind := values[omdb_type]
 	if omdb_type_series != kind {
-		return nil, fmt.Errorf("expected type %s, but got type %s", omdb_type_series, kind)
+		return nil, fmt.Errorf("mapping omdb-response to series meta-info failed: expected type %s, but got type %s", omdb_type_series, kind)
 	}
 
 	series := &video.SeriesMetaInfo{}
@@ -88,7 +88,7 @@ func toSeriesMetaInfo(raw []byte) (*video.SeriesMetaInfo, error) {
 	if err := assignString(&series.Title, values, omdb_title); err != nil {
 		return nil, err
 	}
-	if err := assignInt(&series.Year, values, omdb_year); err != nil {
+	if err := assignString(&series.Year, values, omdb_year); err != nil {
 		return nil, err
 	}
 	if err := assignInt(&series.Seasons, values, omdb_seasons); err != nil {
@@ -105,7 +105,7 @@ func toEpisodeMetaInfo(raw []byte) (*video.EpisodeMetaInfo, error) {
 
 	kind := values[omdb_type]
 	if omdb_type_episode != kind {
-		return nil, fmt.Errorf("expected type %s, but got type %s", omdb_type_episode, kind)
+		return nil, fmt.Errorf("mapping omdb-response to episode meta-info failed: expected type %s, but got type %s", omdb_type_episode, kind)
 	}
 
 	episode := &video.EpisodeMetaInfo{}
@@ -115,7 +115,7 @@ func toEpisodeMetaInfo(raw []byte) (*video.EpisodeMetaInfo, error) {
 	if err := assignString(&episode.Title, values, omdb_title); err != nil {
 		return nil, err
 	}
-	if err := assignInt(&episode.Year, values, omdb_year); err != nil {
+	if err := assignString(&episode.Year, values, omdb_year); err != nil {
 		return nil, err
 	}
 	if err := assignInt(&episode.Season, values, omdb_season); err != nil {
@@ -132,7 +132,7 @@ func assignString(target *string, values map[string]string, key string) error {
 		*target = val
 		return nil
 	} else {
-		return fmt.Errorf("omdb field \"%s\" is missing", key)
+		return fmt.Errorf("mapping omdb-response to meta-info failed: omdb field \"%s\" is missing", key)
 	}
 }
 
@@ -145,6 +145,6 @@ func assignInt(target *int, values map[string]string, key string) error {
 		*target = i
 		return nil
 	} else {
-		return fmt.Errorf("omdb field \"%s\" is missing", key)
+		return fmt.Errorf("mapping omdb-response to meta-info failed: omdb field \"%s\" is missing", key)
 	}
 }

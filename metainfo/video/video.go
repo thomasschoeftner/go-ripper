@@ -28,8 +28,8 @@ type VideoMetaInfoSource interface {
 type MovieMetaInfo struct {
 	metainfo.IdInfo
 	Title string
-	Year int
-	Poster string   //omdb: Poster
+	Year string
+	Poster string
 }
 func (m *MovieMetaInfo) GetType() string {
 	return META_INFO_TYPE_MOVIE
@@ -38,9 +38,9 @@ func (m *MovieMetaInfo) GetType() string {
 type SeriesMetaInfo struct {
 	metainfo.IdInfo
 	Title string
-	Seasons int    //omdb:totalSeasons
-	Year int
-	Poster string //omdb: Poster
+	Seasons int
+	Year string
+	Poster string
 }
 func (s *SeriesMetaInfo) GetType() string {
 	return META_INFO_TYPE_SERIES
@@ -49,9 +49,9 @@ func (s *SeriesMetaInfo) GetType() string {
 type EpisodeMetaInfo struct {
 	metainfo.IdInfo
 	Title string
-	Episode int //omdb: Episode
-	Season int //omdb: Season
-	Year int
+	Episode int
+	Season int
+	Year string
 }
 func (e *EpisodeMetaInfo) GetType() string {
 	return META_INFO_TYPE_EPISODE

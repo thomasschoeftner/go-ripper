@@ -51,7 +51,6 @@ func launch() int {
 	default:
 		logger.Fatalf("unknown video resolver configured: %s", conf.Resolve.Video.Resolver)
 	}
-	fmt.Printf("got omdb tokens %v\n", conf.Resolve.Video.Omdb.OmdbTokens) //TODO  remove
 
 	// create task Tree
 	allTasks  := CreateTasks()
