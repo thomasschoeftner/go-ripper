@@ -39,7 +39,7 @@ func TestMovieMapping(t *testing.T) {
 			t.Errorf("expected not nil, but got %v", got)
 		}
 		assert.StringsEqual(vals["title"], got.Title)
-		assert.StringsEqual(vals["year"], strconv.Itoa(got.Year))
+		assert.StringsEqual(vals["year"], got.Year)
 		assert.StringsEqual(vals["poster"], got.Poster)
 		assert.StringsEqual(vals["id"], got.Id)
 	})
@@ -54,15 +54,17 @@ func TestMovieMapping(t *testing.T) {
 		}
 	})
 
-	t.Run("incorrect field type", func(t *testing.T) {
-		raw := []byte(replaceVars(replaceVars(jsonPattern, map[string]string {"year" : "twenty eighteen"}), vals))
-		got, err := toMovieMetaInfo(raw)
-		assert := test.AssertOn(t)
-		assert.ExpectError("did not catch expected error when mapping movie data with invalid content")(err)
-		if nil != got {
-			t.Errorf("expected nil, but got %v", got)
-		}
-	})
+
+	////obsolete test - all fields are strings -> no mor incorrect field type possible
+	//t.Run("incorrect field type", func(t *testing.T) {
+	//	raw := []byte(replaceVars(replaceVars(jsonPattern, map[string]string {"year" : "twenty eighteen"}), vals))
+	//	got, err := toMovieMetaInfo(raw)
+	//	assert := test.AssertOn(t)
+	//	assert.ExpectError("did not catch expected error when mapping movie data with invalid content")(err)
+	//	if nil != got {
+	//		t.Errorf("expected nil, but got %v", got)
+	//	}
+	//})
 
 	t.Run("missing fields", func(t *testing.T) {
 		illformed := []byte(`
@@ -100,7 +102,7 @@ func TestSeriesMapping(t *testing.T) {
 			t.Errorf("expected not nil, but got %v", got)
 		}
 		assert.StringsEqual(vals["title"], got.Title)
-		assert.StringsEqual(vals["year"], strconv.Itoa(got.Year))
+		assert.StringsEqual(vals["year"], got.Year)
 		assert.StringsEqual(vals["poster"], got.Poster)
 		assert.StringsEqual(vals["id"], got.Id)
 		assert.StringsEqual(vals["totalseasons"], strconv.Itoa(got.Seasons))
@@ -117,7 +119,7 @@ func TestSeriesMapping(t *testing.T) {
 	})
 
 	t.Run("incorrect field type", func(t *testing.T) {
-		raw := []byte(replaceVars(replaceVars(jsonPattern, map[string]string {"year" : "twenty eighteen"}), vals))
+		raw := []byte(replaceVars(replaceVars(jsonPattern, map[string]string {"totalseasons" : "three"}), vals))
 		got, err := toSeriesMetaInfo(raw)
 		assert := test.AssertOn(t)
 		assert.ExpectError("did not catch expected error when mapping series data with invalid content")(err)
@@ -162,7 +164,7 @@ func TestEpisodeMapping(t *testing.T) {
 			t.Errorf("expected not nil, but got %v", got)
 		}
 		assert.StringsEqual(vals["title"], got.Title)
-		assert.StringsEqual(vals["year"], strconv.Itoa(got.Year))
+		assert.StringsEqual(vals["year"], got.Year)
 		assert.StringsEqual(vals["id"], got.Id)
 		assert.StringsEqual(vals["season"], strconv.Itoa(got.Season))
 		assert.StringsEqual(vals["episode"], strconv.Itoa(got.Episode))

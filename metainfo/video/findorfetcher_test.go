@@ -195,7 +195,7 @@ func assertMoviesEqual(assert *test.Assertion, expected *MovieMetaInfo, got *Mov
 	}
 	assert.StringsEqual(expected.Id, got.Id)
 	assert.StringsEqual(expected.Title, got.Title)
-	assert.True(fmt.Sprintf("expected year %d, but got %d", expected.Year, got.Year))(expected.Year == got.Year)
+	assert.True(fmt.Sprintf("expected year %s, but got %s", expected.Year, got.Year))(expected.Year == got.Year)
 	assert.StringsEqual(expected.Poster, got.Poster)
 }
 
