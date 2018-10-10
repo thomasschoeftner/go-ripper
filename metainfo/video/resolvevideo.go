@@ -10,20 +10,14 @@ import (
 // needs to be set for successful creation of a video meta-info source
 var NewVideoMetaInfoSource func(conf *ripper.VideoResolveConfig) (VideoMetaInfoSource, error)
 
-func ErrorHandler(err error) task.HandlerFunc {
-	return func(job task.Job) ([]task.Job, error) {
-		return nil, err
-	}
-}
-
 func ResolveVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
 	if nil == NewVideoMetaInfoSource {
-		return ErrorHandler(errors.New("video meta-info source is undefined"))
+		return ripper.ErrorHandler(errors.New("video meta-info source is undefined"))
 	}
 	metaInfoSrc, err := NewVideoMetaInfoSource(conf.Resolve.Video)
 	if err != nil {
-		return ErrorHandler(err)
+		return ripper.ErrorHandler(err)
 	}
 	findOrFetcher := findOrFetch(metaInfoSrc, conf, ctx.RunLazy)
 

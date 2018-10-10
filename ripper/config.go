@@ -9,9 +9,14 @@ type AppConf struct {
 	WorkDirectory string
 	MetaInfoRepo  string
 	Processing    *task.ProcessingConfig
+	Output        *OutputConfig
 	Scan          *ScanConfigGroup
 	Resolve       *ResolveConfig
-	Tool          *ToolConfig
+	Tag           *TagConfig
+}
+
+type OutputConfig struct {
+	Video string
 }
 
 type ScanConfigGroup struct {
@@ -43,9 +48,15 @@ type OmdbConfig struct {
 	OmdbTokens []string
 }
 
-type ToolConfig struct {
-	Handbrake *HandbrakeConf
-	Vlc *VlcConf
+type TagConfig struct {
+	Video *VideoTagConfig
+}
+
+type VideoTagConfig struct {
+	Tagger string
+	AtomicParsley *struct {
+		Path string
+	}
 }
 
 type HandbrakeConf struct {

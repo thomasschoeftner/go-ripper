@@ -62,3 +62,30 @@ func TestExists(t *testing.T) {
 		assert.TrueNotError(fmt.Sprintf("expected file %s to exist, but did not", file))(Exists(file))
 	})
 }
+
+func TestSplitExtension(t *testing.T) {
+	t.Run("common file name", func(t *testing.T) {
+		file := "abc.de"
+		name, ext := SplitExtension(file)
+		assert := test.AssertOn(t)
+		assert.StringsEqual("abc", name)
+		assert.StringsEqual("de", ext)
+	})
+
+	t.Run("no extension", func(t *testing.T) {
+		file := "abcde"
+		name, ext := SplitExtension(file)
+		assert := test.AssertOn(t)
+		assert.StringsEqual("abcde", name)
+		assert.StringsEqual("", ext)
+	})
+
+	t.Run("multiple periods", func(t *testing.T) {
+		file := "abc.de.fg"
+		name, ext := SplitExtension(file)
+		assert := test.AssertOn(t)
+		assert.StringsEqual("abc.de", name)
+		assert.StringsEqual("fg", ext)
+	})
+
+}

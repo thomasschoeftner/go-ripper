@@ -86,6 +86,7 @@ func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 		if targetinfo.TARGETINFO_TPYE_EPISODE == ti.GetType() {
 			e := ti.(*targetinfo.Episode)
 			e.ItemsTotal = episodeCount[e.Id][e.Season]
+			e.Episode = e.ItemSeqNo
 		}
 	}
 

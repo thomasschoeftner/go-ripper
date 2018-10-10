@@ -107,10 +107,10 @@ func httpGet(client *http.Client) httpGetFunc {
 	return func(buildUrl urlBuilder) ([]byte, error) {
 		url := buildUrl()
 		httpRsp, err:= http.Get(url)
-		defer httpRsp.Body.Close()
 		if err != nil {
 			return nil, err
 		}
+		defer httpRsp.Body.Close()
 
 		if httpRsp.StatusCode == 401 {
 			return nil, fmt.Errorf("invalid OMDB token used for URL: %s", url)

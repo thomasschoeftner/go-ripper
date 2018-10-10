@@ -16,6 +16,7 @@ import (
 	"go-ripper/metainfo/video"
 	"go-ripper/omdb"
 	"io/ioutil"
+	"go-ripper/tag"
 )
 
 const (
@@ -50,6 +51,13 @@ func launch() int {
 		video.NewVideoMetaInfoSource = omdb.NewOmdbVideoMetaInfoSource
 	default:
 		logger.Fatalf("unknown video resolver configured: %s", conf.Resolve.Video.Resolver)
+	}
+
+	switch conf.Tag.Video.Tagger {
+	case tag.CONF_ATOMICPARSLEY_TAGGER:
+		tag.NewVideoTagger = tag.NewAtomicParsleyVideoTagger
+	default:
+		logger.Fatalf("unknown video tagger configured: %s", conf.Tag.Video.Tagger)
 	}
 
 	// create task Tree

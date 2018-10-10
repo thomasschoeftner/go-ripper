@@ -29,3 +29,12 @@ func CreateFolderStructure(folder string) error {
 func Extension(filePath string) string {
 	return strings.Replace(filepath.Ext(filePath), ".", "", 1)
 }
+
+func SplitExtension(file string) (string, string) {
+	idx := strings.LastIndex(file, ".")
+	if idx > 0 {
+		return file[:idx], file[idx+1:len(file)]
+	} else {
+		return file, ""
+	}
+}

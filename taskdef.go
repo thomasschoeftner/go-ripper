@@ -6,6 +6,7 @@ import (
 	"go-ripper/scan"
 	"errors"
 	"go-ripper/metainfo/video"
+	"go-ripper/tag"
 )
 
 const TaskName_Tasks = "tasks"
@@ -33,7 +34,7 @@ func CreateTasks() task.TaskSequence {
 	taskRip      := task.NewTask("rip","digitalize (\"rip\") audio and video", nil).WithDependencies(taskResolve, /*taskRipAudio, */ taskRipVideo)
 
 	//taskTagAudio := task.NewTask("tagAudio","apply meta-info from local file to audio", nil)
-	taskTagVideo := task.NewTask("tagVideo","apply meta-info from local file to video", NotImplementedYetHandler)
+	taskTagVideo := task.NewTask("tagVideo","apply meta-info from local file to video", tag.TagVideo)
 	taskTag      := task.NewTask("tag","apply meta-info from local file to audio and video", nil).WithDependencies(taskRip, /* taskTagAudio, */ taskTagVideo)
 
 	//taskAudio  := task.NewTask("audio","process all audio files in folder and direct sub-folders", nil).WithDependencies(taskScanAudio, taskResolveAudio, taskRipAudio, taskTagAudio)
