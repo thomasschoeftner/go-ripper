@@ -70,7 +70,7 @@ func (ff *findOrFetcher) episode(ti *targetinfo.Episode) (*EpisodeMetaInfo, erro
 
 
 func (ff * findOrFetcher) image(id string, imageUri string) error {
-	imageFile := metainfo.ImageFileName(ff. conf.MetaInfoRepo, id, files.Extension(imageUri))
+	imageFile := metainfo.ImageFileName(ff. conf.MetaInfoRepo, id, files.GetExtension(imageUri))
 	if !ff.needToResolve(imageFile, ff.lazy) {
 		return nil
 	}

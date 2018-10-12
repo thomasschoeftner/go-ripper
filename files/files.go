@@ -3,8 +3,8 @@ package files
 import (
 	"os"
 	"strings"
-	"path/filepath"
 	"fmt"
+	"path/filepath"
 )
 
 func Exists(path string) (bool, error) {
@@ -27,17 +27,24 @@ func CreateFolderStructure(folder string) error {
 	return os.MkdirAll(folder, os.ModePerm)
 }
 
-func Extension(filePath string) string {
-	return strings.Replace(filepath.Ext(filePath), ".", "", 1)
+func SplitExtension(file string) (string, string) {
+	suffix := filepath.Ext(file)
+	prefix := strings.TrimSuffix(file, suffix) //cut extension (including leading '.') from path
+	if 0 == len(prefix) { //use suffix as filename in case there is no extension and file starts with '.'
+		prefix = suffix
+		suffix = ""
+	}
+
+	if len(suffix) > 0 { //removing leading '.' from extension
+		suffix = suffix[1:] //remove leading '.'
+	}
+	return prefix, suffix
 }
 
-func SplitExtension(file string) (string, string) {
-	idx := strings.LastIndex(file, ".")
-	if idx > 0 {
-		return file[:idx], file[idx+1:len(file)]
-	} else {
-		return file, ""
-	}
+func GetExtension(filePath string) string {
+	_, ext := SplitExtension(filePath)
+	return ext
+	//return strings.Replace(filepath.Ext(filePath), ".", "", 1)
 }
 
 func WithExtension(name string, extension string) string {

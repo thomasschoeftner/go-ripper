@@ -35,9 +35,9 @@ func setupFindOrFetcher(assert *test.Assertion, movie *MovieMetaInfo, series *Se
 			for f, image := range images {
 				var imgFileName string
 				if movie != nil && movie.Poster == f {
-					imgFileName = metainfo.ImageFileName(repoDir, movie.Id, files.Extension(movie.Poster))
+					imgFileName = metainfo.ImageFileName(repoDir, movie.Id, files.GetExtension(movie.Poster))
 				} else if series != nil && series.Poster == f {
-					imgFileName = metainfo.ImageFileName(repoDir, series.Id, files.Extension(series.Poster))
+					imgFileName = metainfo.ImageFileName(repoDir, series.Id, files.GetExtension(series.Poster))
 				} else {
 					assert.T.Fatalf("unknown poster name %s matches neither movie, nor series", f)
 				}
@@ -96,7 +96,7 @@ func TestFindOrFetchImage(t *testing.T) {
 			miSrc := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
 			fof := findOrFetch(miSrc, conf, lazy)
 
-			imgFileName := metainfo.ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.Extension(movieMi.Poster))
+			imgFileName := metainfo.ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.GetExtension(movieMi.Poster))
 
 			assert.NotError(fof.image(movieMi.Id, movieMi.Poster))
 			img, err := metainfo.ReadImage(imgFileName)

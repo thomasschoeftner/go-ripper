@@ -63,6 +63,20 @@ func TestExists(t *testing.T) {
 	})
 }
 
+func TestGetExtension(t *testing.T) {
+	t.Run("remove leading '.'", func (t *testing.T) {
+		test.AssertOn(t).StringsEqual("def", GetExtension("s/b/c.def"))
+	})
+
+	t.Run("remove multiple leading '.'", func (t *testing.T) {
+		test.AssertOn(t).StringsEqual("def", GetExtension("s/b/c....def"))
+	})
+
+	t.Run("return empty string if no '.'", func (t* testing.T) {
+		test.AssertOn(t).StringsEqual("", GetExtension("s/b/cdef"))
+	})
+}
+
 func TestSplitExtension(t *testing.T) {
 	t.Run("common file name", func(t *testing.T) {
 		file := "abc.de"
@@ -86,6 +100,38 @@ func TestSplitExtension(t *testing.T) {
 		assert := test.AssertOn(t)
 		assert.StringsEqual("abc.de", name)
 		assert.StringsEqual("fg", ext)
+	})
+
+	t.Run("complete folders including '.'s in folder names", func (t* testing.T) {
+		folder := "/a/b/.c/..d/...e/f./g../.h./"
+		name := "sepp"
+		extension := "rtf"
+
+		rest, ext:= SplitExtension(folder + name + "." + extension)
+		assert := test.AssertOn(t)
+		assert.StringsEqual(folder + name, rest)
+		assert.StringsEqual(extension, ext)
+	})
+
+	t.Run("files with leading '.' with extension", func (t* testing.T) {
+		name, ext := SplitExtension(".abc.def")
+		assert := test.AssertOn(t)
+		assert.StringsEqual(".abc", name)
+		assert.StringsEqual("def", ext)
+	})
+
+	t.Run("files with leading '.' without extension", func (t* testing.T) {
+		name, ext := SplitExtension(".abc")
+		assert := test.AssertOn(t)
+		assert.StringsEqual(".abc", name)
+		assert.StringsEqual("", ext)
+	})
+
+	t.Run("files with multiple '.' before extension", func (t* testing.T) {
+		name, ext := SplitExtension(".abc...xyz")
+		assert := test.AssertOn(t)
+		assert.StringsEqual(".abc..", name)
+		assert.StringsEqual("xyz", ext)
 	})
 }
 
