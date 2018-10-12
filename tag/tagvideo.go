@@ -17,8 +17,7 @@ type VideoTagger interface {
 	TagMovie(file string, id string, title string, year string, posterPath string) error
 	TagEpisode(file string, id string, series string, season int, episode int, title string, year string, posterPath string) error
 }
-
-var NewVideoTagger func(conf *ripper.TagConfig) (VideoTagger, error)
+var NewVideoTagger func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (VideoTagger, error)
 
 
 func TagVideo(ctx task.Context) task.HandlerFunc {
@@ -27,7 +26,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 	if nil == NewVideoTagger {
 		return ripper.ErrorHandler(errors.New("video-tagger is undefined"))
 	}
-	tagger, err := NewVideoTagger(conf.Tag)
+	tagger, err := NewVideoTagger(conf.Tag, ctx.RunLazy, ctx.Printf.WithIndent(2))
 	if err != nil {
 		return ripper.ErrorHandler(err)
 	}
@@ -35,18 +34,16 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 	return func (job task.Job) ([]task.Job, error) {
 		target := ripper.GetTargetFileFromJob(job)
 		ctx.Printf("tag video - target %s\n", target)
-
 		ti, err := targetinfo.ForTarget(conf.WorkDirectory, target)
 		if err != nil {
 			return nil, err
 		}
-		printf := ctx.Printf.WithIndent(2)
 
 		switch ti.GetType() {
 		case targetinfo.TARGETINFO_TYPE_MOVIE:
-			err = tagMovie(tagger, ti, conf, printf)
+			err = tagMovie(tagger, ti, conf.WorkDirectory, conf.MetaInfoRepo, conf.Output.Video)
 		case targetinfo.TARGETINFO_TPYE_EPISODE:
-			err = tagEpisode(tagger, ti, conf, printf)
+			err = tagEpisode(tagger, ti, conf.WorkDirectory, conf.MetaInfoRepo, conf.Output.Video)
 		default:
 			err = fmt.Errorf("unknown type of video target-info found: %s", ti.GetType())
 		}
@@ -55,43 +52,52 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 	}
 }
 
-func tagMovie(tagger VideoTagger, ti targetinfo.TargetInfo, conf *ripper.AppConf, printf commons.FormatPrinter) error {
-	fileToTag, err := chooseInputFile(ti, conf.WorkDirectory, conf.Output.Video)
+func tagMovie(tagger VideoTagger, ti targetinfo.TargetInfo, workDir string, metaInfoRepo string, videoOutputExtension string) error {
+	fileToTag, err := chooseInputFile(ti, workDir, videoOutputExtension)
 	if err != nil {
 		return err
 	}
 
 	movieMi := video.MovieMetaInfo{}
-	metainfo.ReadMetaInfo(video.MovieFileName(conf.MetaInfoRepo, ti.GetId()), &movieMi)
+	err = metainfo.ReadMetaInfo(video.MovieFileName(metaInfoRepo, ti.GetId()), &movieMi)
+	if err != nil {
+		return err
+	}
 	if 0 == len(movieMi.Id) {
 		return fmt.Errorf("could not find meta-info for movie: %s\n", ti.String())
 	}
-	imgFile := metainfo.ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.Extension(movieMi.Poster))
+	imgFile := metainfo.ImageFileName(metaInfoRepo, movieMi.Id, files.GetExtension(movieMi.Poster))
 	//TODO check if missing poster image is actually an error
 
 	return tagger.TagMovie(fileToTag, movieMi.Id, movieMi.Title, movieMi.Year, imgFile)
 }
 
-func tagEpisode(tagger VideoTagger, ti targetinfo.TargetInfo, conf *ripper.AppConf, printf commons.FormatPrinter) error {
-	fileToTag, err := chooseInputFile(ti, conf.WorkDirectory, conf.Output.Video)
+func tagEpisode(tagger VideoTagger, ti targetinfo.TargetInfo, workDir string, metaInfoRepo string, videoOutputExtension string) error {
+	fileToTag, err := chooseInputFile(ti, workDir, videoOutputExtension)
 	if err != nil {
 		return err
 	}
-
 	episodeTi := ti.(*targetinfo.Episode)
 	episodeMi := video.EpisodeMetaInfo{}
-	metainfo.ReadMetaInfo(video.EpisodeFileName(conf.MetaInfoRepo, episodeTi.Id, episodeTi.Season, episodeTi.Episode), &episodeMi)
+	err = metainfo.ReadMetaInfo(video.EpisodeFileName(metaInfoRepo, episodeTi.Id, episodeTi.Season, episodeTi.Episode), &episodeMi)
+	if err != nil {
+		return err
+	}
 	if 0 == len(episodeMi.Id) {
 		return fmt.Errorf("could not find meta-info for episode: %s\n", ti.String())
 	}
+
 	seriesMi := video.SeriesMetaInfo{}
-	metainfo.ReadMetaInfo(video.SeriesFileName(conf.MetaInfoRepo, episodeTi.Id), &seriesMi)
+	err = metainfo.ReadMetaInfo(video.SeriesFileName(metaInfoRepo, episodeTi.Id), &seriesMi)
+	if err != nil {
+		return err
+	}
 	if 0 == len(seriesMi.Id) {
 		return fmt.Errorf("could not find meta-info for series: %s\n", ti.String())
 	}
-	imgFile := metainfo.ImageFileName(conf.MetaInfoRepo, seriesMi.Id, files.Extension(seriesMi.Poster))
+	imgFile := metainfo.ImageFileName(metaInfoRepo, seriesMi.Id, files.GetExtension(seriesMi.Poster))
 
-	return tagger.TagEpisode(fileToTag, episodeMi.Id, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title, episodeMi.Year, imgFile)
+	return tagger.TagEpisode(fileToTag, seriesMi.Id, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title, episodeMi.Year, imgFile)
 }
 
 func chooseInputFile(ti targetinfo.TargetInfo, workDir string, expectedExtension string) (string, error) {
@@ -99,13 +105,14 @@ func chooseInputFile(ti targetinfo.TargetInfo, workDir string, expectedExtension
 	if err != nil {
 		return "", err
 	}
+	// look for a pre-processed file in appropriate format (e.g. a ripped video in .mp4 file)
 	fName, extension := files.SplitExtension(ti.GetFile())
-	preprocessed := filepath.Join(folder, fName + "." + expectedExtension)
-	fmt.Printf("expect=%s, fname=%s, ext=%s, preproc=%s\n", expectedExtension, fName, extension, preprocessed)
+	preprocessed := filepath.Join(folder, files.WithExtension(fName, expectedExtension))
 	if exists, _ := files.Exists(preprocessed); exists {
 		return preprocessed, nil
 	}
 
+	// if no preprocessed input is available, check if the source file can be tagged directly (e.g. if it is an .mp4 video)
 	if extension == expectedExtension {
 		return filepath.Join(ti.GetFolder(), ti.GetFile()), nil
 	} else {
