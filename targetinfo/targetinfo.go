@@ -38,38 +38,42 @@ type Typed struct {
 	Type string `json:"type"`
 }
 
-
-type Movie struct {
+type Video struct {
 	Typed
 	File   string `json:"file"`
 	Folder string `json:"folder"`
 	Id     string `json:"id"`
 }
 
+type Movie struct {
+	Video
+}
+
 type Episode struct {
 	//Typed
-	Movie
+	Video
 	Season     int `json:"season"`
 	Episode    int `json:"episode"`
 	ItemSeqNo  int `json:"itemseqno"`
 	ItemsTotal int `json:"itemstotal"`
 }
 
-func (m *Movie) GetFile() string {
-	return m.File
+func (v *Video) GetFile() string {
+	return v.File
 }
 
-func (m *Movie) GetFolder() string {
-	return m.Folder
+func (v *Video) GetFolder() string {
+	return v.Folder
 }
 
-func (m *Movie) GetType() string {
+func (v *Video) GetId() string {
+	return v.Id
+}
+
+func (v *Movie) GetType() string {
 	return TARGETINFO_TYPE_MOVIE
 }
 
-func (m *Movie) GetId() string {
-	return m.Id
-}
 
 func (m *Movie) String() string {
 	return fmt.Sprintf("movie   (id=%s, file=%s)", m.Id, filepath.Join(m.Folder, m.File))
@@ -85,7 +89,7 @@ func (e *Episode) String() string {
 
 
 func NewMovie(file string, folder string, id string) *Movie {
-	return &Movie{Typed: Typed{ Type: TARGETINFO_TYPE_MOVIE}, File: file, Folder: folder, Id: id}
+	return &Movie{Video{Typed: Typed{ Type: TARGETINFO_TYPE_MOVIE}, File: file, Folder: folder, Id: id}}
 }
 
 func IsMovie(ti TargetInfo) bool {
@@ -93,9 +97,8 @@ func IsMovie(ti TargetInfo) bool {
 }
 
 func NewEpisode(file string, folder string, id string, season int, episode int, itemSeqNo int, itemsTotal int) *Episode {
-	vid := NewMovie(file, folder, id)
-	vid.Type = TARGETINFO_TPYE_EPISODE
-	return &Episode{/*Typed: Typed { Type: TARGETINFO_TPYE_EPISODE},*/ Movie: *vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
+	vid := Video{Typed: Typed{ Type: TARGETINFO_TPYE_EPISODE}, File: file, Folder: folder, Id: id}
+	return &Episode{Video: vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
 }
 
 func IsEpisode(ti TargetInfo) bool {
