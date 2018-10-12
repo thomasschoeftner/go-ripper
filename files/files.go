@@ -44,7 +44,6 @@ func SplitExtension(file string) (string, string) {
 func GetExtension(filePath string) string {
 	_, ext := SplitExtension(filePath)
 	return ext
-	//return strings.Replace(filepath.Ext(filePath), ".", "", 1)
 }
 
 func WithExtension(name string, extension string) string {
