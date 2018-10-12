@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"path/filepath"
+	"fmt"
 )
 
 func Exists(path string) (bool, error) {
@@ -37,4 +38,8 @@ func SplitExtension(file string) (string, string) {
 	} else {
 		return file, ""
 	}
+}
+
+func WithExtension(name string, extension string) string {
+	return fmt.Sprintf("%s.%s", name, strings.TrimLeft(extension, "."))
 }

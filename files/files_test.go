@@ -87,5 +87,19 @@ func TestSplitExtension(t *testing.T) {
 		assert.StringsEqual("abc.de", name)
 		assert.StringsEqual("fg", ext)
 	})
+}
+
+func TestWithExtension(t *testing.T) {
+	t.Run("add extension without leading '.'", func (t *testing.T) {
+		name := "frank"
+		ext := "txt"
+		test.AssertOn(t).StringsEqual(name + "." + ext, WithExtension(name, ext))
+	})
+
+	t.Run("add extension with leading '.'", func (t *testing.T) {
+		name := "frank"
+		ext := ".txt"
+		test.AssertOn(t).StringsEqual(name + ext, WithExtension(name, ext))
+	})
 
 }
