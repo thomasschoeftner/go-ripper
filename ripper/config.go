@@ -54,9 +54,12 @@ type TagConfig struct {
 
 type VideoTagConfig struct {
 	Tagger string
-	AtomicParsley *struct {
-		Path string
-	}
+	AtomicParsley *AtomicParsleyConfig
+}
+
+type AtomicParsleyConfig struct {
+	Path string
+	Timeout string
 }
 
 type HandbrakeConf struct {

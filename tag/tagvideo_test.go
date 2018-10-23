@@ -16,70 +16,71 @@ import (
 )
 
 const expectedVideoExtension = "mp4"
-func TestChooseInputFile(t *testing.T) {
+func TestFindInputOutputFile(t *testing.T) {
 
-	setup := func(tmpDir string, sourceExtension string, preprocessedExtension *string) (targetinfo.TargetInfo, string, string) {
+	setup := func(tmpDir string, sourceExtension string, preprocessedExtension string, preprocessedExists bool) (targetinfo.TargetInfo, string, string) {
 		sourceDir := "/sepp/hat/gelbe/eier"
 		sourceFile := "ripped"
 		source := filepath.Join(sourceDir, files.WithExtension(sourceFile, sourceExtension))
 		ti := targetinfo.NewMovie(files.WithExtension(sourceFile, sourceExtension), sourceDir, sourceFile)
 
-		tiPath, _ := ripper.GetWorkPathForTargetFileFolder(tmpDir, ti.GetFolder())
-		files.CreateFolderStructure(tiPath)
-		var preprocessed string
-		if preprocessedExtension != nil {
-			//only create preprocessed (ie ripped) file if an extension is defined
-			preprocessed = filepath.Join(tiPath, files.WithExtension(sourceFile, *preprocessedExtension))
+		workFolder, _ := ripper.GetWorkPathForTargetFileFolder(tmpDir, ti.GetFolder())
+		files.CreateFolderStructure(workFolder)
+		preprocessed := filepath.Join(workFolder, files.WithExtension(sourceFile, preprocessedExtension))
+		if preprocessedExists {
+			//only create preprocessed (ie ripped) inFile if an extension is defined
 			ioutil.WriteFile(preprocessed, []byte {1,2,3}, os.ModePerm)
 		}
 		return ti, source, preprocessed
 	}
 
-	t.Run("ripped file is available in workdir, source file is not a valid output file", func(t *testing.T) {
+	t.Run("ripped inFile is available in workdir, source inFile is not a valid output inFile", func(t *testing.T) {
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
-		preprocessedExt := expectedVideoExtension
-		ti, _, preprocessed := setup(workDir, "avi", &preprocessedExt)
+		ti, _, preprocessed := setup(workDir, "avi", expectedVideoExtension, true)
 
-		chosen, err := chooseInputFile(ti, workDir, expectedVideoExtension)
+		in, out, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
 		if err != nil {
 			t.Fatal(err)
 		}
-		test.AssertOn(t).StringsEqual(preprocessed, chosen)
+		test.AssertOn(t).StringsEqual(preprocessed, in)
+		test.AssertOn(t).StringsEqual(preprocessed, out)
 	})
 
-	t.Run("ripped file is available in workdir, but source file is already a valid output file", func(t *testing.T) {
+	t.Run("ripped inFile is available in workdir, but source inFile is already a valid output inFile", func(t *testing.T) {
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
-		preprocessedExt := expectedVideoExtension
-		ti, _, preprocessed := setup(workDir, expectedVideoExtension, &preprocessedExt)
+		ti, _, preprocessed := setup(workDir, expectedVideoExtension, expectedVideoExtension, true)
 
-		chosen, err := chooseInputFile(ti, workDir, expectedVideoExtension)
+		in, out, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
 		if err != nil {
 			t.Fatal(err)
 		}
-		test.AssertOn(t).StringsEqual(preprocessed, chosen)
+		test.AssertOn(t).StringsEqual(preprocessed, in)
+		test.AssertOn(t).StringsEqual(preprocessed, out)
 	})
 
-	t.Run("ripped file is missing in workdir, but source file is already a valid output file", func(t *testing.T) {
+	t.Run("ripped inFile is missing in workdir, but source inFile is already a valid output inFile", func(t *testing.T) {
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
-		ti, src, _ := setup(workDir, expectedVideoExtension, nil)
+		ti, source, preprocessed := setup(workDir, expectedVideoExtension, expectedVideoExtension, false)
 
-		chosen, err := chooseInputFile(ti, workDir, expectedVideoExtension)
+		in, out, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
 		if err != nil {
 			t.Fatal(err)
 		}
-		test.AssertOn(t).StringsEqual(src, chosen)
+
+		test.AssertOn(t).StringsEqual(source, in)
+		test.AssertOn(t).StringsEqual(preprocessed, out)
 	})
 
-	t.Run("ripped file is missing in workdir, source file is not a valid output file either", func(t *testing.T) {
+	t.Run("ripped inFile is missing in workdir, source inFile is not a valid output inFile either", func(t *testing.T) {
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
-		ti, _, _ := setup(workDir, "avi", nil)
+		ti, _, _ := setup(workDir, "avi", expectedVideoExtension, false)
 
-		_, err := chooseInputFile(ti, workDir, expectedVideoExtension)
-		test.AssertOn(t).ExpectError("expected error when finding no suitable file - neither source does not have appropriate format, prepocessed file is missing")(err)
+		_, _, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		test.AssertOn(t).ExpectError("expected error when finding no suitable inFile - neither source does not have appropriate format, prepocessed inFile is missing")(err)
 	})
 }
 
@@ -87,19 +88,21 @@ func TestChooseInputFile(t *testing.T) {
 
 type TestTagger struct {
 	raiseError error
-	file string
-	id string
-	title string
-	year string
+	inFile     string
+	outFile    string
+	id         string
+	title      string
+	year       string
 	posterPath string
-	series string
-	season int
-	episode int
+	series     string
+	season     int
+	episode    int
 }
 
-func (tagger *TestTagger) TagMovie(file string, id string, title string, year string, posterPath string) error {
-	fmt.Printf("tag movie %s with {id=%s, title=%s, year=%s, image=%s}\n", file, id, title, year, posterPath)
-	tagger.file = file
+func (tagger *TestTagger) TagMovie(inFile string, outFile string, id string, title string, year string, posterPath string) error {
+	fmt.Printf("tag movie %s with {id=%s, title=%s, year=%s, image=%s} -> write to %s\n", inFile, id, title, year, posterPath, outFile)
+	tagger.inFile = inFile
+	tagger.outFile = outFile
 	tagger.id = id
 	tagger.title = title
 	tagger.year = year
@@ -107,9 +110,10 @@ func (tagger *TestTagger) TagMovie(file string, id string, title string, year st
 	return tagger.raiseError
 }
 
-func (tagger *TestTagger) TagEpisode(file string, id string, series string, season int, episode int, title string, year string, posterPath string) error {
-	fmt.Printf("tag episode %s with {id=%s, title=%s, year=%s, image=%s}\n", file, id, title, year, posterPath)
-	tagger.file = file
+func (tagger *TestTagger) TagEpisode(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error {
+	fmt.Printf("tag episode %s with {id=%s, title=%s, year=%s, image=%s} -> write to %s\n", inFile, id, title, year, posterPath, outFile)
+	tagger.inFile = inFile
+	tagger.outFile = outFile
 	tagger.id = id
 	tagger.series = series
 	tagger.season = season
@@ -122,16 +126,16 @@ func (tagger *TestTagger) TagEpisode(file string, id string, series string, seas
 
 
 func TestTagMovie(t *testing.T) {
-	t.Run("expect error when no appropriate input file is found", func(t *testing.T) {
+	t.Run("expect error when no appropriate input inFile is found", func(t *testing.T) {
 		ti := targetinfo.NewMovie(files.WithExtension("movie", "avi"), "/some/dir", "movie-id")
 		tagger := &TestTagger{}
-		test.AssertOn(t).ExpectError("expected error when tagging movie without appropriate input file, but got none")(tagMovie(tagger, ti, "/work", "/repo", expectedVideoExtension))
+		test.AssertOn(t).ExpectError("expected error when tagging movie without appropriate input inFile, but got none")(tagMovie(tagger, ti, "/work", "/repo", expectedVideoExtension))
 	})
 
 	t.Run("expect error when reading movie meta data fails", func(t *testing.T) {
 		ti := targetinfo.NewMovie(files.WithExtension("movie", expectedVideoExtension), "/some/dir", "movie-id")
 		tagger := &TestTagger{}
-		test.AssertOn(t).ExpectError("expected error when tagging movie without meta-info file, but got none")(tagMovie(tagger, ti, "/work", "/repo", expectedVideoExtension))
+		test.AssertOn(t).ExpectError("expected error when tagging movie without meta-info inFile, but got none")(tagMovie(tagger, ti, "/work", "/repo", expectedVideoExtension))
 	})
 
 	t.Run("invoke tagger with appropriate params and return tagger error", func(t *testing.T) {
@@ -151,14 +155,17 @@ func TestTagMovie(t *testing.T) {
 		assert.StringsEqual(mi.Title, tagger.title)
 		assert.StringsEqual(mi.Year, tagger.year)
 		assert.StringsEqual(metainfo.ImageFileName(repoDir, mi.Id, files.GetExtension(mi.Poster)), tagger.posterPath)
+		in, out, _ := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		assert.StringsEqual(in, tagger.inFile)
+		assert.StringsEqual(out, tagger.outFile)
 	})
 }
 
 func TestTagEpisode(t *testing.T) {
-	t.Run("expect error when no appropriate input file is found", func(t *testing.T) {
+	t.Run("expect error when no appropriate input inFile is found", func(t *testing.T) {
 		ti := targetinfo.NewEpisode(files.WithExtension("movie", "avi"), "/some/dir", "episode-id", 4, 2, 2, 9)
 		tagger := &TestTagger{}
-		test.AssertOn(t).ExpectError("expected error when tagging episode without appropriate input file, but got none")(tagEpisode(tagger, ti, "/work", "/repo", expectedVideoExtension))
+		test.AssertOn(t).ExpectError("expected error when tagging episode without appropriate input inFile, but got none")(tagEpisode(tagger, ti, "/work", "/repo", expectedVideoExtension))
 	})
 
 	t.Run("expect error when reading episode meta data fails", func(t *testing.T) {
@@ -215,5 +222,8 @@ func TestTagEpisode(t *testing.T) {
 		assert.IntsEqual(episodeMi.Episode, tagger.episode)
 		assert.StringsEqual(seriesMi.Title, tagger.series)
 		assert.StringsEqual(metainfo.ImageFileName(repoDir, seriesMi.Id, files.GetExtension(seriesMi.Poster)), tagger.posterPath)
+		in, out, _ := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		assert.StringsEqual(in, tagger.inFile)
+		assert.StringsEqual(out, tagger.outFile)
 	})
 }
