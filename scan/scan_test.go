@@ -235,7 +235,7 @@ func TestGetLastNPathElements(t *testing.T) {
 		path := "a/b/" + expected
 		last3 := getLastNPathElements(path, 3)
 		if last3 != expected {
-			t.Errorf("getting last 3 path elements from %s - expected %s, but got %s", path, expected, last3)
+			t.Errorf("getting last 3.avi path elements from %s - expected %s, but got %s", path, expected, last3)
 		}
 	}
 
@@ -244,7 +244,7 @@ func TestGetLastNPathElements(t *testing.T) {
 		expected := "./" + path
 		last3 := getLastNPathElements(path, 3)
 		if last3 != expected {
-			t.Errorf("getting last 3 path elements from %s - expected %s, but got %s", path, expected, last3)
+			t.Errorf("getting last 3.avi path elements from %s - expected %s, but got %s", path, expected, last3)
 		}
 	}
 
@@ -271,7 +271,9 @@ func TestScanSingleTitles(t *testing.T) {
       "idPattern" : "tt\\d+",
       "collectionPattern": "\\d+",
       "itemNoPattern" : "\\d+",
-      "patterns" : ["<id>.*/.*","<id>.*"]
+      "patterns" : ["<id>.*/.*","<id>.*"],
+      "allowSpaces" : false,
+      "allowedExtensions" : ["avi"]
     }
   }
 }`
@@ -294,14 +296,16 @@ func TestScanMixedSinglesAndCollections(t *testing.T) {
       "patterns" : [
         "<id>.*/season\\s<collection>/<itemno>.*",
         "<id>.*/.*",
-        "<id>.*"]
+        "<id>.*"],
+        "allowSpaces" : false,
+        "allowedExtensions" : ["avi"]
     }
   }
 }`
 	movies := []string{"tt987654321", "tt555", "tt666", "tt34543"}
 	episodes := map[int]map[string]int {
-		2 : {"0.mkv":0, "1.txt":1, "2.a.b.c":2, "4":4}, //TODO change to logical numbering?
-		4 : {"1.txt":1, "2.a.b.c":2, "3":3}}
+		2 : {"0.avi":0, "1.avi":1, "2.a.b.c.avi":2, "4.avi":4}, //TODO change to logical numbering?
+		4 : {"1.avi":1, "2.a.b.c.avi":2, "3.avi":3}}
 	testScanVideos(t, movies, episodes, conf, "testdata")
 }
 
@@ -320,16 +324,18 @@ func TestScanDeep(t *testing.T) {
         "<id>.*/season\\s<collection>/<itemno>.*",
         "<id>.*/season\\s<collection>/.*/.*/.*/<itemno>.*",
         "<id>.*/.*",
-        "<id>.*"]
+        "<id>.*"],
+        "allowSpaces" : false,
+        "allowedExtensions" : ["avi"]
     }
   }
 }`
 
 	movies := []string{"tt987654321", "tt555", "tt666", "tt34543"}
 	episodes := map[int]map[string]int {
-		2 : {"0.mkv":0, "1.txt":1, "2.a.b.c":2, "4":4}, //TODO change to logical numbering
-		4 : {"1.txt":1, "2.a.b.c":2, "3":3},
-		7 : {"6.mkv":6, "7.a.b.c":7, "8":8}}
+		2 : {"0.avi":0, "1.avi":1, "2.a.b.c.avi":2, "4.avi":4}, //TODO change to logical numbering
+		4 : {"1.avi":1, "2.a.b.c.avi":2, "3.avi":3},
+		7 : {"6.avi":6, "7.a.b.c.avi":7, "8.avi":8}}
 
 	testScanVideos(t, movies, episodes, conf, "testdata")
 }
@@ -382,30 +388,37 @@ func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[
 
 func TestExclusion(t *testing.T) {
 	const ignorePrefix = "."
-	t.Run("do not ignore ordinary files", func(t *testing.T) {
-		path := "a/b/c.d"
-		if shouldIgnore(path, ignorePrefix, []string{}) {
+	t.Run("do not ignore ordinary files with valid extension", func(t *testing.T) {
+		path := "a/b/c.valid"
+		if shouldIgnore(path, ignorePrefix, []string{}, []string{"valid"}) {
 			t.Errorf("expected file \"%s\" not to be ignored, but is", path)
 		}
 	})
 
+	t.Run("ignore ordinary files with invalid extension", func(t *testing.T) {
+		path := "a/b/c.invalid"
+		if !shouldIgnore(path, ignorePrefix, []string{}, []string{"valid"}) {
+			t.Errorf("expected file \"%s\" to be ignored, but is not", path)
+		}
+	})
+
 	t.Run("ignore file", func(t *testing.T) {
-		path := "a/b/.c.d"
-		if !shouldIgnore(path, ignorePrefix, []string{}) {
+		path := "a/b/.c.valid"
+		if !shouldIgnore(path, ignorePrefix, []string{}, []string {"valid"}) {
 			t.Errorf("expected file \"%s\" to be ignored, but is not", path)
 		}
 	})
 
 	t.Run("ignore folder", func(t *testing.T) {
-		path := "a/.b/c.d"
-		if !shouldIgnore(path, ignorePrefix, []string{}) {
+		path := "a/.b/c.valid"
+		if !shouldIgnore(path, ignorePrefix, []string{}, []string {"valid"}) {
 			t.Errorf("expected folder content \"%s\" to be ignored, but is not", path)
 		}
 	})
 
 	t.Run("ignore ignored sub-folder", func(t *testing.T) {
-		path := "a/.b/c/d/e.f"
-		if !shouldIgnore(path, ignorePrefix, []string{"a/.b"}) {
+		path := "a/.b/c/d/e.valid"
+		if !shouldIgnore(path, ignorePrefix, []string{"a/.b"}, []string {"valid"}) {
 			t.Errorf("expected folder content \"%s\" to be ignored, but is not", path)
 		}
 	})

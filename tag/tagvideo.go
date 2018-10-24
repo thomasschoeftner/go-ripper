@@ -26,7 +26,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 	if nil == NewVideoTagger {
 		return ripper.ErrorHandler(errors.New("video-tagger is undefined"))
 	}
-	tagger, err := NewVideoTagger(conf.Tag, ctx.RunLazy, ctx.Printf.WithIndent(2))
+	tagger, err := NewVideoTagger(conf.Tag, ctx.RunLazy, ctx.Printf)
 	if err != nil {
 		return ripper.ErrorHandler(err)
 	}

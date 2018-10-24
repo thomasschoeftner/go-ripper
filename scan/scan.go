@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"go-ripper/files"
+	"go-cli/commons"
 )
 
 type scanResult struct {
@@ -30,13 +32,7 @@ func scan(rootPath string, ignorePrefix string, conf *ripper.ScanConfig) ([]*sca
 			return nil
 		}
 
-		//always assume we got absolute path!!
-		//path, err = filepath.Abs(path)
-		//if err != nil {
-		//	return err
-		//}
-
-		if shouldIgnore(path, ignorePrefix, ignoredFolders) {
+		if shouldIgnore(path, ignorePrefix, ignoredFolders, conf.AllowedExtensions) {
 			return nil
 		}
 
@@ -59,16 +55,23 @@ func scan(rootPath string, ignorePrefix string, conf *ripper.ScanConfig) ([]*sca
 	}
 }
 
-func shouldIgnore(path string, ignorePrefix string, ignoredFolders []string) bool {
+func shouldIgnore(path string, ignorePrefix string, ignoredFolders []string, allowedExtensions []string) bool {
 	folder, file := filepath.Split(path)
 	//discard excluded files
 	if strings.HasPrefix(file, ignorePrefix) {
 		return true
 	}
 
-	//discard excluded directories
+	//discard non-matching file extensions
+	_, ext := files.SplitExtension(file)
+	if !commons.IsStringAmong(ext, allowedExtensions) {
+		return true
+	}
+
+	// discard files in ignore folders, and keep list of ignored folders
 	folderName := filepath.Base(folder)
 	if strings.HasPrefix(folderName, ignorePrefix) {
+		//TODO optimize by storing an ignored folder only once?
 		ignoredFolders = append(ignoredFolders, folder)
 		return true
 	}
@@ -79,6 +82,7 @@ func shouldIgnore(path string, ignorePrefix string, ignoredFolders []string) boo
 			return true
 		}
 	}
+
 	return false
 }
 

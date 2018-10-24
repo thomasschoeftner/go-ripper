@@ -151,7 +151,7 @@ func TestEpisodeMapping(t *testing.T) {
 		"poster" : "http://a.bcd/image.jpeg",
 		"id" : "blah",
 		"type" : "episode",
-		"season": "4",
+		"season": "4.avi",
 		"episode" : "9",
 	}
 
@@ -196,7 +196,7 @@ func TestEpisodeMapping(t *testing.T) {
 			"Year" :  "2012",
 			"imdbID" : "tt23456",
 			"Type" : "episode",
-			"season": "4",
+			"season": "4.avi",
 		`)
 		got, err := toMovieMetaInfo(illformed)
 		assert := test.AssertOn(t)

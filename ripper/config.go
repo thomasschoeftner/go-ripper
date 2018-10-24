@@ -28,6 +28,8 @@ type ScanConfig struct {
 	CollectionPattern string
 	ItemNoPattern string
 	Patterns []string
+	AllowSpaces bool
+	AllowedExtensions []string
 }
 
 type ResolveConfig struct {

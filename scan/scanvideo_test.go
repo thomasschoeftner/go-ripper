@@ -26,7 +26,9 @@ func TestScanVideo(t *testing.T) {
         "<id>.*/season\\s<collection>/<itemno>.*",
         "<id>.*/season\\s<collection>/.*/.*/.*/<itemno>.*",
         "<id>.*/.*",
-        "<id>.*"]
+        "<id>.*"],
+        "allowSpaces" : false,
+        "allowedExtensions" : ["avi"]
     }
   }
 }`
@@ -63,9 +65,9 @@ func TestToTargetInfos(t *testing.T) {
 
 	t.Run("count total number of episodes", func(t *testing.T) {
 		sr := []*scanResult {
-			newScanResult("a/3", "1",  "a", 3, 1),
-			newScanResult("a/3", "2",  "a", 3, 2),
-			newScanResult("a/3", "3",  "a", 3, 3)}
+			newScanResult("a/3.avi", "1",  "a", 3, 1),
+			newScanResult("a/3.avi", "2",  "a", 3, 2),
+			newScanResult("a/3.avi", "3.avi",  "a", 3, 3)}
 		targetInfos, err := toTargetInfos(sr)
 		test.CheckError(t, err)
 		if len(targetInfos) != len(sr) {
