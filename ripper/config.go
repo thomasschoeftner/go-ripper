@@ -64,10 +64,6 @@ type AtomicParsleyConfig struct {
 	Timeout string
 }
 
-type HandbrakeConf struct {
-	//TODO
-}
-
-type VlcConf struct {
+type HandbrakeConfig struct {
 	//TODO
 }
