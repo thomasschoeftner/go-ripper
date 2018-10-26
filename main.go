@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"github.com/google/logger"
-	"go-cli/config"
 	"go-cli/task"
 	"go-ripper/ripper"
 	"go-cli/pipeline"
@@ -17,35 +16,39 @@ import (
 	"go-ripper/omdb"
 	"io/ioutil"
 	"go-ripper/tag"
-	"strings"
 )
 
 const (
 	cliFlagVerbose             = "verbose"
+	cliFlagLazy                = "lazy"
 	cliFlagOmdbTokens          = "omdbtoken"
 	cliFlagConfigFile          = "config"
-	cliFlagWithoutDependencies = "without-dependencies"
-	cliFlagLazy                = "lazy"
+	cliFlagOutputFolder        = "output"
 	ApplicationName            = "go-ripper"
 )
 
-var verbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBoolean().WithDefault(false)
-var lazy = cli.FromFlag(cliFlagLazy, "execute task only if no output from previous execution is available").GetBoolean().WithDefault(true)
-var omdbTokenFlags  = cli.FromFlag(cliFlagOmdbTokens, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(cliFlagOmdbTokens).GetArray().WithDefault()
-var configFlag = cli.FromFlag(cliFlagConfigFile,"the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault(ApplicationName + ".conf")
+var isVerbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBoolean().WithDefault(false)
+var isLazy = cli.FromFlag(cliFlagLazy, "execute task only if no output from previous execution is available").GetBoolean().WithDefault(true)
+var omdbTokens = cli.FromFlag(cliFlagOmdbTokens, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(cliFlagOmdbTokens).GetArray().WithDefault()
+var configFile = cli.FromFlag(cliFlagConfigFile, "the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault(ApplicationName + ".conf")
+var outputFolder = cli.FromFlag(cliFlagOutputFolder, "the output folder for the completely processed (tagged) items - defaults to DefaultOutputDirectory in config").GetString().WithDefault("")
 
 func main() {
 	os.Exit(launch())
 }
 
 func launch() int {
+
 	syntax := "[flags] task[...] target[...]"
 	cli.Setup(&syntax, "use task \"tasks\" to display all available tasks:", fmt.Sprintf("  %s tasks\n", os.Args[0]))
-	logger.Init(ApplicationName, *verbose, false, ioutil.Discard)
+	logger.Init(ApplicationName, *isVerbose, false, ioutil.Discard)
 
 	// read config
-	conf := getConfig()
-	conf.Resolve.Video.Omdb.OmdbTokens = *omdbTokenFlags
+	conf := ripper.GetConfig(*configFile)
+	conf.Resolve.Video.Omdb.OmdbTokens = *omdbTokens
+	if outputFolder == nil || 0 == len(*outputFolder) {
+		outputFolder = &conf.DefaultOutputDirectory
+	}
 
 	switch conf.Resolve.Video.Resolver {
 	case omdb.CONF_OMDB_RESOLVER:
@@ -74,7 +77,7 @@ func launch() int {
 	require.NotFailed(err)
 
 	// materialize processing pipeline
-	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *lazy)
+	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *isLazy)
 	require.NotFailed(err)
 
 	// ASYNCHRONOUSLY send a processing command for each target to pipeline
@@ -141,41 +144,4 @@ func getCliTasksAndTargets(taskMap task.TaskMap) ([]string, []string) {
 		absoluteTargetPaths = append(absoluteTargetPaths, abs)
 	}
 	return taskNames, absoluteTargetPaths
-}
-
-func getConfig() *ripper.AppConf {
-	configFile := *configFlag
-	conf := ripper.AppConf{}
-	require.NotFailed(config.FromFile(&conf, configFile, map[string]string {}))
-	require.NotFailed(validateConfig(&conf))
-	return &conf
-}
-
-func validateConfig(c *ripper.AppConf) error {
-	if c == nil {
-		return fmt.Errorf("config is nil - no config available")
-	}
-
-	validatePath:= func(path string, fieldName string) error {
-		if 0 == len(path) {
-			return fmt.Errorf("[config error] \"%s\" is empty", fieldName)
-		}
-		if strings.ContainsRune(path, ' ') {
-			return fmt.Errorf("[config error] \"%s\" must not contain spaces", fieldName)
-		}
-		return nil
-	}
-
-	c.WorkDirectory = strings.Trim(c.WorkDirectory, " ")
-	if err := validatePath(c.WorkDirectory, "workDirectory"); err != nil {
-		return err
-	}
-
-	//validate metainforepo
-	c.MetaInfoRepo = strings.Trim(c.MetaInfoRepo, " ")
-	if err := validatePath(c.MetaInfoRepo, "metaInfoRepo"); err != nil {
-		return err
-	}
-
-	return nil
 }
