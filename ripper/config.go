@@ -110,6 +110,8 @@ type VideoTagConfig struct {
 type AtomicParsleyConfig struct {
 	Path    string
 	Timeout string
+	ShowErrorOutput bool
+	ShowStandardOutput bool
 }
 
 type HandbrakeConfig struct {
