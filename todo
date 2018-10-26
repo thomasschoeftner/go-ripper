@@ -1,7 +1,4 @@
-(1) tag
-    invoke AtomicParsley
-      >> AtomicParsley <input-file> --title "abc" --artwork path-to-artwork --year 2018 -o "outputfile"
-      >> AtomicParsley <input-file> --title "abc" --TVShowName "abc" --artwork path-to-artwork --year 2018 --TVEpisodeNum 4 --TVSeasonNum 1 --TVEpisode "once upon a time..." -o "outputfile"
+(1) fix - use season image as artwork (not series)
 
 (2) rip
     ignore already ripped files (MP4 video, MP3 audio, etc.)
