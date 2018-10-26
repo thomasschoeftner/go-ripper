@@ -16,7 +16,7 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 		scanPath := job[ripper.JobField_Path]
 
 		ctx.Printf("scanning contents of \"%s\"", scanPath)
-		scanResults, err := scan(scanPath, conf.IgnorePrefix, conf.Scan.Video)
+		scanResults, err := scan(scanPath, conf.IgnorePrefix, conf.Scan.Video, ctx.Printf)
 		if err != nil {
 			return nil, err
 		}

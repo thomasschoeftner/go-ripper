@@ -20,7 +20,7 @@ type scanResult struct {
 	ItemNo     *int
 }
 
-func scan(rootPath string, ignorePrefix string, conf *ripper.ScanConfig) ([]*scanResult, error) {
+func scan(rootPath string, ignorePrefix string, conf *ripper.ScanConfig, printf commons.FormatPrinter) ([]*scanResult, error) {
 	results := []*scanResult{}
 	ignoredFolders := []string{}
 
@@ -29,6 +29,12 @@ func scan(rootPath string, ignorePrefix string, conf *ripper.ScanConfig) ([]*sca
 			return err
 		}
 		if info.IsDir() {
+			return nil
+		}
+
+		//ignore spaces if required
+		if !conf.AllowSpaces && strings.Contains(path, " ") {
+			printf("WARNING - ignore file \"%s\" due to spaces in path\n", path)
 			return nil
 		}
 

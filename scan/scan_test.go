@@ -7,6 +7,7 @@ import (
 	"go-cli/test"
 	"fmt"
 	"path/filepath"
+	"go-cli/commons"
 )
 
 func loadConfig(json string) (*ripper.AppConf, error) {
@@ -340,13 +341,12 @@ func TestScanDeep(t *testing.T) {
 	testScanVideos(t, movies, episodes, conf, "testdata")
 }
 
-
 func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[int]map[string]int, confStr string, testDataFolder string) {
 	conf, err := loadConfig(confStr)
 	test.CheckError(t, err)
 
 	path, _ := filepath.Abs(filepath.Join(".", testDataFolder))
-	results, err := scan(path, conf.IgnorePrefix, conf.Scan.Video)
+	results, err := scan(path, conf.IgnorePrefix, conf.Scan.Video, commons.Printf)
 	test.CheckError(t, err)
 
 	for _, result := range results  {
