@@ -35,7 +35,7 @@ func TestScanVideo(t *testing.T) {
 
 	conf, err := loadConfig(confStr)
 	test.CheckError(t, err)
-	ctx := task.Context{nil, conf, commons.Printf, false}
+	ctx := task.Context{nil, conf, commons.Printf, false, ""}
 	handler := ScanVideo(ctx)
 	job := task.Job{ripper.JobField_Path : "./testdata"}
 	results, err := handler(job)

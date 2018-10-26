@@ -31,7 +31,7 @@ var isVerbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBo
 var isLazy = cli.FromFlag(cliFlagLazy, "execute task only if no output from previous execution is available").GetBoolean().WithDefault(true)
 var omdbTokens = cli.FromFlag(cliFlagOmdbTokens, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(cliFlagOmdbTokens).GetArray().WithDefault()
 var configFile = cli.FromFlag(cliFlagConfigFile, "the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault(ApplicationName + ".conf")
-var outputFolder = cli.FromFlag(cliFlagOutputFolder, "the output folder for the completely processed (tagged) items - defaults to DefaultOutputDirectory in config").GetString().WithDefault("")
+var outputDirectory = cli.FromFlag(cliFlagOutputFolder, "the output folder for the completely processed (tagged) items - defaults to DefaultOutputDirectory in config").GetString().WithDefault("")
 
 func main() {
 	os.Exit(launch())
@@ -46,8 +46,8 @@ func launch() int {
 	// read config
 	conf := ripper.GetConfig(*configFile)
 	conf.Resolve.Video.Omdb.OmdbTokens = *omdbTokens
-	if outputFolder == nil || 0 == len(*outputFolder) {
-		outputFolder = &conf.DefaultOutputDirectory
+	if outputDirectory == nil || 0 == len(*outputDirectory) {
+		outputDirectory = &conf.DefaultOutputDirectory
 	}
 
 	switch conf.Resolve.Video.Resolver {
@@ -77,7 +77,7 @@ func launch() int {
 	require.NotFailed(err)
 
 	// materialize processing pipeline
-	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *isLazy)
+	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *isLazy, *outputDirectory)
 	require.NotFailed(err)
 
 	// ASYNCHRONOUSLY send a processing command for each target to pipeline

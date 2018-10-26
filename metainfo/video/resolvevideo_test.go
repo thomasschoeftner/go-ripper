@@ -46,7 +46,7 @@ func TestResolveVideo(t *testing.T) {
 	workDir := filepath.ToSlash(filepath.Join(dir, "work"))
 	assert.NotError(config.FromString(conf, confJson,
 		map[string]string {"repodir" : repoDir, "workdir" : workDir}))
-	ctx := task.Context{nil, conf, commons.Printf, false}
+	ctx := task.Context{nil, conf, commons.Printf, false, ""}
 
 	// create target info files
 	targetInfos := []targetinfo.TargetInfo{movieTi, episodeTi}
