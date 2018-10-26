@@ -19,34 +19,36 @@ func NotImplementedYetHandler(ctx task.Context) task.HandlerFunc {
 
 func CreateTasks() task.TaskSequence {
 	taskTasks := task.NewTask(TaskName_Tasks,"show all available tasks and their dependencies", task.TasksOverviewHandler )
-	taskClean := task.NewTask("clean","cleans work folder for specified target path", clean.CleanHandler)
 
-	//taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", nil)
+	//taskScanAudio := task.NewTask("scanAudio","scan folder and direct sub-folders for audio input", NotImplementedYetHandler)
 	taskScanVideo := task.NewTask("scanVideo","scan folder and direct sub-folders for video input", scan.ScanVideo)
 	taskScan      := task.NewTask("scan","scan folder and direct sub-folders for audio and video input", nil).WithDependencies(/*taskScanAudio,*/ taskScanVideo)
 
-	//taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", nil )
+	//taskResolveAudio := task.NewTask("resolveAudio","resolve & download audio meta-info from FreeDB", NotImplementedYetHandler )
 	taskResolveVideo := task.NewTask("resolveVideo","resolve & download video meta-info from IMDB", video.ResolveVideo)
 	taskResolve      := task.NewTask("resolve","resolve & download audio and video meta-info from various sources", nil).WithDependencies(taskScan, /*taskResolveAudio, */ taskResolveVideo)
 
-	//taskRipAudio := task.NewTask("ripAudio","digitalize (\"rip\") audio", nil)
+	//taskRipAudio := task.NewTask("ripAudio","digitalize (\"rip\") audio", NotImplementedYetHandler)
 	taskRipVideo := task.NewTask("ripVideo","digitalize (\"rip\") video", NotImplementedYetHandler)
 	taskRip      := task.NewTask("rip","digitalize (\"rip\") audio and video", nil).WithDependencies(taskResolve, /*taskRipAudio, */ taskRipVideo)
 
-	//taskTagAudio := task.NewTask("tagAudio","apply meta-info from local file to audio", nil)
+	//taskTagAudio := task.NewTask("tagAudio","apply meta-info from local file to audio", NotImplementedYetHandler)
 	taskTagVideo := task.NewTask("tagVideo","apply meta-info from local file to video", tag.TagVideo)
 	taskTag      := task.NewTask("tag","apply meta-info from local file to audio and video", nil).WithDependencies(taskRip, /* taskTagAudio, */ taskTagVideo)
 
-	//taskAudio  := task.NewTask("audio","process all audio files in folder and direct sub-folders", nil).WithDependencies(taskScanAudio, taskResolveAudio, taskRipAudio, taskTagAudio)
+	//taskAudio  := task.NewTask("audio","process all audio files in folder and direct sub-folders", nil).WithDependencies(taskScanAudio, taskResolveAudio, taskRipAudio, taskTagAudio, taskRemoveOriginalAudio )
 	taskVideo  := task.NewTask("video","process all video files in folder and direct sub-folders", nil).WithDependencies(taskScanVideo, taskResolveVideo, taskRipVideo, taskTagVideo)
-	//taskAll    := task.NewTask("all","process all audio and video files in folder and direct sub-folders", nil).WithDependencies(taskTag)
+
+	taskClean := task.NewTask("clean","cleans all processing artifacts related to a specific input file from work folder", clean.CleanHandler)
+	taskRemoveOriginal := task.NewTask("removeOriginal", "deletes original input file", NotImplementedYetHandler)
+
 
 	return task.LoadTasks(
 		taskTasks,
-		taskClean,
 		/* taskScanAudio, */ taskScanVideo, taskScan,
 		/* taskResolveAudio, */ taskResolveVideo, taskResolve,
 		/* taskRipAudio, */ taskRipVideo, taskRip,
 		/* taskTagAudio, */ taskTagVideo, taskTag,
-		/* taskAudio, */ taskVideo  /*, taskAll*/)
+		taskClean, taskRemoveOriginal,
+		/* taskAudio, */ taskVideo)
 }
