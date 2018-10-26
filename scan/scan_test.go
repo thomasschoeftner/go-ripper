@@ -295,7 +295,7 @@ func TestScanMixedSinglesAndCollections(t *testing.T) {
       "collectionPattern": "\\d+",
       "itemNoPattern" : "\\d+",
       "patterns" : [
-        "<id>.*/season\\s<collection>/<itemno>.*",
+        "<id>.*/season<collection>/<itemno>.*",
         "<id>.*/.*",
         "<id>.*"],
         "allowSpaces" : false,
@@ -322,8 +322,8 @@ func TestScanDeep(t *testing.T) {
       "collectionPattern": "\\d+",
       "itemNoPattern" : "\\d+",
       "patterns" : [
-        "<id>.*/season\\s<collection>/<itemno>.*",
-        "<id>.*/season\\s<collection>/.*/.*/.*/<itemno>.*",
+        "<id>.*/season<collection>/<itemno>.*",
+        "<id>.*/season<collection>/.*/.*/.*/<itemno>.*",
         "<id>.*/.*",
         "<id>.*"],
         "allowSpaces" : false,
@@ -350,7 +350,7 @@ func testScanVideos(t *testing.T, expectedMovies []string, expectedEpisodes map[
 	test.CheckError(t, err)
 
 	for _, result := range results  {
-		fmt.Printf("%v\n", *result)
+		  fmt.Printf("found %v\n", *result)
 	}
 
 	expectedNoOfMatches := len(expectedMovies)

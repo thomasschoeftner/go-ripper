@@ -23,8 +23,8 @@ func TestScanVideo(t *testing.T) {
       "collectionPattern": "\\d+",
       "itemNoPattern" : "\\d+",
       "patterns" : [
-        "<id>.*/season\\s<collection>/<itemno>.*",
-        "<id>.*/season\\s<collection>/.*/.*/.*/<itemno>.*",
+        "<id>.*/season<collection>/<itemno>.*",
+        "<id>.*/season<collection>/.*/.*/.*/<itemno>.*",
         "<id>.*/.*",
         "<id>.*"],
         "allowSpaces" : false,
