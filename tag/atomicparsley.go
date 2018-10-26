@@ -51,17 +51,14 @@ func NewAtomicParsleyVideoTagger(conf *ripper.TagConfig, lazy bool, printf commo
 		return nil, fmt.Errorf("unable to find AtomicParsley binary at \"%s\"\n", path)
 	}
 
-	var errOut io.Writer
+	ap := &atomicParsleyVideoTagger{timeout: timeout, path: path, printf: printf.WithIndent(2)}
 	if apConf.ShowErrorOutput {
-		errOut = os.Stderr
+		ap.errOut = os.Stderr
 	}
-
-	var stdOut io.Writer
-	if apConf.ShowStandardOutput{
-		stdOut = os.Stdout
+	if apConf.ShowStandardOutput {
+		ap.stdOut = os.Stdout
 	}
-
-	return &atomicParsleyVideoTagger{timeout: timeout, path: path, printf: printf.WithIndent(2), errOut: errOut, stdOut: stdOut}, nil
+	return ap, nil
 }
 
 type atomicParsleyVideoTagger struct {
