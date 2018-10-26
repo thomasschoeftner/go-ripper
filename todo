@@ -1,10 +1,23 @@
 (1) fix - use season image as artwork (not series)
 
-(2) rip
+(2) use input folder as output-folder, unless specified by --output option
+
+(3) rip
     ignore already ripped files (MP4 video, MP3 audio, etc.)
     invoke handbrake
 
-(3) go-cli/pipeline
-    add support for non-blocking parallel pipeline using buffered channels for concurrent resolving, ripping, and tagging
+(4) implement remove original tag
 
-(4) add dedicated input file for omdb keys
+(5) add dedicated input file for omdb keys
+
+(6a) go-cli/pipeline
+     add support for non-blocking parallel pipeline using buffered channels for concurrent resolving, ripping, and tagging
+
+(6b) go-cli/pipeline
+     modify sequential pipeline to process a single item entirely (all tasks) before starting the next item even if all items are recovered by single job
+
+(7) collect status per job in global overview grouped by state (finished, tagged, ripped)
+
+(8) introduce explicitly verbose logging
+
+(9) accept graceful shutdown on SIGTERM (Ctrl+c)
