@@ -42,6 +42,74 @@ func TestCreateFolderStructure(t *testing.T) {
 	assert.NotError(CreateFolderStructure(subFolder))
 }
 
+func TestCopy(t *testing.T) {
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
+	const testDataFolder = "testdata"
+
+	t.Run("empty source file", func(t *testing.T){
+		assert := test.AssertOn(t)
+		target := filepath.Join(dir, "empty")
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "empty"), target, false)
+		assert.NotError(err)
+		assert.IntsEqual(0, int(cnt))
+
+		exists, err := Exists(target)
+		assert.NotError(err)
+		assert.True("copying empty file did not create target file")(exists)
+	})
+
+	t.Run("small source file", func(t *testing.T){
+		assert := test.AssertOn(t)
+		target := filepath.Join(dir, "small")
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "small"), target, false)
+		assert.NotError(err)
+		assert.IntsEqual(3, int(cnt))
+
+		exists, err := Exists(target)
+		assert.NotError(err)
+		assert.True("copying small file did not create target file")(exists)
+	})
+
+	t.Run("missing source file", func(t *testing.T){
+		assert := test.AssertOn(t)
+		target := filepath.Join(dir, "missing")
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "missing"), target, false)
+		assert.ExpectError("expected error when copying missing file, but got none")(err)
+		assert.IntsEqual(0, int(cnt))
+
+		exists, err := Exists(target)
+		assert.NotError(err)
+		assert.False("copying missing file did create target file")(exists)
+	})
+
+	t.Run("pre-existing destination file without truncate", func(t *testing.T){
+		assert := test.AssertOn(t)
+		target := filepath.Join(dir, "preexists1")
+		f, _ := os.Create(target)
+		f.Close()
+		exists, err := Exists(target)
+		assert.True("preexisting target file exists")(exists)
+
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "small"), target, false)
+		assert.ExpectError("expected error when copying to preexisting file with truncation disabled")(err)
+		assert.IntsEqual(0, int(cnt))
+	})
+
+	t.Run("pre-existing destination file with truncate", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		target := filepath.Join(dir, "preexists2")
+		f, _ := os.Create(target)
+		f.Close()
+		exists, err := Exists(target)
+		assert.True("preexisting target file exists")(exists)
+
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "small"), target, true)
+		assert.NotError(err)
+		assert.IntsEqual(3, int(cnt))
+	})
+}
+
 func TestExists(t *testing.T) {
 	dir := test.MkTempFolder(t)
 	defer test.RmTempFolder(t, dir)

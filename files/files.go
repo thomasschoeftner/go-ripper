@@ -5,7 +5,35 @@ import (
 	"strings"
 	"fmt"
 	"path/filepath"
+	"io"
 )
+
+func Copy(from, to string, truncate bool) (int64, error) {
+	if srcFileStat, err := os.Stat(from); err != nil {
+		return 0, err
+	} else if !srcFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("cannot copy file \"%s\" - not a regular file", from)
+	}
+	src, err := os.Open(from)
+	if err != nil {
+		return 0, err
+	}
+	defer src.Close()
+
+	fileOptions := os.O_RDWR|os.O_CREATE
+	if truncate {
+		fileOptions = fileOptions|os.O_TRUNC
+	} else {
+		fileOptions = fileOptions|os.O_EXCL
+	}
+	dst, err := os.OpenFile(to, fileOptions, 0666)
+	if err != nil {
+		return 0, err
+	}
+	defer dst.Close()
+
+	return io.Copy(dst, src)
+}
 
 func Exists(path string) (bool, error) {
 	_, err := os.Stat(path)
