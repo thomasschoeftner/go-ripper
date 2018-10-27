@@ -76,32 +76,81 @@ func TestPrepareEvacuation(t *testing.T) {
 
 
 func TestCopyEvacuator(t *testing.T) {
-	t.Run("", func(t *testing.T) {
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
+	source := "./testdata/larger"
 
+	t.Run("copy created while original remains", func(t *testing.T) {
+		evacuate := CopyingEvacuator(dir, nil)
+		evac, err := evacuate(source)
+
+		copy := evac.(*copied).copy
+		assert := test.AssertOn(t)
+		assert.NotError(err)
+		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("copy was not created")(Exists(copy))
+		assert.False("orignal and copy are the same")(source == copy)
 	})
 
-	t.Run("", func(t *testing.T) {
+	t.Run("restore deletes copy and leaves original", func(t *testing.T) {
+		evacuate := CopyingEvacuator(dir, nil)
+		evac, _ := evacuate(source)
 
+		copy := evac.(*copied).copy
+		assert := test.AssertOn(t)
+		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("copy was not created")(Exists(copy))
+
+		assert.NotError(evac.Restore())
+		assert.TrueNotError("original not available after copy and restore")(Exists(source))
+		assert.FalseNotError("copy was not deleted during restore")(Exists(copy))
 	})
 
-	t.Run("", func(t *testing.T) {
+	t.Run("discard deletes copy but leaves original", func(t *testing.T) {
+		evacuate := CopyingEvacuator(dir, nil)
+		evac, _ := evacuate(source)
 
+		copy := evac.(*copied).copy
+		assert := test.AssertOn(t)
+		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("copy was not created")(Exists(copy))
+
+		assert.NotError(evac.Discard())
+		assert.TrueNotError("original not available after copy and restore")(Exists(source))
+		assert.FalseNotError("copy was not deleted during restore")(Exists(copy))
 	})
 
-	t.Run("", func(t *testing.T) {
+	t.Run("move leaves original and moves copy", func(t *testing.T) {
+		evacuate := CopyingEvacuator(dir, nil)
+		evac, _ := evacuate(source)
 
+		copy := evac.(*copied).copy
+		assert := test.AssertOn(t)
+		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("copy was not created")(Exists(copy))
+
+		moved := filepath.Join(dir, "moved")
+		assert.NotError(evac.MoveTo(moved))
+		assert.TrueNotError("original not available after copy and restore")(Exists(source))
+		assert.FalseNotError("copy was not deleted during move")(Exists(copy))
+		assert.TrueNotError("no new copy at location where it was moved")(Exists(moved))
 	})
-
-	t.Run("", func(t *testing.T) {
-
-	})
-
-	t.Run("", func(t *testing.T) {
-
-	})
-
 }
 
 func TestMoveEvacuator(t *testing.T) {
+	t.Run("evacuates file to new location - original location is empty", func(t *testing.T) {
 
+	})
+
+	t.Run("restore moves evacuated back to original location", func(t *testing.T) {
+
+	})
+
+	t.Run("discard deletes evacuated without leaving original", func(t *testing.T) {
+
+	})
+
+	t.Run("move moves evacuated to another location", func(t *testing.T) {
+
+	})
 }

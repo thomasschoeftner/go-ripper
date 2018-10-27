@@ -13,7 +13,7 @@ type EvacuatorFactory func(tempDir string, toReplace map[rune]rune) evacuator
 type evacuator func(filePath string) (evacuated, error)
 type evacuated interface {
 	Restore() error
-	Clean() error
+	Discard() error
 	MoveTo(file string) error
 }
 
@@ -68,7 +68,7 @@ type moved struct {
 func (m *moved) Restore() error {
 	return m.MoveTo(m.original)
 }
-func (m *moved) Clean() error {
+func (m *moved) Discard() error {
 	return os.RemoveAll(filepath.Dir(m.movedTo))
 }
 func (m *moved) MoveTo(file string) error {
@@ -76,7 +76,7 @@ func (m *moved) MoveTo(file string) error {
 	if err != nil {
 		return err
 	}
-	return m.Clean()
+	return m.Discard()
 }
 
 
@@ -102,10 +102,10 @@ type copied struct {
 }
 
 func (c *copied) Restore() error {
-	return c.Clean()
+	return c.Discard()
 }
 
-func (c *copied) Clean() error {
+func (c *copied) Discard() error {
 	return os.RemoveAll(filepath.Dir(c.copy))
 }
 
@@ -114,5 +114,5 @@ func (c *copied) MoveTo(file string) error {
 	if err != nil {
 		return err
 	}
-	return c.Clean()
+	return c.Discard()
 }
