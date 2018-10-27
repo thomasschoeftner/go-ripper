@@ -193,7 +193,7 @@ func TestMoveEvacuator(t *testing.T) {
 	})
 
 	t.Run("move moves evacuated to another location", func(t *testing.T) {
-		src := filepath.Join(dir, "file3")
+		src := filepath.Join(dir, "file4")
 		Copy(someFile, src, false)
 
 		evacuate := MovingEvacuator(dir, nil)
