@@ -138,19 +138,76 @@ func TestCopyEvacuator(t *testing.T) {
 }
 
 func TestMoveEvacuator(t *testing.T) {
-	t.Run("evacuates file to new location - original location is empty", func(t *testing.T) {
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
+	someFile := "./testdata/larger"
 
+	t.Run("evacuates file to new location - original location is empty", func(t *testing.T) {
+		src := filepath.Join(dir, "file1")
+		Copy(someFile, src, false)
+
+		evacuate := MovingEvacuator(dir, nil)
+		evac, err := evacuate(src)
+		m := evac.(*moved)
+
+		assert := test.AssertOn(t)
+		assert.NotError(err)
+		assert.FalseNotError("original still available after move")(Exists(src))
+		assert.TrueNotError("moved file not found")(Exists(m.movedTo))
+		assert.StringsEqual(src, m.original)
 	})
 
 	t.Run("restore moves evacuated back to original location", func(t *testing.T) {
+		src := filepath.Join(dir, "file2")
+		Copy(someFile, src, false)
+
+		evacuate := MovingEvacuator(dir, nil)
+		evac, _ := evacuate(src)
+		m := evac.(*moved)
+
+		assert := test.AssertOn(t)
+		assert.FalseNotError("original still available after move")(Exists(src))
+		assert.TrueNotError("moved file not found")(Exists(m.movedTo))
+
+		assert.NotError(evac.Restore())
+		assert.TrueNotError("original not available after move and restore")(Exists(src))
+		assert.FalseNotError("moved file still exists")(Exists(m.movedTo))
 
 	})
 
 	t.Run("discard deletes evacuated without leaving original", func(t *testing.T) {
+		src := filepath.Join(dir, "file3")
+		Copy(someFile, src, false)
 
+		evacuate := MovingEvacuator(dir, nil)
+		evac, _ := evacuate(src)
+
+		m := evac.(*moved)
+		assert := test.AssertOn(t)
+		assert.FalseNotError("original still available after move")(Exists(src))
+		assert.TrueNotError("moved file not found")(Exists(m.movedTo))
+
+		assert.NotError(evac.Discard())
+		assert.FalseNotError("original available despite moved was discarded")(Exists(src))
+		assert.FalseNotError("moved file still exists")(Exists(m.movedTo))
 	})
 
 	t.Run("move moves evacuated to another location", func(t *testing.T) {
+		src := filepath.Join(dir, "file3")
+		Copy(someFile, src, false)
 
+		evacuate := MovingEvacuator(dir, nil)
+		evac, _ := evacuate(src)
+
+		m := evac.(*moved)
+		assert := test.AssertOn(t)
+		assert.FalseNotError("original still available after move")(Exists(src))
+		assert.TrueNotError("moved file not found")(Exists(m.movedTo))
+
+		moved := filepath.Join(dir, "moved-somewhere-else")
+		assert.NotError(evac.MoveTo(moved))
+		assert.FalseNotError("original available despite moved was discarded")(Exists(src))
+		assert.FalseNotError("moved file still exists")(Exists(m.movedTo))
+		assert.TrueNotError("file is not available at location where it was moved")(Exists(moved))
 	})
 }
