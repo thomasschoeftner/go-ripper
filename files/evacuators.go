@@ -72,11 +72,8 @@ func (m *moved) Discard() error {
 	return os.RemoveAll(filepath.Dir(m.movedTo))
 }
 func (m *moved) MoveTo(file string) error {
-	err := os.Rename(m.movedTo, file)
-	if err != nil {
-		return err
-	}
-	return m.Discard()
+	defer m.Discard()
+	return os.Rename(m.movedTo, file)
 }
 
 
@@ -93,16 +90,17 @@ func CopyingEvacuator(tempDir string, toReplace map[rune]rune) evacuator {
 		if err != nil {
 			return nil, err
 		}
-		return &copied{copy: copyTo}, nil
+		return &copied{original: path, copy: copyTo}, nil
 	}
 }
 
 type copied struct {
+	original string
 	copy string
 }
 
 func (c *copied) Restore() error {
-	return c.Discard()
+	return c.MoveTo(c.original)
 }
 
 func (c *copied) Discard() error {
@@ -110,9 +108,6 @@ func (c *copied) Discard() error {
 }
 
 func (c *copied) MoveTo(file string) error {
-	err := os.Rename(c.copy, file)
-	if err != nil {
-		return err
-	}
-	return c.Discard()
+	defer c.Discard()
+	return os.Rename(c.copy, file)
 }

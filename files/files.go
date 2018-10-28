@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func Copy(from, to string, truncate bool) (int64, error) {
+func Copy(from, to string, append bool) (int64, error) {
 	if srcFileStat, err := os.Stat(from); err != nil {
 		return 0, err
 	} else if !srcFileStat.Mode().IsRegular() {
@@ -20,9 +20,9 @@ func Copy(from, to string, truncate bool) (int64, error) {
 	}
 	defer src.Close()
 
-	fileOptions := os.O_RDWR|os.O_CREATE
-	if truncate {
-		fileOptions = fileOptions|os.O_TRUNC
+	fileOptions := os.O_RDWR|os.O_CREATE|os.O_TRUNC
+	if append {
+		fileOptions = fileOptions|os.O_APPEND
 	} else {
 		fileOptions = fileOptions|os.O_EXCL
 	}
@@ -33,6 +33,40 @@ func Copy(from, to string, truncate bool) (int64, error) {
 	defer dst.Close()
 
 	return io.Copy(dst, src)
+}
+
+const defaultKeepExt = "_keep_"
+func Replace(file, with string) (wasReplaced bool, err error) {
+	defer os.Remove(WithExtension(file, defaultKeepExt))
+	return ReplaceButKeepOriginal(file, with, defaultKeepExt)
+}
+
+func ReplaceButKeepOriginal(file, with, keepExtension string) (wasReplaced bool, e error) {
+	if 0 == len(keepExtension) {
+		return false, fmt.Errorf("cannot replace file, but keep original with the same name (keep extension is empty)")
+	}
+
+	println("replace", file, "->", with)
+
+	originalExists, err := Exists(file)
+	if err != nil {
+		return false, err
+	}
+	if replacementExists, err := Exists(with); err != nil {
+		return false, err
+	} else if !replacementExists {
+		return false, fmt.Errorf("cannot replace file \"%s\" with MISSING file \"%s\"", file, with)
+	}
+
+	if originalExists {
+		err = os.Rename(file, WithExtension(file, keepExtension))
+		if err != nil {
+			return false, err
+		}
+	}
+
+	_, err = Copy(with, file, false)
+	return originalExists, err
 }
 
 func Exists(path string) (bool, error) {

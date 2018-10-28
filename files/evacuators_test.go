@@ -78,60 +78,69 @@ func TestPrepareEvacuation(t *testing.T) {
 func TestCopyEvacuator(t *testing.T) {
 	dir := test.MkTempFolder(t)
 	defer test.RmTempFolder(t, dir)
-	source := "./testdata/larger"
+	largeFile := filepath.Join(dir, "larger")
+	emptyFile := filepath.Join(dir, "empty")
+	Copy("./testdata/larger", largeFile, false)
+	Copy("./testdata/empty", emptyFile, false)
 
 	t.Run("copy created while original remains", func(t *testing.T) {
 		evacuate := CopyingEvacuator(dir, nil)
-		evac, err := evacuate(source)
+		evac, err := evacuate(largeFile)
 
 		copy := evac.(*copied).copy
 		assert := test.AssertOn(t)
 		assert.NotError(err)
-		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("original not available after copy")(Exists(largeFile))
 		assert.TrueNotError("copy was not created")(Exists(copy))
-		assert.False("orignal and copy are the same")(source == copy)
+		assert.False("orignal and copy are the same")(largeFile == copy)
 	})
 
-	t.Run("restore deletes copy and leaves original", func(t *testing.T) {
+	t.Run("restore replaces original with copy", func(t *testing.T) {
 		evacuate := CopyingEvacuator(dir, nil)
-		evac, _ := evacuate(source)
+		evac, _ := evacuate(largeFile)
+		originalSize := sizeOf(largeFile)
 
 		copy := evac.(*copied).copy
 		assert := test.AssertOn(t)
-		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("original not available after copy")(Exists(largeFile))
 		assert.TrueNotError("copy was not created")(Exists(copy))
 
+		//modify (aka replace) evacuated file
+		assert.TrueNotError("failed to replace (modify) evacuated file")(Replace(copy, emptyFile))
+
 		assert.NotError(evac.Restore())
-		assert.TrueNotError("original not available after copy and restore")(Exists(source))
+		assert.TrueNotError("original not available after copy and restore")(Exists(largeFile))
 		assert.FalseNotError("copy was not deleted during restore")(Exists(copy))
+		newSize := sizeOf(largeFile)
+		assert.Falsef("file size must differ after evacuation (original=%d, evacuated=%d", originalSize, newSize)(originalSize == newSize)
 	})
 
 	t.Run("discard deletes copy but leaves original", func(t *testing.T) {
 		evacuate := CopyingEvacuator(dir, nil)
-		evac, _ := evacuate(source)
+		evac, _ := evacuate(largeFile)
 
 		copy := evac.(*copied).copy
 		assert := test.AssertOn(t)
-		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("original not available after copy")(Exists(largeFile))
 		assert.TrueNotError("copy was not created")(Exists(copy))
 
 		assert.NotError(evac.Discard())
-		assert.TrueNotError("original not available after copy and restore")(Exists(source))
+		assert.TrueNotError("original not available after copy and restore")(Exists(largeFile))
 		assert.FalseNotError("copy was not deleted during restore")(Exists(copy))
 	})
 
 	t.Run("move leaves original and moves copy", func(t *testing.T) {
 		evacuate := CopyingEvacuator(dir, nil)
-		evac, _ := evacuate(source)
+		evac, _ := evacuate(largeFile)
 
 		copy := evac.(*copied).copy
 		assert := test.AssertOn(t)
-		assert.TrueNotError("original not available after copy")(Exists(source))
+		assert.TrueNotError("original not available after copy")(Exists(largeFile))
 		assert.TrueNotError("copy was not created")(Exists(copy))
 
 		moved := filepath.Join(dir, "moved")
 		assert.NotError(evac.MoveTo(moved))
-		assert.TrueNotError("original not available after copy and restore")(Exists(source))
+		assert.TrueNotError("original not available after copy and restore")(Exists(largeFile))
 		assert.FalseNotError("copy was not deleted during move")(Exists(copy))
 		assert.TrueNotError("no new copy at location where it was moved")(Exists(moved))
 	})
@@ -140,11 +149,14 @@ func TestCopyEvacuator(t *testing.T) {
 func TestMoveEvacuator(t *testing.T) {
 	dir := test.MkTempFolder(t)
 	defer test.RmTempFolder(t, dir)
-	someFile := "./testdata/larger"
+	largeFile := filepath.Join(dir, "larger")
+	emptyFile := filepath.Join(dir, "empty")
+	Copy("./testdata/larger", largeFile, false)
+	Copy("./testdata/empty", emptyFile, false)
 
 	t.Run("evacuates file to new location - original location is empty", func(t *testing.T) {
 		src := filepath.Join(dir, "file1")
-		Copy(someFile, src, false)
+		Copy(largeFile, src, false)
 
 		evacuate := MovingEvacuator(dir, nil)
 		evac, err := evacuate(src)
@@ -159,7 +171,7 @@ func TestMoveEvacuator(t *testing.T) {
 
 	t.Run("restore moves evacuated back to original location", func(t *testing.T) {
 		src := filepath.Join(dir, "file2")
-		Copy(someFile, src, false)
+		Copy(largeFile, src, false)
 
 		evacuate := MovingEvacuator(dir, nil)
 		evac, _ := evacuate(src)
@@ -177,7 +189,7 @@ func TestMoveEvacuator(t *testing.T) {
 
 	t.Run("discard deletes evacuated without leaving original", func(t *testing.T) {
 		src := filepath.Join(dir, "file3")
-		Copy(someFile, src, false)
+		Copy(largeFile, src, false)
 
 		evacuate := MovingEvacuator(dir, nil)
 		evac, _ := evacuate(src)
@@ -194,7 +206,7 @@ func TestMoveEvacuator(t *testing.T) {
 
 	t.Run("move moves evacuated to another location", func(t *testing.T) {
 		src := filepath.Join(dir, "file4")
-		Copy(someFile, src, false)
+		Copy(largeFile, src, false)
 
 		evacuate := MovingEvacuator(dir, nil)
 		evac, _ := evacuate(src)

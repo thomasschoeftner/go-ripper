@@ -7,7 +7,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"math"
 )
+
+func sizeOf(fileName string) int {
+	stats, err := os.Stat(fileName)
+	if err != nil {
+		return -1
+	}
+	if stats.Size() > math.MaxInt32 {
+		return -2
+	}
+	return int(stats.Size())
+}
+
 
 func TestCreateFolder(t *testing.T) {
 	dir := test.MkTempFolder(t)
@@ -109,6 +122,68 @@ func TestCopy(t *testing.T) {
 		assert.IntsEqual(3, int(cnt))
 	})
 }
+
+func TestReplace(t *testing.T) {
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
+
+	_cnt := 0
+	setup := func(t *testing.T) (*test.Assertion, string, string) {
+		_cnt = _cnt + 1
+		assert := test.AssertOn(t)
+		o := filepath.Join(dir, fmt.Sprintf("original_%d", _cnt))
+		r := filepath.Join(dir, fmt.Sprintf("replacement_%d", _cnt))
+		assert.AnythingNotError(Copy("./testdata/small", o, false))
+		assert.AnythingNotError(Copy("./testdata/larger", r, false))
+		return assert, o, r
+	}
+
+	t.Run("replace file, keep replacement, but do not keep original", func(t* testing.T) {
+		assert, o, r := setup(t)
+		originalSize := sizeOf(o)
+		assert.TrueNotErrorf("did not replace \"%s\" with \"%s\"", o, r)(Replace(o, r))
+		assert.TrueNotErrorf("replacement file \"%s\" does not exist anymore", r)(Exists(r))
+		newSize := sizeOf(o)
+		assert.IntsEqual(newSize, sizeOf(r))
+		assert.False("replaced file is still of same size")(newSize == originalSize)
+	})
+
+	t.Run("replace file, but keep original", func(t* testing.T) {
+		assert, o, r := setup(t)
+		originalSize := sizeOf(o)
+		assert.TrueNotErrorf("did not replace \"%s\" with \"%s\"", o, r)(ReplaceButKeepOriginal(o, r, "backup"))
+		assert.TrueNotErrorf("replacement file \"%s\" does not exist anymore", r)(Exists(r))
+		assert.TrueNotErrorf("replacement file \"%s\" does not exist anymore", r)(Exists(r))
+		newSize := sizeOf(o)
+		backup := WithExtension(o, "backup")
+		assert.TrueNotErrorf("backup file \"%s\" missing", backup)(Exists(backup))
+		assert.IntsEqual(newSize, sizeOf(r))
+		assert.IntsEqual(originalSize, sizeOf(backup))
+	})
+
+	t.Run("check for empty keep-file extension", func(t* testing.T) {
+		assert, o, r := setup(t)
+		replaced, err := ReplaceButKeepOriginal(o, r,"")
+		assert.ExpectError("expect error when trying to replace file but keep backup with identical name")(err)
+		assert.False("should not replace file if keep-extension is missing")(replaced)
+	})
+
+	t.Run("fail to replace with non-existent file", func(t* testing.T) {
+		assert, o, r := setup(t)
+		assert.NotError(os.Remove(r))
+		replaced, err := ReplaceButKeepOriginal(o, r,"backup")
+		assert.ExpectError("expect error when trying to replace file with non-existing file")(err)
+		assert.False("should not replace file with non-existing")(replaced)
+	})
+
+	t.Run("silently replace non-existent file", func(t* testing.T) {
+		assert, o, r := setup(t)
+		assert.NotError(os.Remove(o))
+		assert.FalseNotError("should not return true if replaced file did not exist")(ReplaceButKeepOriginal(o, r,"backup"))
+		assert.IntsEqual(sizeOf(o), sizeOf(r))
+	})
+}
+
 
 func TestExists(t *testing.T) {
 	dir := test.MkTempFolder(t)
