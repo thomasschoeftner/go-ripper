@@ -81,6 +81,86 @@ func TestPrepareEvacuation(t *testing.T) {
 	})
 }
 
+func TestMoving(t *testing.T) {
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
+
+	t.Run("successful moving", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		source := filepath.Join(dir, "source1")
+		assert.AnythingNotError(Copy("./testdata/small", source, false))
+		destination := filepath.Join(dir, "move1")
+
+		evacuated, err := Moving(source, destination)
+		assert.NotError(err)
+		assert.FalseNotError("expected move source file not to exist anymore")(Exists(source))
+		assert.TrueNotError("expected move destination file to exist")(Exists(destination))
+		assert.StringsEqual(source, evacuated.original)
+		assert.StringsEqual(destination, evacuated.evacuatedTo)
+	})
+
+	t.Run("move of missing source", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		destination := filepath.Join(dir, "move2")
+		evacuated, err := Moving(filepath.Join(dir, ".missing"), destination)
+		assert.ExpectError("expected error when moving non-existing file")(err)
+		assert.True("expect evacuated to be nil after error")(evacuated == nil)
+	})
+
+	t.Run("overwrite during move", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		source := filepath.Join(dir, "source3")
+		assert.AnythingNotError(Copy("./testdata/small", source, false))
+		destination := filepath.Join(dir, "move3")
+		Copy("./testdata/larger", destination, false) //pre-create file
+		originalSize := sizeOf(destination)
+
+		evacuated, err := Moving(source, destination)
+		assert.NotError(err)
+		assert.FalseNotError("expected move source file not to exist anymore")(Exists(source))
+		assert.TrueNotError("expected move destination file to exist")(Exists(evacuated.evacuatedTo))
+		assert.StringsEqual(source, evacuated.original)
+		assert.StringsEqual(destination, evacuated.evacuatedTo)
+		newSize := sizeOf(evacuated.evacuatedTo)
+		assert.True("expected destination file to have different size after overwriting ig")(newSize != originalSize)
+	})
+}
+
+func TestCopying(t *testing.T) {
+	dir := test.MkTempFolder(t)
+	defer test.RmTempFolder(t, dir)
+
+	t.Run("successful copying", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		source := "./testdata/small"
+		destination := filepath.Join(dir, "copy1")
+		evacuated, err := Copying(source, destination)
+		assert.NotError(err)
+		assert.TrueNotError("expected copy source file to exist")(Exists(source))
+		assert.TrueNotError("expected copy destination file to exist")(Exists(destination))
+		assert.StringsEqual(source, evacuated.original)
+		assert.StringsEqual(destination, evacuated.evacuatedTo)
+	})
+
+	t.Run("copy of missing source", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		destination := filepath.Join(dir, "copy2")
+		evacuated, err := Copying(".missing", destination)
+		assert.ExpectError("expected error when copying non-existing file")(err)
+		assert.True("expect evacuated to be nil after error")(evacuated == nil)
+	})
+
+	t.Run("copy to pre-existing destination", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		source := "./testdata/small"
+		destination := filepath.Join(dir, "copy3")
+		Copy(source, destination, false) //pre-create file
+
+		evacuated, err := Copying(source, destination)
+		assert.ExpectError("expected error when overwriting pre-existing file")(err)
+		assert.True("expect evacuated to be nil after error")(evacuated == nil)
+	})
+}
 
 //func TestCopyEvacuator(t *testing.T) {
 //	dir := test.MkTempFolder(t)
