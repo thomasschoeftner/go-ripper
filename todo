@@ -25,3 +25,5 @@
 (11) add validation not to use workDir or repoDir as target folder
 
 (12) improve escaping mechanism in files.evacuator and tag.tagvideo
+
+(13) introduce flexible naming facility for tagged artifacts

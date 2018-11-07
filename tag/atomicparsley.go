@@ -14,7 +14,8 @@ import (
 
 const CONF_ATOMICPARSLEY_TAGGER = "atomicparsley"
 const (
-	paramOutput = "-o"
+	paramOutputFile = "-o"
+	argumentOverwrite = "--overWrite"
 
 	paramTitle = "--title"
 	paramYear = "--year"
@@ -70,21 +71,28 @@ type atomicParsleyVideoTagger struct {
 }
 
 func (ap *atomicParsleyVideoTagger) TagMovie(inFile string, outFile string, id string, title string, year string, posterPath string) error {
-	ap.printf("AtomicParsley tags {id=%s, title=%s, year=%s, image=%s}\n", id, title, year, posterPath)
-	ap.printf("-> write to \"%s\"\n", outFile)
+	//ap.printf("AtomicParsley tags \"%s\"\n", inFile)
+	//ap.printf("using {id=%s, title=%s, year=%s, image=%s}\n", id, title, year, posterPath)
+	//ap.printf("-> write to \"%s\"\n", outFile)
 	cmd := cli.Command(ap.path, ap.timeout).WithQuotes(" ", '"').
 		WithArgument(inFile).
 		WithParam(paramTitle, title, "").
 		WithParam(paramPoster, posterPath, "").
-		WithParam(paramYear, year, "").
-		WithParam(paramOutput, outFile, "")
+		WithParam(paramYear, year, "")
+	if inFile == outFile {
+		cmd = cmd.WithArgument(argumentOverwrite)
+	} else {
+		cmd = cmd.WithParam(paramOutputFile, outFile, "")
+	}
+
 	//ap.printf(">>>> %s\n", cmd.String())
 	return cmd.ExecuteSync(ap.stdOut, ap.errOut)
 }
 
 func (ap *atomicParsleyVideoTagger) TagEpisode(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error {
-	ap.printf("AtomicParsley tags {id=%s, series=%s, season=%d, episode=%d, title=%s, year=%s, image=%s}\n", id, series, season, episode, title, year, posterPath)
-	ap.printf("-> write to \"%s\"\n", outFile)
+	//ap.printf("AtomicParsley tags \"%s\"\n", inFile)
+	//ap.printf("using {id=%s, series=%s, season=%d, episode=%d, title=%s, year=%s, image=%s}\n", id, series, season, episode, title, year, posterPath)
+	//ap.printf("-> write to \"%s\"\n", outFile)
 	cmd := cli.Command(ap.path, ap.timeout).WithQuotes(" ", '"').
 		WithArgument(inFile).
 		WithParam(paramTitle, title, "").
@@ -93,8 +101,12 @@ func (ap *atomicParsleyVideoTagger) TagEpisode(inFile string, outFile string, id
 		WithParam(paramSeriesName, series, "").
 		WithParam(paramEpisode, strconv.Itoa(episode), "").
 		WithParam(paramSeason, strconv.Itoa(season), "").
-		WithParam(paramEpisodeName, title, "").
-		WithParam(paramOutput, outFile, "")
+		WithParam(paramEpisodeName, title, "")
+	if inFile == outFile {
+		cmd = cmd.WithArgument(argumentOverwrite)
+	} else {
+		cmd = cmd.WithParam(paramOutputFile, outFile, "")
+	}
 	//ap.printf(">>>> %s\n", cmd.String())
 	return cmd.ExecuteSync(ap.stdOut, ap.errOut)
 }

@@ -77,7 +77,6 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 		}
 
 		dst := buildDestinationPath(ctx.OutputDir, subPathElems, invalidFileNameChars)
-		println("movie output to: ", dst)
 
 		//move evacuated file to output folder
 		if err := files.CreateFolderStructure(filepath.Dir(dst)); err != nil {
