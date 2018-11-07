@@ -20,7 +20,7 @@ func (e *Evacuated) Restore() error {
 	return e.MoveTo(e.original)
 }
 func (e *Evacuated) Discard() error {
-	return os.RemoveAll(filepath.Dir(e.evacuatedTo))
+	return os.Remove(e.evacuatedTo)
 }
 func (e *Evacuated) MoveTo(file string) error {
 	defer e.Discard()

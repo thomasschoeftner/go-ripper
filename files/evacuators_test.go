@@ -186,27 +186,26 @@ func TestEvacuated(t *testing.T) {
 		assert.FalseNotErrorf("expected Evacuated file \"%s\" to be gone after restoring back to \"%s\"", evacuated.evacuatedTo, evacuated.original)(Exists(evacuated.evacuatedTo))
 	})
 
-	t.Run("delete all files in evacuation folder and folder itself", func(t *testing.T) {
+	t.Run("delete evacuated file but leave temp-dir", func(t *testing.T) {
 		assert, dir, evacuated := setup(t)
 		defer test.RmTempFolder(t, dir)
 
 		//create extra dummz files in evacuation folder
 		evacDir := filepath.Dir(evacuated.evacuatedTo)
-		extraFile1 := filepath.Join(evacDir, "file1")
-		extraFile2 := filepath.Join(evacDir, "file2")
-		assert.AnythingNotError(Copy("./testdata/empty.jpg", extraFile1, false))
-		assert.AnythingNotError(Copy("./testdata/small.tiny", extraFile2, false))
+		extraFile := filepath.Join(evacDir, "file1")
+		assert.AnythingNotError(Copy("./testdata/empty.jpg", extraFile, false))
 
 		// check preconditions
 		assert.TrueNotErrorf("expected Evacuated file \"%s\" to exist before discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
-		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile1)(Exists(extraFile1))
-		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile2)(Exists(extraFile2))
+		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile)(Exists(extraFile))
 
 		assert.NotError(evacuated.Discard())
 
 		// validate impact of discard operation
-		assert.FalseNotErrorf("expected evacuation directory \"%s\" to be gone after discard", evacDir)(Exists(evacDir))
+		assert.TrueNotErrorf("expected evacuation directory \"%s\" to still exist after discard", evacDir)(Exists(evacDir))
+		assert.FalseNotErrorf("expect evacuated file \"%s\" to be gone after discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
 		assert.TrueNotErrorf("expected original file \"%s\" to still exist after discard", evacuated.original)(Exists(evacuated.original))
+		assert.TrueNotErrorf("expected extra file \"%s\" to still exist after discard", extraFile)(Exists(extraFile))
 	})
 
 	t.Run("move Evacuated file and discard evac folder", func(t *testing.T) {
@@ -215,22 +214,18 @@ func TestEvacuated(t *testing.T) {
 
 		//create extra dummz files in evacuation folder
 		evacDir := filepath.Dir(evacuated.evacuatedTo)
-		extraFile1 := filepath.Join(evacDir, "file1")
-		extraFile2 := filepath.Join(evacDir, "file2")
-		assert.AnythingNotError(Copy("./testdata/empty.jpg", extraFile1, false))
-		assert.AnythingNotError(Copy("./testdata/small.tiny", extraFile2, false))
 
 		// check preconditions
 		assert.TrueNotErrorf("expected Evacuated file \"%s\" to exist before discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
-		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile1)(Exists(extraFile1))
-		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile2)(Exists(extraFile2))
 
 		movedTo := filepath.Join(dir, "moved")
 		assert.NotError(evacuated.MoveTo(movedTo))
 
 		// validate impact of discard operation
-		assert.FalseNotErrorf("expected evacuation directory \"%s\" to be gone after move", evacDir)(Exists(evacDir))
-		assert.TrueNotErrorf("expected original file \"%s\" to still exist after move", evacuated.original)(Exists(evacuated.original))
+
+		assert.TrueNotErrorf("expected evacuation directory \"%s\" to still exist after discard", evacDir)(Exists(evacDir))
+		assert.FalseNotErrorf("expect evacuated file \"%s\" to be gone after discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
+		assert.TrueNotErrorf("expected original file \"%s\" to still exist after discard", evacuated.original)(Exists(evacuated.original))
 		assert.TrueNotErrorf("expected moved file \"%s\" to exist after move", movedTo)(Exists(movedTo))
 	})
 }
