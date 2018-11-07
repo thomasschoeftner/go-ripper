@@ -20,6 +20,7 @@ type VideoTagger interface {
 }
 
 var NewVideoTagger func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (VideoTagger, error)
+const tagTempFolder = ".tmp"
 
 func TagVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
@@ -34,7 +35,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 
 	expectedExtension := conf.Output.Video
 	invalidFileNameChars := conf.Output.InvalidCharactersInFileName
-	evacuate := files.PrepareEvacuation(filepath.Join(conf.WorkDirectory, ".tmp")) //replace spaces with underscores
+	evacuate := files.PrepareEvacuation(filepath.Join(conf.WorkDirectory, tagTempFolder)) //replace spaces with underscores
 
 	return func(job task.Job) ([]task.Job, error) {
 		target := ripper.GetTargetFileFromJob(job)
@@ -170,6 +171,6 @@ func findInputOutputFiles(ti targetinfo.TargetInfo, workDir string, expectedExte
 	if extension == expectedExtension {
 		return filepath.Join(ti.GetFolder(), ti.GetFile()), preprocessed, nil
 	} else {
-		return "", "", errors.New("unable to find appropriate input inFile for meta-info tagging")
+		return "", "", fmt.Errorf("unable to find appropriate input file (\"%s\") for meta-info tagging", expectedExtension)
 	}
 }
