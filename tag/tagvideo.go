@@ -34,15 +34,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 
 	expectedExtension := conf.Output.Video
 	invalidFileNameChars := conf.Output.InvalidCharactersInFileName
-
-	toEscape := map[rune]rune {
-		' ' : '_',
-		'?' : 'q',
-		'!' : 'e',
-		':' : 'c',
-		';' : 's',
-		'ß' : 's'}
-	evacuate := files.PrepareEvacuation(filepath.Join(conf.WorkDirectory, ".tmp"), toEscape) //replace spaces with underscores
+	evacuate := files.PrepareEvacuation(filepath.Join(conf.WorkDirectory, ".tmp")) //replace spaces with underscores
 
 	return func(job task.Job) ([]task.Job, error) {
 		target := ripper.GetTargetFileFromJob(job)
@@ -51,6 +43,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+
 		in, out, err := findInputOutputFiles(ti, conf.WorkDirectory, expectedExtension)
 		if err != nil {
 			return nil, err
@@ -63,29 +56,33 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 			evacuated, err = evacuate(in).By(files.Moving)
 		}
 		if err != nil {
+			return nil, err
 		}
 		defer evacuated.Discard()
 
-		var outputFileName string
+		var subPathElems []string
 		switch ti.GetType() {
 		case targetinfo.TARGETINFO_TYPE_MOVIE:
-			outputFileName, err = tagMovie(tagger, ti.(*targetinfo.Movie), conf.MetaInfoRepo, evacuated.Path())
+			subPathElems, err = tagMovie(tagger, ti.(*targetinfo.Movie), conf.MetaInfoRepo, evacuated.Path())
 		case targetinfo.TARGETINFO_TPYE_EPISODE:
-			outputFileName, err = tagEpisode(tagger, ti.(*targetinfo.Episode), conf.MetaInfoRepo, evacuated.Path())
+			subPathElems, err = tagEpisode(tagger, ti.(*targetinfo.Episode), conf.MetaInfoRepo, evacuated.Path())
 		default:
 			err = fmt.Errorf("unknown type of video target-info found: %s", ti.GetType())
 		}
 		if err != nil {
 			return nil, err
 		}
-		outputFileName = filepath.Join(ctx.OutputDir, commons.RemoveCharacters(outputFileName, invalidFileNameChars))  // fix file path
+		if 0 == len(subPathElems) {
+			return nil, fmt.Errorf("empty output path returned")
+		}
 
-		println("evacuated", in, "to", evacuated.Path(), "will move to",  outputFileName) //TODO remove me
+		dst := buildDestinationPath(ctx.OutputDir, subPathElems, invalidFileNameChars)
+		println("movie output to: ", dst)
 
 		//move evacuated file to output folder
-		if err := files.CreateFolderStructure(filepath.Dir(outputFileName)); err != nil {
+		if err := files.CreateFolderStructure(filepath.Dir(dst)); err != nil {
 			return nil, err}
-		err = evacuated.MoveTo(outputFileName)
+		err = evacuated.MoveTo(dst)
 		if err != nil {
 			return nil, err
 		}
@@ -93,56 +90,68 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 	}
 }
 
-func tagMovie(tagger VideoTagger, ti *targetinfo.Movie, metaInfoRepo string, inputFile string) (string, error) {
+func buildDestinationPath(outputDir string, pathElems []string, invalidFileNameChars string) string {
+	dstPathElems := []string {outputDir}
+	for _, pathElem := range pathElems {
+		dstPathElems = append(dstPathElems, commons.RemoveCharacters(pathElem, invalidFileNameChars))
+	}
+
+	return filepath.Join(dstPathElems...)
+}
+
+func tagMovie(tagger VideoTagger, ti *targetinfo.Movie, metaInfoRepo string, inputFile string) ([]string, error) {
+	noPath := []string{}
 	movieMi := video.MovieMetaInfo{}
 	err := metainfo.ReadMetaInfo(video.MovieFileName(metaInfoRepo, ti.GetId()), &movieMi)
 	if err != nil {
-		return "", err
+		return noPath, err
 	}
 	if 0 == len(movieMi.Id) {
-		return "", fmt.Errorf("could not find meta-info for movie: %s\n", ti.String())
+		return noPath, fmt.Errorf("could not find meta-info for movie: %s\n", ti.String())
 	}
 	imgFile := metainfo.ImageFileName(metaInfoRepo, movieMi.Id, files.GetExtension(movieMi.Poster))
 	//TODO check if missing poster image is actually an error
 
 	err = tagger.TagMovie(inputFile, inputFile, movieMi.Id, movieMi.Title, movieMi.Year, imgFile)
 	if err != nil {
-		return "", err
+		return noPath, err
 	}
 
 	_, ext := files.SplitExtension(inputFile)
-	return files.WithExtension(movieMi.Title, ext), nil
+	return []string{files.WithExtension(movieMi.Title, ext)}, nil
 }
 
-const templateEpisodeFilename = "%s-s%de%d-%s"
-func tagEpisode(tagger VideoTagger, ti *targetinfo.Episode, metaInfoRepo string, inputFile string) (string, error) {
+const templateEpisodeFilename = "%s-s%02de%02d-%s"
+
+func tagEpisode(tagger VideoTagger, ti *targetinfo.Episode, metaInfoRepo string, inputFile string) ([]string, error) {
+	noPath := []string{}
 	episodeMi := video.EpisodeMetaInfo{}
 	err := metainfo.ReadMetaInfo(video.EpisodeFileName(metaInfoRepo, ti.Id, ti.Season, ti.Episode), &episodeMi)
 	if err != nil {
-		return "", err
+		return noPath, err
 	}
 	if 0 == len(episodeMi.Id) {
-		return "", fmt.Errorf("could not find meta-info for episode: %s\n", ti.String())
+		return noPath, fmt.Errorf("could not find meta-info for episode: %s\n", ti.String())
 	}
 
 	seriesMi := video.SeriesMetaInfo{}
 	err = metainfo.ReadMetaInfo(video.SeriesFileName(metaInfoRepo, ti.Id), &seriesMi)
 	if err != nil {
-		return "", err
+		return noPath, err
 	}
 	if 0 == len(seriesMi.Id) {
-		return "", fmt.Errorf("could not find meta-info for series: %s\n", ti.String())
+		return noPath, fmt.Errorf("could not find meta-info for series: %s\n", ti.String())
 	}
 	imgFile := metainfo.ImageFileName(metaInfoRepo, seriesMi.Id, files.GetExtension(seriesMi.Poster))
 
 	err = tagger.TagEpisode(inputFile, inputFile, seriesMi.Id, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title, episodeMi.Year, imgFile)
 	if err != nil {
-		return "", err
+		return noPath, err
 	}
 
 	_, ext := files.SplitExtension(inputFile)
-	fname := files.WithExtension(fmt.Sprintf(templateEpisodeFilename, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title), ext)
-	return filepath.Join(seriesMi.Title, strconv.Itoa(episodeMi.Season), fname), nil
+	fName := files.WithExtension(fmt.Sprintf(templateEpisodeFilename, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title), ext)
+	return []string {seriesMi.Title, strconv.Itoa(episodeMi.Season), fName}, nil
 }
 
 func findInputOutputFiles(ti targetinfo.TargetInfo, workDir string, expectedExtension string) (string, string, error) {
