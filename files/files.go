@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"io"
+	"sort"
 )
 
 func Copy(from, to string, append bool) (int64, error) {
@@ -33,6 +34,20 @@ func Copy(from, to string, append bool) (int64, error) {
 	defer dst.Close()
 
 	return io.Copy(dst, src)
+}
+
+func GetDirectoryContents(dir string) ([] string, error) {
+	f, err := os.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	names, err := f.Readdirnames(-1)
+	f.Close()
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(names)
+	return names, nil
 }
 
 const defaultKeepExt = "_keep_"
