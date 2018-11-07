@@ -27,11 +27,7 @@ type TargetInfo interface {
 }
 
 func fileName(ti TargetInfo) string {
-	return appendFileExtension(ti.GetFile())
-}
-
-func appendFileExtension(targetFileName string) string {
-	return fmt.Sprintf("%s.%s", targetFileName, targetinfo_file_extension)
+	return files.WithExtension(ti.GetFile(), targetinfo_file_extension)
 }
 
 type Typed struct {
@@ -110,7 +106,7 @@ func IsEpisode(ti TargetInfo) bool {
 func ForTarget(workDir string, targetPath string) (TargetInfo, error) {
 	targetFolder, targetFile := filepath.Split(targetPath)
 
-	workDir, err := ripper.GetWorkPathForTargetFileFolder(workDir, targetFolder)
+	workDir, err := ripper.GetWorkPathForTargetFolder(workDir, targetFolder)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +116,7 @@ func ForTarget(workDir string, targetPath string) (TargetInfo, error) {
 
 // read TargetInfo with specific filename
 func read(workFolder string, targetFileName string) (TargetInfo, error) {
-	targetInfoFile := filepath.Join(workFolder, appendFileExtension(targetFileName))
+	targetInfoFile := filepath.Join(workFolder, files.WithExtension(targetFileName, targetinfo_file_extension))
 	jsonRaw, err := ioutil.ReadFile(targetInfoFile)
 	if err != nil {
 		return nil, err

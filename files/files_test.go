@@ -60,28 +60,28 @@ func TestCopy(t *testing.T) {
 	defer test.RmTempFolder(t, dir)
 	const testDataFolder = "testdata"
 
-	t.Run("empty source file", func(t *testing.T){
+	t.Run("empty.jpg source file", func(t *testing.T){
 		assert := test.AssertOn(t)
-		target := filepath.Join(dir, "empty")
-		cnt, err := Copy(filepath.Join(".", testDataFolder, "empty"), target, false)
+		target := filepath.Join(dir, "empty.jpg")
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "empty.jpg"), target, false)
 		assert.NotError(err)
 		assert.IntsEqual(0, int(cnt))
 
 		exists, err := Exists(target)
 		assert.NotError(err)
-		assert.True("copying empty file did not create target file")(exists)
+		assert.True("copying empty.jpg file did not create target file")(exists)
 	})
 
-	t.Run("small source file", func(t *testing.T){
+	t.Run("small.tiny source file", func(t *testing.T){
 		assert := test.AssertOn(t)
-		target := filepath.Join(dir, "small")
-		cnt, err := Copy(filepath.Join(".", testDataFolder, "small"), target, false)
+		target := filepath.Join(dir, "small.tiny")
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "small.tiny"), target, false)
 		assert.NotError(err)
 		assert.IntsEqual(3, int(cnt))
 
 		exists, err := Exists(target)
 		assert.NotError(err)
-		assert.True("copying small file did not create target file")(exists)
+		assert.True("copying small.tiny file did not create target file")(exists)
 	})
 
 	t.Run("missing source file", func(t *testing.T){
@@ -104,7 +104,7 @@ func TestCopy(t *testing.T) {
 		exists, err := Exists(target)
 		assert.True("preexisting target file exists")(exists)
 
-		cnt, err := Copy(filepath.Join(".", testDataFolder, "small"), target, false)
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "small.tiny"), target, false)
 		assert.ExpectError("expected error when copying to preexisting file with truncation disabled")(err)
 		assert.IntsEqual(0, int(cnt))
 	})
@@ -117,7 +117,7 @@ func TestCopy(t *testing.T) {
 		exists, err := Exists(target)
 		assert.True("preexisting target file exists")(exists)
 
-		cnt, err := Copy(filepath.Join(".", testDataFolder, "small"), target, true)
+		cnt, err := Copy(filepath.Join(".", testDataFolder, "small.tiny"), target, true)
 		assert.NotError(err)
 		assert.IntsEqual(3, int(cnt))
 	})
@@ -133,8 +133,8 @@ func TestReplace(t *testing.T) {
 		assert := test.AssertOn(t)
 		o := filepath.Join(dir, fmt.Sprintf("original_%d", _cnt))
 		r := filepath.Join(dir, fmt.Sprintf("replacement_%d", _cnt))
-		assert.AnythingNotError(Copy("./testdata/small", o, false))
-		assert.AnythingNotError(Copy("./testdata/larger", r, false))
+		assert.AnythingNotError(Copy("./testdata/small.tiny", o, false))
+		assert.AnythingNotError(Copy("./testdata/larger.png", r, false))
 		return assert, o, r
 	}
 
@@ -161,7 +161,7 @@ func TestReplace(t *testing.T) {
 		assert.IntsEqual(originalSize, sizeOf(backup))
 	})
 
-	t.Run("check for empty keep-file extension", func(t* testing.T) {
+	t.Run("check for empty.jpg keep-file extension", func(t* testing.T) {
 		assert, o, r := setup(t)
 		replaced, err := ReplaceButKeepOriginal(o, r,"")
 		assert.ExpectError("expect error when trying to replace file but keep backup with identical name")(err)
@@ -215,7 +215,7 @@ func TestGetExtension(t *testing.T) {
 		test.AssertOn(t).StringsEqual("def", GetExtension("s/b/c....def"))
 	})
 
-	t.Run("return empty string if no '.'", func (t* testing.T) {
+	t.Run("return empty.jpg string if no '.'", func (t* testing.T) {
 		test.AssertOn(t).StringsEqual("", GetExtension("s/b/cdef"))
 	})
 }

@@ -51,7 +51,7 @@ func TestResolveVideo(t *testing.T) {
 	// create target info files
 	targetInfos := []targetinfo.TargetInfo{movieTi, episodeTi}
 	for _, ti := range targetInfos {
-		workDir, err := ripper.GetWorkPathForTargetFileFolder(conf.WorkDirectory, ti.GetFolder())
+		workDir, err := ripper.GetWorkPathForTargetFolder(conf.WorkDirectory, ti.GetFolder())
 		assert.NotError(err)
 		assert.NotError(files.CreateFolderStructure(workDir))
 		assert.NotError(targetinfo.Save(workDir, ti))

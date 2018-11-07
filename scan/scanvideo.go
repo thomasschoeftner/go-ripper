@@ -31,7 +31,7 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 		ctx.Printf("found %d targets:\n", len(targets))
 		for _, target := range targets {
 			//write TargetInfo to work folder
-			workDir, err := ripper.GetWorkPathForTargetFileFolder(conf.WorkDirectory, target.GetFolder())
+			workDir, err := ripper.GetWorkPathForTargetFolder(conf.WorkDirectory, target.GetFolder())
 			if err != nil {
 				return nil, err
 			}

@@ -6,6 +6,7 @@ import (
 	"go-cli/task"
 	"strings"
 	"go-cli/test"
+	"go-ripper/files"
 )
 
 func TestGetWorkPathForFile(t *testing.T) {
@@ -26,4 +27,27 @@ func TestGetWorkPathForFile(t *testing.T) {
 	assert := test.AssertOn(t)
 	workPath := assert.StringNotError(GetWorkPathForJob(workDir, job))
 	assert.StringsEqual(expectedWorkPath, workPath)
+}
+
+func TestGetProcessingArtifactPath(t *testing.T) {
+	var drive string
+	if filepath.Separator == '/' {
+		drive = "/"
+	} else {
+		drive = "c:/"
+	}
+
+	targetDir := drive + "my/private/videos"
+	targetFile := "cut7.mov"
+
+	workDir := "/my/work/dir"
+	requiredExtension := "xyz"
+
+	fName, _ := files.SplitExtension(targetFile)
+	expectedPath := filepath.Join(workDir, strings.Replace(targetDir, ":", "", 1), files.WithExtension(fName, requiredExtension))
+
+	artifactPath, err := GetProcessingArtifactPathFor(workDir, targetDir, targetFile, requiredExtension)
+	assert := test.AssertOn(t)
+	assert.NotError(err)
+	assert.StringsEqual(expectedPath, artifactPath)
 }

@@ -68,7 +68,7 @@ func resolveEpisode(findOrFetch *findOrFetcher, ti *targetinfo.Episode) error {
 	//	return err
 	//}
 	ti.Episode = ti.ItemSeqNo
-	workDir, err := ripper.GetWorkPathForTargetFileFolder(findOrFetch.conf.WorkDirectory, ti.GetFolder())
+	workDir, err := ripper.GetWorkPathForTargetFolder(findOrFetch.conf.WorkDirectory, ti.GetFolder())
 	if err != nil {
 		return err
 	}

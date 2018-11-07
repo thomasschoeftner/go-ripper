@@ -21,3 +21,7 @@
 (9) accept graceful shutdown on SIGTERM (Ctrl+c)
 
 (10) allow user to provide <movie>.json in input folder to override specific settings (e.g. poster url, output file-name)
+
+(11) add validation not to use workDir or repoDir as target folder
+
+(12) improve escaping mechanism in files.evacuator and tag.tagvideo

@@ -6,29 +6,31 @@ import (
 	"path/filepath"
 	"strings"
 	"fmt"
+	"go-cli/commons"
+	"strconv"
 )
 
 
-func DummyEvac(from, to string) (*evacuated, error) {
-	return &evacuated{original: from, evacuatedTo: to}, nil
+func DummyEvac(from, to string) (*Evacuated, error) {
+	return &Evacuated{original: from, evacuatedTo: to}, nil
 }
 
 func TestPrepareEvacuation(t *testing.T) {
 	dir := test.MkTempFolder(t)
 	defer test.RmTempFolder(t, dir)
 
-	t.Run("check for empty temp folder", func(t *testing.T) {
+	t.Run("check for empty.jpg temp folder", func(t *testing.T) {
 		assert := test.AssertOn(t)
-		evacuate := PrepareEvacuation("", nil)
-		evacuated, err := evacuate("./testdata/small").By(DummyEvac)
-		assert.ExpectError("expected error due to empty temp folder name")(err)
-		assert.True("expected evacuated to be nil after finding empty temp folder name")(nil == evacuated)
+		evacuate := PrepareEvacuation("")
+		evacuated, err := evacuate("./testdata/small.tiny").By(DummyEvac)
+		assert.ExpectError("expected error due to empty.jpg temp folder name")(err)
+		assert.True("expected Evacuated to be nil after finding empty.jpg temp folder name")(nil == evacuated)
 	})
 
 	t.Run("create temp folder if not existing", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		tmp := filepath.Join(dir, "temp1")
-		_, err := PrepareEvacuation(tmp, nil).Of("./testdata/small").By(DummyEvac)
+		_, err := PrepareEvacuation(tmp).Of("./testdata/small.tiny").By(DummyEvac)
 		assert.NotError(err)
 		assert.TrueNotError("temp folder was not created")(Exists(tmp))
 	})
@@ -38,7 +40,7 @@ func TestPrepareEvacuation(t *testing.T) {
 		tmp := filepath.Join(dir, "temp2")
 		assert.NotError(CreateFolderStructure(tmp))
 
-		evacuated, err := PrepareEvacuation(tmp, nil).Of("./testdata/small").By(DummyEvac)
+		evacuated, err := PrepareEvacuation(tmp).Of("./testdata/small.tiny").By(DummyEvac)
 		assert.NotError(err)
 		assert.True("expected temp folder to be re-used")(strings.HasPrefix(evacuated.evacuatedTo, tmp))
 	})
@@ -46,38 +48,29 @@ func TestPrepareEvacuation(t *testing.T) {
 	t.Run("detect missing source file", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		tmp := filepath.Join(dir, "temp3")
-		evacuated, err := PrepareEvacuation(tmp, nil).Of("./testdata/missing").By(DummyEvac)
+		evacuated, err := PrepareEvacuation(tmp).Of("./testdata/missing").By(DummyEvac)
 		assert.ExpectError("expected error due to missing source file, but got none")(err)
-		assert.True("expected evacuated to be nil after detecting missing source file")(nil == evacuated)
+		assert.True("expected Evacuated to be nil after detecting missing source file")(nil == evacuated)
 	})
 
-	t.Run("create unique temporary subfolder", func(t *testing.T) {
+	t.Run("create unique temporary evacuation files", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		tmp := filepath.Join(dir, "temp4")
-		evacuated1, err := PrepareEvacuation(tmp, nil)("./testdata/small").By(DummyEvac)
+		evacuated1, err := PrepareEvacuation(tmp)("./testdata/small.tiny").By(DummyEvac)
 		assert.NotError(err)
-		evacuated2, err := PrepareEvacuation(tmp, nil)("./testdata/small").By(DummyEvac)
+		evacuated2, err := PrepareEvacuation(tmp)("./testdata/larger.png").By(DummyEvac)
 		assert.NotError(err)
-		assert.True(fmt.Sprintf("expected temp folders to be unique, but got \"%s\" and \"%s\"", evacuated1.evacuatedTo, evacuated2.evacuatedTo))(evacuated1.evacuatedTo != evacuated2.evacuatedTo)
+		assert.True(fmt.Sprintf("expected evacuation files to be unique, but got \"%s\" and \"%s\"", evacuated1.evacuatedTo, evacuated2.evacuatedTo))(evacuated1.evacuatedTo != evacuated2.evacuatedTo)
 	})
 
-	t.Run("calculate proper filename without replacement", func(t *testing.T) {
+	t.Run("calculate proper filename", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		tmp := filepath.Join(dir, "temp5")
-		evacuated, err := PrepareEvacuation(tmp, nil)("./testdata/small").By(DummyEvac)
+		evacuated, err := PrepareEvacuation(tmp)("./testdata/small.tiny").By(DummyEvac)
 		assert.NotError(err)
-		assert.True("expected original file name to be kept")(strings.HasSuffix(evacuated.original,"small"))
-		assert.True("expected evacuated file name to match original")(strings.HasSuffix(evacuated.evacuatedTo,"small"))
+		assert.StringsEqual("./testdata/small.tiny", evacuated.original) //assert original stays untouched
+		assert.StringsEqual(filepath.Join(tmp, strconv.Itoa(int(commons.Hash32(evacuated.original))) + ".tiny"), evacuated.evacuatedTo)
 		assert.False("expected only file name, but not folders, to be used for destination file")(strings.Contains(evacuated.evacuatedTo,"testdata"))
-	})
-
-	t.Run("replace characters", func(t *testing.T) {
-		assert := test.AssertOn(t)
-		tmp := filepath.Join(dir, "temp6")
-		evacuated, err := PrepareEvacuation(tmp, map[rune]rune {'t': 'x', 'a' : 'i', 'l' : 't'}).Of("./testdata/small").By(DummyEvac)
-		assert.NotError(err)
-		assert.True("expected characters to be replaced, but were not")(strings.HasSuffix(evacuated.evacuatedTo, "smitt"))
-		assert.True("expected original file name to be kept")(strings.HasSuffix(evacuated.original,"small"))
 	})
 }
 
@@ -88,7 +81,7 @@ func TestMoving(t *testing.T) {
 	t.Run("successful moving", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		source := filepath.Join(dir, "source1")
-		assert.AnythingNotError(Copy("./testdata/small", source, false))
+		assert.AnythingNotError(Copy("./testdata/small.tiny", source, false))
 		destination := filepath.Join(dir, "move1")
 
 		evacuated, err := Moving(source, destination)
@@ -104,15 +97,15 @@ func TestMoving(t *testing.T) {
 		destination := filepath.Join(dir, "move2")
 		evacuated, err := Moving(filepath.Join(dir, ".missing"), destination)
 		assert.ExpectError("expected error when moving non-existing file")(err)
-		assert.True("expect evacuated to be nil after error")(evacuated == nil)
+		assert.True("expect Evacuated to be nil after error")(evacuated == nil)
 	})
 
 	t.Run("overwrite during move", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		source := filepath.Join(dir, "source3")
-		assert.AnythingNotError(Copy("./testdata/small", source, false))
+		assert.AnythingNotError(Copy("./testdata/small.tiny", source, false))
 		destination := filepath.Join(dir, "move3")
-		Copy("./testdata/larger", destination, false) //pre-create file
+		Copy("./testdata/larger.png", destination, false) //pre-create file
 		originalSize := sizeOf(destination)
 
 		evacuated, err := Moving(source, destination)
@@ -132,7 +125,7 @@ func TestCopying(t *testing.T) {
 
 	t.Run("successful copying", func(t *testing.T) {
 		assert := test.AssertOn(t)
-		source := "./testdata/small"
+		source := "./testdata/small.tiny"
 		destination := filepath.Join(dir, "copy1")
 		evacuated, err := Copying(source, destination)
 		assert.NotError(err)
@@ -147,38 +140,38 @@ func TestCopying(t *testing.T) {
 		destination := filepath.Join(dir, "copy2")
 		evacuated, err := Copying(".missing", destination)
 		assert.ExpectError("expected error when copying non-existing file")(err)
-		assert.True("expect evacuated to be nil after error")(evacuated == nil)
+		assert.True("expect Evacuated to be nil after error")(evacuated == nil)
 	})
 
 	t.Run("copy to pre-existing destination", func(t *testing.T) {
 		assert := test.AssertOn(t)
-		source := "./testdata/small"
+		source := "./testdata/small.tiny"
 		destination := filepath.Join(dir, "copy3")
 		Copy(source, destination, false) //pre-create file
 
 		evacuated, err := Copying(source, destination)
 		assert.ExpectError("expected error when overwriting pre-existing file")(err)
-		assert.True("expect evacuated to be nil after error")(evacuated == nil)
+		assert.True("expect Evacuated to be nil after error")(evacuated == nil)
 	})
 }
 
 func TestEvacuated(t *testing.T) {
-	setup := func(t *testing.T) (*test.Assertion, string, *evacuated) {
+	setup := func(t *testing.T) (*test.Assertion, string, *Evacuated) {
 		assert := test.AssertOn(t)
 		tempDir := test.MkTempFolder(t)
 		evacDir := filepath.Join(tempDir, "evac")
 
-		e := &evacuated{filepath.Join(tempDir, "original"), filepath.Join(evacDir, "evacuated")}
+		e := &Evacuated{filepath.Join(tempDir, "original"), filepath.Join(evacDir, "Evacuated")}
 		CreateFolderStructure(evacDir)
 
-		assert.AnythingNotError(Copy("./testdata/small", e.original, false))
-		assert.AnythingNotError(Copy("./testdata/larger", e.evacuatedTo, false))
+		assert.AnythingNotError(Copy("./testdata/small.tiny", e.original, false))
+		assert.AnythingNotError(Copy("./testdata/larger.png", e.evacuatedTo, false))
 		return assert, tempDir, e
 	}
 
 	t.Run("return correct path", func(t *testing.T) {
 		assert := test.AssertOn(t)
-		e := &evacuated{"orignate/from", "evacuated/to"}
+		e := &Evacuated{"orignate/from", "Evacuated/to"}
 		assert.StringsEqual(e.evacuatedTo, e.Path())
 	})
 
@@ -187,10 +180,10 @@ func TestEvacuated(t *testing.T) {
 		defer test.RmTempFolder(t, dir)
 		originalSize := sizeOf(evacuated.original)
 		evacuatedSize := sizeOf(evacuated.evacuatedTo)
-		assert.True("original and evacuated need different size for this test")(evacuatedSize != originalSize)
+		assert.True("original and Evacuated need different size for this test")(evacuatedSize != originalSize)
 		assert.NotError(evacuated.Restore())
 		assert.IntsEqual(evacuatedSize, sizeOf(evacuated.original))
-		assert.FalseNotErrorf("expected evacuated file \"%s\" to be gone after restoring back to \"%s\"", evacuated.evacuatedTo, evacuated.original)(Exists(evacuated.evacuatedTo))
+		assert.FalseNotErrorf("expected Evacuated file \"%s\" to be gone after restoring back to \"%s\"", evacuated.evacuatedTo, evacuated.original)(Exists(evacuated.evacuatedTo))
 	})
 
 	t.Run("delete all files in evacuation folder and folder itself", func(t *testing.T) {
@@ -201,11 +194,11 @@ func TestEvacuated(t *testing.T) {
 		evacDir := filepath.Dir(evacuated.evacuatedTo)
 		extraFile1 := filepath.Join(evacDir, "file1")
 		extraFile2 := filepath.Join(evacDir, "file2")
-		assert.AnythingNotError(Copy("./testdata/empty", extraFile1, false))
-		assert.AnythingNotError(Copy("./testdata/small", extraFile2, false))
+		assert.AnythingNotError(Copy("./testdata/empty.jpg", extraFile1, false))
+		assert.AnythingNotError(Copy("./testdata/small.tiny", extraFile2, false))
 
 		// check preconditions
-		assert.TrueNotErrorf("expected evacuated file \"%s\" to exist before discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
+		assert.TrueNotErrorf("expected Evacuated file \"%s\" to exist before discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
 		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile1)(Exists(extraFile1))
 		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile2)(Exists(extraFile2))
 
@@ -216,7 +209,7 @@ func TestEvacuated(t *testing.T) {
 		assert.TrueNotErrorf("expected original file \"%s\" to still exist after discard", evacuated.original)(Exists(evacuated.original))
 	})
 
-	t.Run("move evacuated file and discard evac folder", func(t *testing.T) {
+	t.Run("move Evacuated file and discard evac folder", func(t *testing.T) {
 		assert, dir, evacuated := setup(t)
 		defer test.RmTempFolder(t, dir)
 
@@ -224,11 +217,11 @@ func TestEvacuated(t *testing.T) {
 		evacDir := filepath.Dir(evacuated.evacuatedTo)
 		extraFile1 := filepath.Join(evacDir, "file1")
 		extraFile2 := filepath.Join(evacDir, "file2")
-		assert.AnythingNotError(Copy("./testdata/empty", extraFile1, false))
-		assert.AnythingNotError(Copy("./testdata/small", extraFile2, false))
+		assert.AnythingNotError(Copy("./testdata/empty.jpg", extraFile1, false))
+		assert.AnythingNotError(Copy("./testdata/small.tiny", extraFile2, false))
 
 		// check preconditions
-		assert.TrueNotErrorf("expected evacuated file \"%s\" to exist before discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
+		assert.TrueNotErrorf("expected Evacuated file \"%s\" to exist before discard", evacuated.evacuatedTo)(Exists(evacuated.evacuatedTo))
 		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile1)(Exists(extraFile1))
 		assert.TrueNotErrorf("expected extra file \"%s\" to exist before discard", extraFile2)(Exists(extraFile2))
 

@@ -6,6 +6,7 @@ import (
 	"go-cli/task"
 	"path/filepath"
 	"strings"
+	"go-ripper/files"
 )
 
 const (
@@ -18,11 +19,24 @@ func GetTargetFileFromJob(job task.Job) string {
 
 func GetWorkPathForJob(workDir string, job task.Job) (string, error) {
 	folder, _ := filepath.Split(GetTargetFileFromJob(job))
-	return GetWorkPathForTargetFileFolder(workDir, folder)
+	return GetWorkPathForTargetFolder(workDir, folder)
 }
 
-func GetWorkPathForTargetFileFolder(workDir, folder string) (string, error) {
-	targetPath, err := filepath.Abs(folder)
+func GetProcessingArtifactPathFor(workDir string, targetDir string, targetFile string, expectedExtension string) (string, error) {
+	dir, err := GetWorkPathForTargetFolder(workDir, targetDir)
+	if err != nil {
+		return "", err
+	}
+
+	fname, _ := files.SplitExtension(targetFile)
+	preprocessedArtifact := filepath.Join(dir, files.WithExtension(fname, expectedExtension))
+	return preprocessedArtifact, nil
+}
+
+
+
+func GetWorkPathForTargetFolder(workDir, targetFolder string) (string, error) {
+	targetPath, err := filepath.Abs(targetFolder)
 	if err !=  nil {
 		return "", err
 	}

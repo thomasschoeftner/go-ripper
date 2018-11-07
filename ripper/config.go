@@ -65,6 +65,7 @@ type AppConf struct {
 
 type OutputConfig struct {
 	Video string
+	InvalidCharactersInFileName string
 }
 
 type ScanConfigGroup struct {

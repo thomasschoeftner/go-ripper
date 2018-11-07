@@ -43,7 +43,7 @@ func Replace(file, with string) (wasReplaced bool, err error) {
 
 func ReplaceButKeepOriginal(file, with, keepExtension string) (wasReplaced bool, e error) {
 	if 0 == len(keepExtension) {
-		return false, fmt.Errorf("cannot replace file, but keep original with the same name (keep extension is empty)")
+		return false, fmt.Errorf("cannot replace file, but keep original with the same name (keep extension is empty.jpg)")
 	}
 
 	originalExists, err := Exists(file)

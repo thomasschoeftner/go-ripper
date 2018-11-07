@@ -71,6 +71,7 @@ func launch() int {
 
 	// read command line params (flags & args)
 	taskNames, targets := getCliTasksAndTargets(taskMap)
+	//TODO add validation not to use workDir or repoDir as target folder
 
 	// calculate tasks to be invoked
 	tasksToRun, err := taskMap.CompileTasksForNamesCompact(taskNames...)
