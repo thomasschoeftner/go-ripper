@@ -60,6 +60,7 @@ type AppConf struct {
 	Output                 *OutputConfig
 	Scan                   *ScanConfigGroup
 	Resolve                *ResolveConfig
+	Rip                    *RipConfig
 	Tag                    *TagConfig
 }
 
@@ -99,6 +100,21 @@ type OmdbConfig struct {
 	OmdbTokens   []string
 }
 
+type RipConfig struct {
+	Video *VideoRipConfig
+}
+
+type VideoRipConfig struct {
+	Ripper string
+	Handbrake *HandbrakeConfig
+}
+
+type HandbrakeConfig struct {
+	CommandlineToolConfig
+	Template string
+}
+
+
 type TagConfig struct {
 	Video *VideoTagConfig
 }
@@ -109,12 +125,12 @@ type VideoTagConfig struct {
 }
 
 type AtomicParsleyConfig struct {
-	Path    string
+	CommandlineToolConfig
 	Timeout string
-	ShowErrorOutput bool
-	ShowStandardOutput bool
 }
 
-type HandbrakeConfig struct {
-	//TODO
+type CommandlineToolConfig struct {
+	Path    string
+	ShowErrorOutput bool
+	ShowStandardOutput bool
 }
