@@ -114,7 +114,6 @@ type HandbrakeConfig struct {
 	Profile string
 }
 
-
 type TagConfig struct {
 	Video *VideoTagConfig
 }
@@ -126,11 +125,11 @@ type VideoTagConfig struct {
 
 type AtomicParsleyConfig struct {
 	CommandlineToolConfig
-	Timeout string
 }
 
 type CommandlineToolConfig struct {
 	Path    string
+	Timeout string
 	ShowErrorOutput bool
 	ShowStandardOutput bool
 }

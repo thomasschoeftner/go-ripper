@@ -6,13 +6,13 @@ import (
 	"errors"
 )
 
-
 type Ripper interface {
 	process(inFile string, outFile string) error
 }
 
 
-func Rip(ctx task.Context, conf *ripper.AppConf, ripper Ripper) task.HandlerFunc {
+func Rip(ctx task.Context, theRipper Ripper) task.HandlerFunc {
+	conf := ctx.Config.(*ripper.AppConf)
 	println(conf.Rip.Video.Ripper)
 	//expectedExtension := conf.Output.Video
 
