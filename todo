@@ -1,10 +1,8 @@
-(2) use input folder as output-folder, unless specified by --output option
-
 (3) rip
     ignore already ripped files (MP4 video, MP3 audio, etc.)
     invoke handbrake
 
-(4) implement remove original tag
+(4) implement remove original task
 
 (5) add dedicated input file for omdb keys
 
