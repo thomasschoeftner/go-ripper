@@ -4,7 +4,7 @@
 
 (4) implement remove original task
 
-(5) add dedicated input file for omdb keys
+(5) add dedicated config file (profile) for omdb keys, tool-paths (atomicparsley, handbrake), and tool configs (handbrake profile)
 
 (6a) go-cli/pipeline
      add support for non-blocking parallel pipeline using buffered channels for concurrent resolving, ripping, and tagging
