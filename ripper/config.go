@@ -111,7 +111,7 @@ type VideoRipConfig struct {
 
 type HandbrakeConfig struct {
 	CommandlineToolConfig
-	Template string
+	Profile string
 }
 
 

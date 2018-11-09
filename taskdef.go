@@ -7,6 +7,7 @@ import (
 	"errors"
 	"go-ripper/metainfo/video"
 	"go-ripper/tag"
+	"go-ripper/rip"
 )
 
 const TaskName_Tasks = "tasks"
@@ -29,7 +30,7 @@ func CreateTasks() task.TaskSequence {
 	taskResolve      := task.NewTask("resolve","resolve & download audio and video meta-info from various sources", nil).WithDependencies(taskScan, /*taskResolveAudio, */ taskResolveVideo)
 
 	//taskRipAudio := task.NewTask("ripAudio","digitalize (\"rip\") audio", NotImplementedYetHandler)
-	taskRipVideo := task.NewTask("ripVideo","digitalize (\"rip\") video", NotImplementedYetHandler)
+	taskRipVideo := task.NewTask("ripVideo","digitalize (\"rip\") video", rip.RipVideo)
 	taskRip      := task.NewTask("rip","digitalize (\"rip\") audio and video", nil).WithDependencies(taskResolve, /*taskRipAudio, */ taskRipVideo)
 
 	//taskTagAudio := task.NewTask("tagAudio","apply meta-info from local file to audio", NotImplementedYetHandler)

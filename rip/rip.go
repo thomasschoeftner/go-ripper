@@ -1,30 +1,31 @@
 package rip
 
 import (
-	"go-ripper/targetinfo"
+	"go-cli/task"
 	"go-ripper/ripper"
-	"go-ripper/files"
-	"path/filepath"
 	"errors"
 )
 
-func findInputOutputFiles(ti targetinfo.TargetInfo, workDir string, expectedExtension string) (string, string, error) {
-	folder, err := ripper.GetWorkPathForTargetFolder(workDir, ti.GetFolder())
-	if err != nil {
-		return "", "", err
-	}
 
-	// check work directory for a pre-processed inFile in appropriate format (e.g. a ripped video in .mp4 inFile)
-	fName, extension := files.SplitExtension(ti.GetFile())
-	preprocessed := filepath.Join(folder, files.WithExtension(fName, expectedExtension))
-	if exists, _ := files.Exists(preprocessed); exists {
-		return preprocessed, preprocessed, nil
-	}
+type Ripper interface {
+	process(inFile string, outFile string) error
+}
 
-	// if no preprocessed input is available, check if the source inFile can be tagged directly (e.g. if it is an .mp4 video)
-	if extension == expectedExtension {
-		return filepath.Join(ti.GetFolder(), ti.GetFile()), preprocessed, nil
-	} else {
-		return "", "", errors.New("unable to find appropriate input inFile for meta-info tagging")
+
+func Rip(ctx task.Context, conf *ripper.AppConf, ripper Ripper) task.HandlerFunc {
+	println(conf.Rip.Video.Ripper)
+	//expectedExtension := conf.Output.Video
+
+	return func(job task.Job) ([]task.Job, error) {
+		//TODO implement me
+		//return []task.Job{job}, nil
+		return []task.Job{}, errors.New("IMPLEMENT ME")
+	}
+}
+
+
+func RipError(err error) task.HandlerFunc {
+	return func (job task.Job) ([]task.Job, error) {
+		return []task.Job{}, err
 	}
 }
