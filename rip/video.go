@@ -12,7 +12,7 @@ func RipVideo(ctx task.Context) task.HandlerFunc {
 
 	switch ripperType {
 	case CONF_RIPPER_HANDBRAKE:
-		handbrake, err := createHandbrakeRipper(conf.Rip.Video.Handbrake, ctx.RunLazy, ctx.Printf)
+		handbrake, err := handbrakeRipper(conf.Rip.Video.Handbrake, ctx.RunLazy, ctx.Printf)
 		if err != nil {
 			return ripper.ErrorHandler(err)
 		}

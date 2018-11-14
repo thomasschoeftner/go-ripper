@@ -9,15 +9,14 @@ import (
 	"go-cli/commons"
 )
 
-type Ripper interface {
-	process(inFile string, outFile string) error
-}
 
-func Rip(ctx task.Context, theRipper Ripper, allowedInputExtensions []string, expectedOutputExtension string) task.HandlerFunc {
+type Ripper func(inFile string, outFile string) error
+
+func Rip(ctx task.Context, rip Ripper, allowedInputExtensions []string, expectedOutputExtension string) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
 	ripperType := conf.Rip.Video.Ripper
 
-	if nil == theRipper {
+	if nil == rip {
 		return ripper.ErrorHandler(fmt.Errorf("failed to initialize ripper module using %s because actual ripper is undefined", ripperType))
 	}
 
@@ -30,7 +29,7 @@ func Rip(ctx task.Context, theRipper Ripper, allowedInputExtensions []string, ex
 			return nil, err
 		}
 
-		err = theRipper.process(in, out)
+		err = rip(in, out)
 		if err != nil {
 			return []task.Job{}, err
 		} else {

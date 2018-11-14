@@ -19,45 +19,29 @@ const (
 	argLogToJson            = "--json"
 )
 
-func createHandbrakeRipper(conf *ripper.HandbrakeConfig, lazy bool, printf commons.FormatPrinter) (Ripper, error) {
+func handbrakeRipper(conf *ripper.HandbrakeConfig, lazy bool, printf commons.FormatPrinter) (Ripper, error) {
 	timeout, err := time.ParseDuration(conf.Timeout)
 	if err != nil {
 		return nil, err
 	}
 
-	hb := handbrakeRipper{
-		lazy:            lazy,
-		path:            conf.Path,
-		presetsFilePath: conf.PresetsFile,
-		presetName:      conf.PresetName,
-		timeout :        timeout,
-		printf:          printf}
+	var errOut io.Writer
 	if conf.ShowErrorOutput {
-		hb.errOut = os.Stderr
+		errOut = os.Stderr
 	}
+	var stdOut io.Writer
 	if conf.ShowStandardOutput {
-		hb.stdOut = os.Stdout
+		stdOut = os.Stdout
 	}
-	return &hb, nil
-}
 
-type handbrakeRipper struct {
-	lazy            bool
-	path            string
-	presetsFilePath string
-	presetName      string
-	timeout         time.Duration
-	printf          commons.FormatPrinter
-	errOut          io.Writer
-	stdOut          io.Writer
-}
 
-func (hb *handbrakeRipper) process(inFile string, outFile string) error {
-	cmd := cli.Command(hb.path, hb.timeout).WithQuotes(" ", '"').
-		WithParam(paramImportPreset, hb.presetsFilePath, "").
-		WithParam(paramUsePreset, hb.presetName, "").
+	return func (inFile string, outFile string) error {
+		cmd := cli.Command(conf.Path, timeout).WithQuotes(" ", '"').
+		WithParam(paramImportPreset, conf.PresetsFile, "").
+		WithParam(paramUsePreset, conf.PresetName, "").
 		WithParam(paramInput, inFile, "").
 		WithParam(paramOutput, outFile, "")
-	hb.printf(">>>> %s\n", cmd.String())
-	return cmd.ExecuteSync(hb.stdOut, hb.errOut)
+		//hb.printf(">>>> %s\n", cmd.String())
+		return cmd.ExecuteSync(stdOut, errOut)
+	}, nil
 }
