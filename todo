@@ -1,10 +1,9 @@
-(3) rip
-    ignore already ripped files (MP4 video, MP3 audio, etc.)
-    invoke handbrake
+(3a) rip - implement LAZY
+(3b) rip - handle file names with spaces
 
-(4) implement remove original task
+(4) refactor tagVideo to funcationl interface (same as rip)
 
-(5) add dedicated config file (profile) for omdb keys, tool-paths (atomicparsley, handbrake), and tool configs (handbrake profile)
+(5) add dedicated profile file for omdb keys, tool-paths (atomicparsley, handbrake), and tool configs (handbrake profile)
 
 (6a) go-cli/pipeline
      add support for non-blocking parallel pipeline using buffered channels for concurrent resolving, ripping, and tagging
@@ -18,10 +17,13 @@
 
 (9) accept graceful shutdown on SIGTERM (Ctrl+c)
 
-(10) allow user to provide <movie>.json in input folder to override specific settings (e.g. poster url, output file-name)
+(10) allow user to provide <item>.json in input folder to override specific custom meta-info (e.g. poster url, output file-name)
 
 (11) add validation not to use workDir or repoDir as target folder
 
-(12) improve escaping mechanism in files.evacuator and tag.tagvideo
+(12) extend file evacuation with check if evac is required(in files.evacuator, tag.tagvideo, rip.handbrake)
 
 (13) introduce flexible naming facility for tagged artifacts
+
+(14) implement remove original task
+
