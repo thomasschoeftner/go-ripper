@@ -45,15 +45,14 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 			return nil, err
 		}
 
-		in, out, err := findInputOutputFiles(ti, conf.WorkDirectory, expectedExtension)
+		in, inputIsOriginal, err := findInputFile(ti, conf.WorkDirectory, expectedExtension)
 		if err != nil {
 			return nil, err
 		}
 
 		//ctx.Printf("  input=%s\n", in)   //TODO remove
-		//ctx.Printf("  output=%s\n", out) //TODO remove
 		var evacuated *files.Evacuated
-		if in != out { //original is input
+		if inputIsOriginal {
 			evacuated, err = evacuate(in).By(files.Copying)
 		} else { //already preprocessed in work-directory is input
 			evacuated, err = evacuate(in).By(files.Moving)
@@ -156,23 +155,23 @@ func tagEpisode(tagger VideoTagger, ti *targetinfo.Episode, metaInfoRepo string,
 	return []string {seriesMi.Title, strconv.Itoa(episodeMi.Season), fName}, nil
 }
 
-func findInputOutputFiles(ti targetinfo.TargetInfo, workDir string, expectedExtension string) (string, string, error) {
+func findInputFile(ti targetinfo.TargetInfo, workDir string, expectedExtension string) (string, bool, error) {
 	// check work directory for a pre-processed inFile in appropriate format (e.g. a ripped video in .mp4 inFile)
 	preprocessed, err := ripper.GetProcessingArtifactPathFor(workDir, ti.GetFolder(), ti.GetFile(), expectedExtension)
 	if err != nil {
-		return "", "", err
+		return "", false, err
 	}
 	if exists, err := files.Exists(preprocessed); err != nil {
-		return "", "", err
+		return "", false, err
 	} else if exists {
-		return preprocessed, preprocessed, nil
+		return preprocessed, false, nil
 	}
 
 	// if no preprocessed input is available, check if the source inFile can be tagged directly (e.g. f
 	_, extension := files.SplitExtension(ti.GetFile())
 	if extension == expectedExtension {
-		return filepath.Join(ti.GetFolder(), ti.GetFile()), preprocessed, nil
+		return filepath.Join(ti.GetFolder(), ti.GetFile()), true, nil
 	} else {
-		return "", "", fmt.Errorf("unable to find appropriate input file (\"%s\") for meta-info tagging", expectedExtension)
+		return "", false, fmt.Errorf("unable to find appropriate input file (\"%s\") for meta-info tagging", expectedExtension)
 	}
 }

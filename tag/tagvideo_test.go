@@ -38,43 +38,46 @@ func TestFindInputOutputFile(t *testing.T) {
 	}
 
 	t.Run("ripped inFile is available in workdir, source inFile is not a valid output inFile", func(t *testing.T) {
+		assert := test.AssertOn(t)
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
 		ti, _, preprocessed := setup(workDir, "avi", expectedVideoExtension, true)
 
-		in, out, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		in, isOriginal, err := findInputFile(ti, workDir, expectedVideoExtension)
 		if err != nil {
 			t.Fatal(err)
 		}
-		test.AssertOn(t).StringsEqual(preprocessed, in)
-		test.AssertOn(t).StringsEqual(preprocessed, out)
+		assert.StringsEqual(preprocessed, in)
+		assert.False("expected to detect other input file than original")(isOriginal)
 	})
 
 	t.Run("ripped inFile is available in workdir, but source inFile is already a valid output inFile", func(t *testing.T) {
+		assert := test.AssertOn(t)
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
 		ti, _, preprocessed := setup(workDir, expectedVideoExtension, expectedVideoExtension, true)
 
-		in, out, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		in, isOriginal, err := findInputFile(ti, workDir, expectedVideoExtension)
 		if err != nil {
 			t.Fatal(err)
 		}
-		test.AssertOn(t).StringsEqual(preprocessed, in)
-		test.AssertOn(t).StringsEqual(preprocessed, out)
+		assert.StringsEqual(preprocessed, in)
+		assert.False("expected to detect other input file than original")(isOriginal)
 	})
 
 	t.Run("ripped inFile is missing in workdir, but source inFile is already a valid output inFile", func(t *testing.T) {
+		assert := test.AssertOn(t)
 		workDir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, workDir)
-		ti, source, preprocessed := setup(workDir, expectedVideoExtension, expectedVideoExtension, false)
+		ti, source, _ := setup(workDir, expectedVideoExtension, expectedVideoExtension, false)
 
-		in, out, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		in, isOriginal, err := findInputFile(ti, workDir, expectedVideoExtension)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		test.AssertOn(t).StringsEqual(source, in)
-		test.AssertOn(t).StringsEqual(preprocessed, out)
+		assert.StringsEqual(source, in)
+		assert.True("expected to detect original as input file")(isOriginal)
 	})
 
 	t.Run("ripped inFile is missing in workdir, source inFile is not a valid output inFile either", func(t *testing.T) {
@@ -82,7 +85,7 @@ func TestFindInputOutputFile(t *testing.T) {
 		defer test.RmTempFolder(t, workDir)
 		ti, _, _ := setup(workDir, "avi", expectedVideoExtension, false)
 
-		_, _, err := findInputOutputFiles(ti, workDir, expectedVideoExtension)
+		_, _, err := findInputFile(ti, workDir, expectedVideoExtension)
 		test.AssertOn(t).ExpectError("expected error when finding no suitable inFile - neither source does not have appropriate format, prepocessed inFile is missing")(err)
 	})
 }
