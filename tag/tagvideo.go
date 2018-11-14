@@ -50,6 +50,8 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 			return nil, err
 		}
 
+		//ctx.Printf("  input=%s\n", in)   //TODO remove
+		//ctx.Printf("  output=%s\n", out) //TODO remove
 		var evacuated *files.Evacuated
 		if in != out { //original is input
 			evacuated, err = evacuate(in).By(files.Copying)
