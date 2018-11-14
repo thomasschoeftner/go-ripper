@@ -34,7 +34,6 @@ func handbrakeRipper(conf *ripper.HandbrakeConfig, lazy bool, printf commons.For
 		stdOut = os.Stdout
 	}
 
-
 	return func (inFile string, outFile string) error {
 		cmd := cli.Command(conf.Path, timeout).WithQuotes(" ", '"').
 		WithParam(paramImportPreset, conf.PresetsFile, "").
