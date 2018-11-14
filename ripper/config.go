@@ -106,12 +106,14 @@ type RipConfig struct {
 
 type VideoRipConfig struct {
 	Ripper string
+	AllowedInputExtensions []string
 	Handbrake *HandbrakeConfig
 }
 
 type HandbrakeConfig struct {
 	CommandlineToolConfig
-	Profile string
+	PresetsFile string
+	PresetName string
 }
 
 type TagConfig struct {
