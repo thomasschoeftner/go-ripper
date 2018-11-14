@@ -14,10 +14,10 @@ func RipVideo(ctx task.Context) task.HandlerFunc {
 	case CONF_RIPPER_HANDBRAKE:
 		handbrake, err := createHandbrakeRipper(conf.Rip.Video.Handbrake, ctx.RunLazy, ctx.Printf)
 		if err != nil {
-			return RipError(err)
+			return ripper.ErrorHandler(err)
 		}
-		return Rip(ctx, handbrake)
+		return Rip(ctx, handbrake, conf.Rip.Video.AllowedInputExtensions, conf.Output.Video)
 	default:
-		return RipError(fmt.Errorf("unable to create video ripper of type \"%s\"", ripperType))
+		return ripper.ErrorHandler(fmt.Errorf("unable to create video ripper of type \"%s\"", ripperType))
 	}
 }
