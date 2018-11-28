@@ -318,8 +318,8 @@ func TestTagVideo(t *testing.T) {
 		jobs, err := handlerFunc(job)
 		assert.ExpectError("expected intentional test error")(err)
 		assert.IntsEqual(0, len(jobs))
-		tmpDir := filepath.Join(workDir, tagTempFolder)
-		assert.TrueNotErrorf("expected \"%s\" folder to exist", tagTempFolder)(files.Exists(tmpDir))
+		tmpDir := filepath.Join(workDir, files.TEMP_DIR_NAME)
+		assert.TrueNotErrorf("expected \"%s\" folder to exist", files.TEMP_DIR_NAME)(files.Exists(tmpDir))
 
 		containedFiles, err := files.GetDirectoryContents(tmpDir)
 		assert.NotError(err)

@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+const TEMP_DIR_NAME = ".tmp"
+
 type Evacuated struct {
 	original    string
 	evacuatedTo string

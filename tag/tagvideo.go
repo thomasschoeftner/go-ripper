@@ -20,7 +20,6 @@ type VideoTagger interface {
 }
 
 var NewVideoTagger func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (VideoTagger, error)
-const tagTempFolder = ".tmp"
 
 func TagVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
@@ -35,7 +34,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 
 	expectedExtension := conf.Output.Video
 	invalidFileNameChars := conf.Output.InvalidCharactersInFileName
-	evacuate := files.PrepareEvacuation(filepath.Join(conf.WorkDirectory, tagTempFolder)) //replace spaces with underscores
+	evacuate := files.PrepareEvacuation(filepath.Join(conf.WorkDirectory, files.TEMP_DIR_NAME)) //replace spaces with underscores
 
 	return func(job task.Job) ([]task.Job, error) {
 		target := ripper.GetTargetFileFromJob(job)
