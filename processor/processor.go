@@ -10,7 +10,6 @@ import (
 	"go-cli/commons"
 )
 
-
 type Processor func(ti targetinfo.TargetInfo, inFile string, outFile string) error
 type CheckLazy func(targetInfo targetinfo.TargetInfo) bool
 type InputFile func(targetInfo targetinfo.TargetInfo, workDir string) (string, error)
@@ -54,7 +53,6 @@ func Process(ctx task.Context, process Processor, processorName string, checkLaz
 		}
 	}
 }
-
 
 func DefaultCheckLazy(lazyEnabled bool, expectedExtension string) CheckLazy {
 	return func(targetInfo targetinfo.TargetInfo) bool {
