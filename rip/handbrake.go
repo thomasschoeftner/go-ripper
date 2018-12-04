@@ -21,7 +21,7 @@ const (
 	argLogToJson            = "--json"
 )
 
-func handbrakeRipper(conf *ripper.HandbrakeConfig, lazy bool, printf commons.FormatPrinter, workDir string) (Ripper, error) {
+func handbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (Ripper, error) {
 	timeout, err := time.ParseDuration(conf.Timeout)
 	if err != nil {
 		return nil, err

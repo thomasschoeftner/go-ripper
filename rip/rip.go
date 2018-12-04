@@ -22,14 +22,20 @@ func Rip(ctx task.Context, rip Ripper, allowedInputExtensions []string, expected
 
 	return func(job task.Job) ([]task.Job, error) {
 		target := ripper.GetTargetFileFromJob(job)
-		ctx.Printf("use %s to rip file - target %s\n", ripperType, target)
-
 		in, out, err := findInputOutputFiles(target, conf.WorkDirectory, allowedInputExtensions, expectedOutputExtension)
 		if err != nil {
 			return nil, err
 		}
 
-		err = rip(in, out)
+		_, inputExtension := files.SplitExtension(in)
+		if ctx.RunLazy && expectedOutputExtension == inputExtension {
+			ctx.Printf("input file appears already ripped -> reuse %s\n", target)
+			_, err = files.Copy(in, out, false)
+		} else {
+			ctx.Printf("use %s to rip file - target %s\n", ripperType, target)
+			err = rip(in, out)
+		}
+
 		if err != nil {
 			return []task.Job{}, err
 		} else {
