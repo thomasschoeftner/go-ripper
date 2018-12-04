@@ -24,6 +24,7 @@ type TargetInfo interface {
 	GetFolder() string
 	GetType() string
 	GetId() string
+	GetFullPath() string
 }
 
 func fileName(ti TargetInfo) string {
@@ -64,6 +65,10 @@ func (v *Video) GetFolder() string {
 
 func (v *Video) GetId() string {
 	return v.Id
+}
+
+func (v *Video) GetFullPath() string {
+	return filepath.Join(v.Folder, v.File)
 }
 
 func (v *Movie) GetType() string {

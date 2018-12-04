@@ -81,7 +81,8 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 
 		//move evacuated file to output folder
 		if err := files.CreateFolderStructure(filepath.Dir(dst)); err != nil {
-			return nil, err}
+			return nil, err
+		}
 		err = evacuated.MoveTo(dst)
 		if err != nil {
 			return nil, err

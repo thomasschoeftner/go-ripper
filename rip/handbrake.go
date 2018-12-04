@@ -9,6 +9,8 @@ import (
 	"time"
 	"path/filepath"
 	"go-ripper/files"
+	"go-ripper/targetinfo"
+	"go-ripper/processor"
 )
 
 const CONF_RIPPER_HANDBRAKE = "handbrake"
@@ -21,7 +23,7 @@ const (
 	argLogToJson            = "--json"
 )
 
-func handbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (Ripper, error) {
+func handbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (processor.Processor, error) {
 	timeout, err := time.ParseDuration(conf.Timeout)
 	if err != nil {
 		return nil, err
@@ -36,17 +38,14 @@ func handbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter,
 		stdOut = os.Stdout
 	}
 
-	return func (inFile string, outFile string) error {
+	return func (ti targetinfo.TargetInfo, inFile string, outFile string) error {
 		evacuated, err := files.PrepareEvacuation(filepath.Join(workDir, files.TEMP_DIR_NAME)).Of(inFile).By(files.Moving)
 		if err != nil {
 			return err
 		}
-		//TODO pass conf.WorkDir and use it to locate temporary file
 		tmpOut, ext := files.SplitExtension(evacuated.Path())
 		tmpOut = files.WithExtension(tmpOut+ ".ripped", ext)
-		defer func(){
-			evacuated.Restore() //TODO chcck that restore works properly
-		}()
+		defer evacuated.Restore()
 
 		cmd := cli.Command(conf.Path, timeout).WithQuotes(" ", '\'').
 		WithParam(paramImportPreset, filepath.ToSlash(conf.PresetsFile), "").
