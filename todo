@@ -1,3 +1,5 @@
+*** add processor-tests
+
 (3a) rip - implement LAZY
 (3b) rip - handle file names with spaces
 

@@ -171,13 +171,20 @@ func TestEvacuated(t *testing.T) {
 
 	t.Run("return correct path", func(t *testing.T) {
 		assert := test.AssertOn(t)
-		e := &Evacuated{"orignate/from", "Evacuated/to"}
+		e := &Evacuated{"originate/from", "Evacuated/to"}
 		assert.StringsEqual(e.evacuatedTo, e.Path())
+	})
+
+	t.Run("return correct path with suffix", func(t *testing.T) {
+		assert := test.AssertOn(t)
+		e := &Evacuated{"originate/from.xyz", "evacuated/to.xyz"}
+		assert.StringsEqual("evacuated/to.suffix.xyz", e.WithSuffix(".suffix"))
 	})
 
 	t.Run("successfully restore", func(t *testing.T) {
 		assert, dir, evacuated := setup(t)
 		defer test.RmTempFolder(t, dir)
+
 		originalSize := sizeOf(evacuated.original)
 		evacuatedSize := sizeOf(evacuated.evacuatedTo)
 		assert.True("original and Evacuated need different size for this test")(evacuatedSize != originalSize)

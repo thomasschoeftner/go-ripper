@@ -42,8 +42,8 @@ func validateConfig(c *AppConf) error {
 	}
 
 	//validate outputfolder
-	c.DefaultOutputDirectory = strings.Trim(c.DefaultOutputDirectory, " ")
-	if err := validatePath(c.DefaultOutputDirectory, "defaultOutputDirectory"); err != nil {
+	c.OutputDirectory = strings.Trim(c.OutputDirectory, " ")
+	if err := validatePath(c.OutputDirectory, "outputDirectory"); err != nil {
 		return err
 	}
 
@@ -55,7 +55,7 @@ type AppConf struct {
 	IgnorePrefix           string
 	WorkDirectory          string
 	MetaInfoRepo           string
-	DefaultOutputDirectory string
+	OutputDirectory        string
 	Processing             *task.ProcessingConfig
 	Output                 *OutputConfig
 	Scan                   *ScanConfigGroup

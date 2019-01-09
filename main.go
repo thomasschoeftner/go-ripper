@@ -15,7 +15,7 @@ import (
 	"go-ripper/metainfo/video"
 	"go-ripper/omdb"
 	"io/ioutil"
-	"go-ripper/tag"
+	"go-ripper/files"
 )
 
 const (
@@ -46,8 +46,9 @@ func launch() int {
 	// read config
 	conf := ripper.GetConfig(*configFile)
 	conf.Resolve.Video.Omdb.OmdbTokens = *omdbTokens
-	if outputDirectory == nil || 0 == len(*outputDirectory) {
-		outputDirectory = &conf.DefaultOutputDirectory
+	if outputDirectory != nil && len(*outputDirectory) > 0 {
+		conf.OutputDirectory = *outputDirectory
+		require.NotFailed(files.CreateFolderStructure(conf.OutputDirectory))
 	}
 
 	switch conf.Resolve.Video.Resolver {
@@ -55,13 +56,6 @@ func launch() int {
 		video.NewVideoMetaInfoSource = omdb.NewOmdbVideoMetaInfoSource
 	default:
 		logger.Fatalf("unknown video resolver configured: %s", conf.Resolve.Video.Resolver)
-	}
-
-	switch conf.Tag.Video.Tagger {
-	case tag.CONF_ATOMICPARSLEY_TAGGER:
-		tag.NewVideoTagger = tag.NewAtomicParsleyVideoTagger
-	default:
-		logger.Fatalf("unknown video tagger configured: %s", conf.Tag.Video.Tagger)
 	}
 
 	// create task Tree
@@ -78,7 +72,7 @@ func launch() int {
 	require.NotFailed(err)
 
 	// materialize processing pipeline
-	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *isLazy, *outputDirectory)
+	pipe, err := pipeline.Materialize(tasksToRun).WithConfig(conf.Processing, conf, allTasks, *isLazy)
 	require.NotFailed(err)
 
 	// ASYNCHRONOUSLY send a processing command for each target to pipeline

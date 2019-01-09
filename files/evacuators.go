@@ -18,6 +18,11 @@ type Evacuated struct {
 func (e *Evacuated) Path() string {
 	return e.evacuatedTo
 }
+func (e *Evacuated) WithSuffix(suffix string) string {
+	file, ext := SplitExtension(e.evacuatedTo)
+	return WithExtension(fmt.Sprintf("%s%s", file, suffix), ext)
+}
+
 func (e *Evacuated) Restore() error {
 	return e.MoveTo(e.original)
 }
