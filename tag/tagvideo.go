@@ -17,29 +17,38 @@ import (
 type MovieTagger func(inFile string, outFile string, id string, title string, year string, posterPath string) error
 type EpisodeTagger func(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error
 
+
+type TaggerFactory func(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)
+var TaggerFactories map[string]TaggerFactory
+
+func init() {
+	TaggerFactories = make(map[string]TaggerFactory)
+	TaggerFactories[conf_tagger_atomicparsley] = createAtomicParsleyVideoTagger
+}
+
 func TagVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
 	taggerType := conf.Tag.Video.Tagger
 
-
-
 	var movieTagger MovieTagger
 	var episodeTagger EpisodeTagger
 	var err error
-	switch taggerType {
-	case conf_tagger_atomicparsley:
-		movieTagger, episodeTagger, err = createAtomicParsleyVideoTagger(conf.Tag, ctx.RunLazy, ctx.Printf, conf.WorkDirectory)
-	default:
+
+	tf := TaggerFactories[taggerType]
+	if tf == nil {
 		err = fmt.Errorf("unknown video tagger configured: \"%s\"", conf.Tag.Video.Tagger)
-	}
-	if err != nil {
-		return ripper.ErrorHandler(err)
+	} else {
+		movieTagger, episodeTagger, err = createAtomicParsleyVideoTagger(conf, ctx.RunLazy, ctx.Printf, conf.WorkDirectory)
 	}
 
-	return processor.Process(ctx, getProcessor(conf, movieTagger, episodeTagger), taggerType,
-		processor.NeverLazy(ctx.RunLazy, taggerType, ctx.Printf),
-		processor.DefaultInputFileFor([]string{conf.Output.Video}),
-		processor.DefaultOutputFileFor(conf.Output.Video))
+	if err != nil {
+		return ripper.ErrorHandler(err)
+	} else {
+		return processor.Process(ctx, getProcessor(conf, movieTagger, episodeTagger), taggerType,
+			processor.NeverLazy(ctx.RunLazy, taggerType, ctx.Printf),
+			processor.DefaultInputFileFor([]string{conf.Output.Video}),
+			processor.DefaultOutputFileFor(conf.Output.Video))
+	}
 }
 
 func getProcessor(conf *ripper.AppConf, movieTagger MovieTagger, episodeTagger EpisodeTagger) processor.Processor {

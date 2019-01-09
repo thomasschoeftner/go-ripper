@@ -34,8 +34,8 @@ const (
 	paramDisc = "--disk"
 )
 
-func createAtomicParsleyVideoTagger(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)  {
-	apConf := conf.Video.AtomicParsley
+func createAtomicParsleyVideoTagger(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)  {
+	apConf := conf.Tag.Video.AtomicParsley
 	tagCtx := &atomicParsley{}
 	var err error
 

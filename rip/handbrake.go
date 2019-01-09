@@ -23,18 +23,19 @@ const (
 	argLogToJson            = "--json"
 )
 
-func createHandbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (processor.Processor, error) {
-	timeout, err := time.ParseDuration(conf.Timeout)
+func createHandbrakeRipper(conf *ripper.AppConf, printf commons.FormatPrinter, workDir string) (processor.Processor, error) {
+	hbConf := conf.Rip.Video.Handbrake
+	timeout, err := time.ParseDuration(hbConf.Timeout)
 	if err != nil {
 		return nil, err
 	}
 
 	var errOut io.Writer
-	if conf.ShowErrorOutput {
+	if hbConf.ShowErrorOutput {
 		errOut = os.Stderr
 	}
 	var stdOut io.Writer
-	if conf.ShowStandardOutput {
+	if hbConf.ShowStandardOutput {
 		stdOut = os.Stdout
 	}
 
@@ -46,9 +47,9 @@ func createHandbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPr
 		defer evacuated.Restore()
 
 		tmpOut := evacuated.WithSuffix(".ripped")
-		cmd := cli.Command(conf.Path, timeout).WithQuotes(" ", '\'').
-		WithParam(paramImportPreset, filepath.ToSlash(conf.PresetsFile), "").
-		WithParam(paramUsePreset, conf.PresetName, "").
+		cmd := cli.Command(hbConf.Path, timeout).WithQuotes(" ", '\'').
+		WithParam(paramImportPreset, filepath.ToSlash(hbConf.PresetsFile), "").
+		WithParam(paramUsePreset, hbConf.PresetName, "").
 		WithParam(paramInput, filepath.ToSlash(evacuated.Path()), "").
 		WithParam(paramOutput, filepath.ToSlash(tmpOut), "")
 		//printf(">>>> %s\n", cmd.String())

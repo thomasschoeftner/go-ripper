@@ -8,7 +8,7 @@ import (
 	"go-cli/commons"
 )
 
-type RipperFactory func(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (processor.Processor, error)
+type RipperFactory func(conf *ripper.AppConf, printf commons.FormatPrinter, workDir string) (processor.Processor, error)
 var RipperFactories map[string]RipperFactory
 
 func init() {
@@ -28,7 +28,7 @@ func RipVideo(ctx task.Context) task.HandlerFunc {
 	if rf == nil {
 		err = fmt.Errorf("unknown video ripper configured: \"%s\"", ripperType)
 	} else {
-		rip, err = rf(conf.Rip.Video.Handbrake, ctx.Printf, conf.WorkDirectory)
+		rip, err = rf(conf, ctx.Printf, conf.WorkDirectory)
 	}
 
 	if err != nil {
