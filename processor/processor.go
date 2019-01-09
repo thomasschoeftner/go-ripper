@@ -6,20 +6,32 @@ import (
 	"fmt"
 	"go-ripper/targetinfo"
 	"go-ripper/files"
-	"strings"
 	"go-cli/commons"
 )
 
-type Processor func(ti targetinfo.TargetInfo, inFile string, outFile string) error
 type CheckLazy func(targetInfo targetinfo.TargetInfo) bool
+type Processor func(ti targetinfo.TargetInfo, inFile string, outFile string) error
 type InputFile func(targetInfo targetinfo.TargetInfo, workDir string) (string, error)
 type OutputFile func(targetInfo targetinfo.TargetInfo, workDir string) (string, error)
 
+func initError(processorName string, reason string) error {
+	return fmt.Errorf("failed to initialize %s processor because %s", processorName, reason)
+}
 func Process(ctx task.Context, process Processor, processorName string, checkLazy CheckLazy, inputFile InputFile, outputFile OutputFile) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
 	workDir := conf.WorkDirectory
+
 	if nil == process {
-		return ripper.ErrorHandler(fmt.Errorf("failed to initialize %s processor because actual processor instance is undefined", processorName))
+		return ripper.ErrorHandler(initError(processorName, "actual processor instance is undefined"))
+	}
+	if nil == checkLazy {
+		checkLazy = NeverLazy(ctx.RunLazy, processorName, ctx.Printf.WithIndent(2))
+	}
+	if nil == inputFile {
+		return ripper.ErrorHandler(initError(processorName, "function for selecting input file is undefined"))
+	}
+	if nil == outputFile {
+		return ripper.ErrorHandler(initError(processorName, "function for calculating output file is undefined"))
 	}
 
 	return func(job task.Job) ([]task.Job, error) {
@@ -56,11 +68,20 @@ func Process(ctx task.Context, process Processor, processorName string, checkLaz
 
 func DefaultCheckLazy(lazyEnabled bool, expectedExtension string) CheckLazy {
 	return func(targetInfo targetinfo.TargetInfo) bool {
-		return lazyEnabled && strings.ToLower(files.GetExtension(targetInfo.GetFile())) == strings.ToLower(expectedExtension)
+		return lazyEnabled && files.GetExtension(targetInfo.GetFile()) == expectedExtension
 	}
 }
 
-func DefaultInputFileFor(workDir string, allowedInputExtensions []string) InputFile {
+func NeverLazy(lazyEnabled bool, processorName string, printf commons.FormatPrinter) CheckLazy {
+	return func(targetInfo targetinfo.TargetInfo) bool {
+		if lazyEnabled {
+			printf("processor %s ignores lazy", processorName)
+		}
+		return false
+	}
+}
+
+func DefaultInputFileFor(allowedInputExtensions []string) InputFile {
 	return func(ti targetinfo.TargetInfo, workDir string) (string, error) {
 		if ti == nil {
 			return "", fmt.Errorf("target-info is undefined")
@@ -90,7 +111,7 @@ func DefaultInputFileFor(workDir string, allowedInputExtensions []string) InputF
 	}
 }
 
-func DefaultOutputFileFor(workDir string, expectedOutputExtension string) OutputFile {
+func DefaultOutputFileFor(expectedOutputExtension string) OutputFile {
 	return func(ti targetinfo.TargetInfo, workDir string) (string, error) {
 		return ripper.GetProcessingArtifactPathFor(workDir, ti.GetFolder(), ti.GetFile(), expectedOutputExtension)
 	}

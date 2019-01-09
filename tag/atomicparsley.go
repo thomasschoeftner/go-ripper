@@ -10,9 +10,10 @@ import (
 	"strconv"
 	"os"
 	"io"
+	"path/filepath"
 )
 
-const CONF_ATOMICPARSLEY_TAGGER = "atomicparsley"
+const conf_tagger_atomicparsley = "atomicparsley"
 const (
 	paramOutputFile = "-o"
 	argumentOverwrite = "--overWrite"
@@ -33,80 +34,109 @@ const (
 	paramDisc = "--disk"
 )
 
-func NewAtomicParsleyVideoTagger(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (VideoTagger, error)  {
-	if lazy {
-		printf("WARNING - video tagging via AtomicParsley is NOT lazy - ie files will always be tagged/written!\n")
-	}
-
-	timeout, err := time.ParseDuration(conf.Video.AtomicParsley.Timeout)
-	if err != nil {
-		return nil, err
-	}
-
+func createAtomicParsleyVideoTagger(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)  {
 	apConf := conf.Video.AtomicParsley
-	path := apConf.Path
-	exists, err := files.Exists(path)
+	tagCtx := &atomicParsley{}
+	var err error
+
+	tagCtx.timeout, err = time.ParseDuration(apConf.Timeout)
 	if err != nil {
-		return nil, err
-	} else if !exists {
-		return nil, fmt.Errorf("unable to find AtomicParsley binary at \"%s\"\n", path)
+		return nil, nil, err
 	}
 
-	ap := &atomicParsleyVideoTagger{timeout: timeout, path: path, printf: printf.WithIndent(2)}
+	tagCtx.path = apConf.Path
+	exists, err := files.Exists(tagCtx.path)
+	if err != nil {
+		return nil, nil, err
+	} else if !exists {
+		return nil, nil, fmt.Errorf("unable to find AtomicParsley binary at \"%s\"\n", tagCtx.path)
+	}
+
 	if apConf.ShowErrorOutput {
-		ap.errOut = os.Stderr
+		tagCtx.errout = os.Stderr
 	}
 	if apConf.ShowStandardOutput {
-		ap.stdOut = os.Stdout
+		tagCtx.stdout = os.Stdout
 	}
-	return ap, nil
+
+	tagCtx.printf = printf.WithIndent(2)
+	tagCtx.tempDir = filepath.Join(workDir, files.TEMP_DIR_NAME)
+	return tagCtx.movie, tagCtx.episode, nil
 }
 
-type atomicParsleyVideoTagger struct {
-	timeout time.Duration
+type atomicParsley struct {
 	path string
+	timeout time.Duration
 	printf commons.FormatPrinter
-	errOut io.Writer
-	stdOut io.Writer
+	stdout io.Writer
+	errout io.Writer
+	evacuate files.EvacuatorFunc
+	tempDir string
 }
 
-func (ap *atomicParsleyVideoTagger) TagMovie(inFile string, outFile string, id string, title string, year string, posterPath string) error {
-	//ap.printf("AtomicParsley tags \"%s\"\n", inFile)
-	//ap.printf("using {id=%s, title=%s, year=%s, image=%s}\n", id, title, year, posterPath)
-	//ap.printf("-> write to \"%s\"\n", outFile)
-	cmd := cli.Command(ap.path, ap.timeout).WithQuotes(" ", '"').
-		WithArgument(inFile).
-		WithParam(paramTitle, title, "").
-		WithParam(paramPoster, posterPath, "").
-		WithParam(paramYear, year, "")
-	if inFile == outFile {
-		cmd = cmd.WithArgument(argumentOverwrite)
-	} else {
-		cmd = cmd.WithParam(paramOutputFile, outFile, "")
-	}
+func (ap *atomicParsley) movie(inFile string, outFile string, id string, title string, year string, posterPath string) error {
+	evacuate := files.PrepareEvacuation(ap.tempDir)
+	evacuated, err := evacuate(inFile).By(files.Copying)
 
-	//ap.printf(">>>> %s\n", cmd.String())
-	return cmd.ExecuteSync(ap.stdOut, ap.errOut)
+	if err == nil {
+		defer evacuated.Discard()
+		resultFile := evacuated.WithSuffix(".tagged")
+		//ap.printf("AtomicParsley tags \"%s\"\n", inFile)
+		//ap.printf("using {id=%s, title=%s, year=%s, image=%s}\n", id, title, year, posterPath)
+		//ap.printf("-> write to \"%s\"\n", outFile)
+		cmd := cli.Command(ap.path, ap.timeout).WithQuotes(" ", '"').
+			WithArgument(evacuated.Path()).
+			WithParam(paramTitle, title, "").
+			WithParam(paramPoster, posterPath, "").
+			WithParam(paramYear, year, "")
+		cmd = cmd.WithParam(paramOutputFile, resultFile, "")
+
+		//ap.printf(">>>> %s\n", cmd.String())
+		err = cmd.ExecuteSync(ap.stdout, ap.errout)
+		if err == nil {
+			err = moveTo(resultFile, outFile)
+		}
+	}
+	return err
 }
 
-func (ap *atomicParsleyVideoTagger) TagEpisode(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error {
-	//ap.printf("AtomicParsley tags \"%s\"\n", inFile)
-	//ap.printf("using {id=%s, series=%s, season=%d, episode=%d, title=%s, year=%s, image=%s}\n", id, series, season, episode, title, year, posterPath)
-	//ap.printf("-> write to \"%s\"\n", outFile)
-	cmd := cli.Command(ap.path, ap.timeout).WithQuotes(" ", '"').
-		WithArgument(inFile).
-		WithParam(paramTitle, title, "").
-		WithParam(paramPoster, posterPath, "").
-		WithParam(paramYear, year, "").
-		WithParam(paramSeriesName, series, "").
-		WithParam(paramEpisode, strconv.Itoa(episode), "").
-		WithParam(paramSeason, strconv.Itoa(season), "").
-		WithParam(paramEpisodeName, title, "")
-	if inFile == outFile {
-		cmd = cmd.WithArgument(argumentOverwrite)
-	} else {
-		cmd = cmd.WithParam(paramOutputFile, outFile, "")
+func (ap *atomicParsley) episode(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error {
+	evacuate := files.PrepareEvacuation(ap.tempDir)
+	evacuated, err := evacuate(inFile).By(files.Copying)
+
+	if err == nil {
+		defer evacuated.Discard()
+		resultFile := evacuated.WithSuffix(".tagged")
+
+		//ap.printf("AtomicParsley tags \"%s\"\n", inFile)
+		//ap.printf("using {id=%s, series=%s, season=%d, episode=%d, title=%s, year=%s, image=%s}\n", id, series, season, episode, title, year, posterPath)
+		//ap.printf("-> write to \"%s\"\n", outFile)
+		cmd := cli.Command(ap.path, ap.timeout).WithQuotes(" ", '"').
+			WithArgument(evacuated.Path()).
+			WithParam(paramTitle, title, "").
+			WithParam(paramPoster, posterPath, "").
+			WithParam(paramYear, year, "").
+			WithParam(paramSeriesName, series, "").
+			WithParam(paramEpisode, strconv.Itoa(episode), "").
+			WithParam(paramSeason, strconv.Itoa(season), "").
+			WithParam(paramEpisodeName, title, "")
+		cmd = cmd.WithParam(paramOutputFile, resultFile, "")
+
+		//ap.printf(">>>> %s\n", cmd.String())
+		err = cmd.ExecuteSync(ap.stdout, ap.errout)
+		if err == nil {
+			err = moveTo(resultFile, outFile)
+		}
 	}
-	//ap.printf(">>>> %s\n", cmd.String())
-	return cmd.ExecuteSync(ap.stdOut, ap.errOut)
+	return err
+}
+
+func moveTo(intermediateFile string, outFile string) error {
+	err := files.CreateFolderStructure(filepath.Dir(outFile))
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(intermediateFile, outFile)
+	return err
 }

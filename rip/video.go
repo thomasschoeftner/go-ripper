@@ -16,9 +16,9 @@ func RipVideo(ctx task.Context) task.HandlerFunc {
 
 	switch ripperType {
 	case CONF_RIPPER_HANDBRAKE:
-		rip, err = handbrakeRipper(conf.Rip.Video.Handbrake, ctx.Printf, conf.WorkDirectory)
+		rip, err = createHandbrakeRipper(conf.Rip.Video.Handbrake, ctx.Printf, conf.WorkDirectory)
 	default:
-		err = fmt.Errorf("unable to create video ripper of type \"%s\"", ripperType)
+		err = fmt.Errorf("unknown video ripper configured: \"%s\"", ripperType)
 	}
 
 	if err != nil {
@@ -26,6 +26,6 @@ func RipVideo(ctx task.Context) task.HandlerFunc {
 	}
 	return processor.Process(ctx, rip, ripperType,
 		processor.DefaultCheckLazy(ctx.RunLazy, conf.Output.Video),
-		processor.DefaultInputFileFor(conf.WorkDirectory, conf.Rip.Video.AllowedInputExtensions),
-		processor.DefaultOutputFileFor(conf.WorkDirectory, conf.Output.Video))
+		processor.DefaultInputFileFor(conf.Rip.Video.AllowedInputExtensions),
+		processor.DefaultOutputFileFor(conf.Output.Video))
 }

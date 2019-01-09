@@ -23,7 +23,7 @@ const (
 	argLogToJson            = "--json"
 )
 
-func handbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (processor.Processor, error) {
+func createHandbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter, workDir string) (processor.Processor, error) {
 	timeout, err := time.ParseDuration(conf.Timeout)
 	if err != nil {
 		return nil, err
@@ -43,10 +43,9 @@ func handbrakeRipper(conf *ripper.HandbrakeConfig, printf commons.FormatPrinter,
 		if err != nil {
 			return err
 		}
-		tmpOut, ext := files.SplitExtension(evacuated.Path())
-		tmpOut = files.WithExtension(tmpOut+ ".ripped", ext)
 		defer evacuated.Restore()
 
+		tmpOut := evacuated.WithSuffix(".ripped")
 		cmd := cli.Command(conf.Path, timeout).WithQuotes(" ", '\'').
 		WithParam(paramImportPreset, filepath.ToSlash(conf.PresetsFile), "").
 		WithParam(paramUsePreset, conf.PresetName, "").
