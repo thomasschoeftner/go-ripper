@@ -2,7 +2,7 @@
     * processor_test.go
     * tagvideo_test.go
     * ripvideo_test.go
-    
+
 
 (3a) rip - implement LAZY
 (3b) rip - handle file names with spaces
