@@ -67,7 +67,6 @@ func getProcessor(conf *ripper.AppConf, movieTagger MovieTagger, episodeTagger E
 	}
 }
 
-
 func tagMovie(tag MovieTagger, conf *ripper.AppConf, ti *targetinfo.Movie, inputFile string) error {
 	movieMi := video.MovieMetaInfo{}
 	err := metainfo.ReadMetaInfo(video.MovieFileName(conf.MetaInfoRepo, ti.GetId()), &movieMi)
