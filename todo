@@ -1,5 +1,4 @@
 *** add/fix tests
-    * processor_test.go
     * tagvideo_test.go
     * ripvideo_test.go
 
