@@ -6,8 +6,6 @@ import (
 	"go-ripper/ripper"
 	"go-cli/test"
 	"path/filepath"
-	"io/ioutil"
-	"os"
 	"go-ripper/files"
 	"fmt"
 	"go-ripper/metainfo"
