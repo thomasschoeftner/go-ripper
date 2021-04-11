@@ -1,15 +1,15 @@
 package processor
 
 import (
-	"go-ripper/files"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
-	"go-ripper/targetinfo"
-	"go-cli/test"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-cli/commons"
 )
 
 

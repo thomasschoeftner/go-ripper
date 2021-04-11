@@ -3,10 +3,10 @@ package ripper
 import (
 	"testing"
 	"path/filepath"
-	"go-cli/task"
+	"github.com/thomasschoeftner/go-cli/task"
 	"strings"
-	"go-cli/test"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/files"
 )
 
 func TestGetWorkPathForFile(t *testing.T) {

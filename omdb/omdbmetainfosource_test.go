@@ -3,7 +3,7 @@ package omdb
 import (
 	"testing"
 	"strings"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 )
 
 var allTokens = []string {"sepp", "hat", "gelbe", "eier"}

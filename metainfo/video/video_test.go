@@ -2,9 +2,9 @@ package video
 
 import (
 	"testing"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 	"fmt"
-	"go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
 )
 
 func TestGetType(t *testing.T) {

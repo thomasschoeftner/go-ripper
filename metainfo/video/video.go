@@ -3,7 +3,7 @@ package video
 import (
 	"path/filepath"
 	"fmt"
-	"go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
 )
 
 const (

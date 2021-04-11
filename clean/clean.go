@@ -1,9 +1,9 @@
 package clean
 
 import (
-	"go-cli/task"
-	"go-ripper/ripper"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/commons"
 	"path/filepath"
 	"os"
 )

@@ -1,15 +1,15 @@
 package scan
 
 import (
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"path/filepath"
 	"os"
 	"strings"
 	"fmt"
 	"regexp"
 	"strconv"
-	"go-ripper/files"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-cli/commons"
 )
 
 type scanResult struct {

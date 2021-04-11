@@ -1,16 +1,16 @@
 package rip
 
 import (
-	"go-cli/commons"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"io"
 	"os"
-	"go-cli/cli"
+	"github.com/thomasschoeftner/go-cli/cli"
 	"time"
 	"path/filepath"
-	"go-ripper/files"
-	"go-ripper/targetinfo"
-	"go-ripper/processor"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-ripper/processor"
 )
 
 const CONF_RIPPER_HANDBRAKE = "handbrake"

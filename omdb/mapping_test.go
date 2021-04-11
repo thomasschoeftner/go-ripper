@@ -3,7 +3,7 @@ package omdb
 import (
 	"testing"
 	"strconv"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 )
 
 const jsonPattern = `

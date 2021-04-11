@@ -3,7 +3,7 @@ package metainfo
 import (
 	"testing"
 	"fmt"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 	"path/filepath"
 	"bytes"
 )

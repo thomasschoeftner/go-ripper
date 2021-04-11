@@ -1,9 +1,9 @@
 package video
 
 import (
-	"go-cli/task"
-	"go-ripper/ripper"
-	"go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 	"errors"
 )
 

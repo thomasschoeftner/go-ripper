@@ -3,7 +3,7 @@ package video
 import (
 	"errors"
 	"fmt"
-	"go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
 )
 
 type testVideoMetaInfoSource struct {

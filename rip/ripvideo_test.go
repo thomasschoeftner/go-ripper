@@ -1,7 +1,7 @@
 package rip
 
 import (
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 	"testing"
 )
 

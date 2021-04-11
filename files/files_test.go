@@ -2,7 +2,7 @@ package files
 
 import (
 	"testing"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 	"path/filepath"
 	"fmt"
 	"io/ioutil"

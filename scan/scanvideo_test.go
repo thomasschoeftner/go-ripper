@@ -2,11 +2,11 @@ package scan
 
 import (
 	"testing"
-	"go-cli/task"
-	"go-cli/commons"
-	"go-cli/test"
-	"go-ripper/ripper"
-	"go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 	"path/filepath"
 )
 

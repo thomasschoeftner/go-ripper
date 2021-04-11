@@ -3,19 +3,19 @@ package main
 import (
 	"os"
 	"github.com/google/logger"
-	"go-cli/task"
-	"go-ripper/ripper"
-	"go-cli/pipeline"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/pipeline"
 	"flag"
 	"fmt"
-	"go-cli/require"
+	"github.com/thomasschoeftner/go-cli/require"
 	"errors"
-	"go-cli/cli"
+	"github.com/thomasschoeftner/go-cli/cli"
 	"path/filepath"
-	"go-ripper/metainfo/video"
-	"go-ripper/omdb"
+	"github.com/thomasschoeftner/go-ripper/metainfo/video"
+	"github.com/thomasschoeftner/go-ripper/omdb"
 	"io/ioutil"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/files"
 )
 
 const (

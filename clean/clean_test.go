@@ -2,14 +2,14 @@ package clean
 
 import (
 	"testing"
-	"go-cli/task"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"os"
 	"io/ioutil"
 	"path/filepath"
-	"go-cli/test"
-	"go-ripper/files"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-cli/commons"
 )
 
 func TestClean(t *testing.T) {

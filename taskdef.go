@@ -1,13 +1,13 @@
 package main
 
 import (
-	"go-cli/task"
-	"go-ripper/clean"
-	"go-ripper/scan"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/clean"
+	"github.com/thomasschoeftner/go-ripper/scan"
 	"errors"
-	"go-ripper/metainfo/video"
-	"go-ripper/tag"
-	"go-ripper/rip"
+	"github.com/thomasschoeftner/go-ripper/metainfo/video"
+	"github.com/thomasschoeftner/go-ripper/tag"
+	"github.com/thomasschoeftner/go-ripper/rip"
 )
 
 const TaskName_Tasks = "tasks"

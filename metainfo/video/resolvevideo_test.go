@@ -2,15 +2,15 @@ package video
 
 import (
 	"testing"
-	"go-cli/test"
-	"go-ripper/targetinfo"
-	"go-cli/task"
-	"go-cli/commons"
-	"go-ripper/ripper"
-	"go-cli/config"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/config"
 	"path/filepath"
-	"go-ripper/files"
-	"go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
 )
 
 var movieTi = targetinfo.NewMovie("movieTi.mp4", "/a/b", "tt123456")

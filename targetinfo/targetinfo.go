@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"go-ripper/ripper"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/files"
 )
 
 const targetinfo_file_extension = "targetinfo"

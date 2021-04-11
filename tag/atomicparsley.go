@@ -1,11 +1,11 @@
 package tag
 
 import (
-	"go-ripper/ripper"
-	"go-cli/commons"
-	"go-cli/cli"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/cli"
 	"time"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/files"
 	"fmt"
 	"strconv"
 	"os"

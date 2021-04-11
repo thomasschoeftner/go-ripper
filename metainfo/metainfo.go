@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"path/filepath"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/files"
 	"os"
 )
 

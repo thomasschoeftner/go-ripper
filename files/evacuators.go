@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"os"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/commons"
 	"strconv"
 )
 

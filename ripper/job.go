@@ -1,12 +1,12 @@
 package ripper
 
 import (
-	"go-cli/pipeline"
+	"github.com/thomasschoeftner/go-cli/pipeline"
 	"fmt"
-	"go-cli/task"
+	"github.com/thomasschoeftner/go-cli/task"
 	"path/filepath"
 	"strings"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/files"
 )
 
 const (

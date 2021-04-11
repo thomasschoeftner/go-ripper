@@ -1,0 +1,11 @@
+github.com/google/logger v1.1.0 h1:saB74Etb4EAJNH3z74CVbCKk75hld/8T0CsXKetWCwM=
+github.com/google/logger v1.1.0/go.mod h1:w7O8nrRr0xufejBlQMI83MXqRusvREoJdaAxV+CoAB4=
+github.com/thomasschoeftner/go-cli v0.0.0-20190614110959-9e8081affb38 h1:B097O2s7Q8jhskqiamUxT/h9u/cfRzwQOb628lwjggM=
+github.com/thomasschoeftner/go-cli v0.0.0-20190614110959-9e8081affb38/go.mod h1:3zi5pGXc3mQ/IduP3NfjDbmkOci4GNC0CRDjcac+Tso=
+github.com/thomasschoeftner/go-cli v0.1.0 h1:i8oorLiowaWtAonmcQ+Op0zBz7dJJX8XOZpVPUjf0Pw=
+github.com/thomasschoeftner/go-cli v0.1.0/go.mod h1:aNCA8/T1KRZ08r5aIYyKGNFhn9R0i9mSR1fwBGv3bIY=
+github.com/thomasschoeftner/go-cli v0.1.1 h1:UN9O1EXNDNxxL7v2l0ZjeYzmidRuZyArTXuIv6Ykbnk=
+github.com/thomasschoeftner/go-cli v0.1.1/go.mod h1:9abY4Xt0p7UUnT0UtqA8aMyGprh03uk9oRVkDi7JMwE=
+github.com/thomasschoeftner/go-cli v0.1.2 h1:M0AZcFxEdESpDf/EyTmx6k9B0jTiG+GAB9Faa9uBBXE=
+github.com/thomasschoeftner/go-cli v0.1.2/go.mod h1:9abY4Xt0p7UUnT0UtqA8aMyGprh03uk9oRVkDi7JMwE=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

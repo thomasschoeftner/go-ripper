@@ -1,10 +1,10 @@
 package video
 
 import (
-	"go-ripper/targetinfo"
-	"go-ripper/files"
-	"go-ripper/ripper"
-	"go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
 )
 
 func findOrFetch(metaInfo VideoMetaInfoSource, conf *ripper.AppConf, lazy bool) *findOrFetcher {

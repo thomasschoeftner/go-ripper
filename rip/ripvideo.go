@@ -1,11 +1,11 @@
 package rip
 
 import (
-	"go-cli/task"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"fmt"
-	"go-ripper/processor"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/processor"
+	"github.com/thomasschoeftner/go-cli/commons"
 )
 
 type RipperFactory func(conf *ripper.AppConf, printf commons.FormatPrinter, workDir string) (processor.Processor, error)

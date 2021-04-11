@@ -1,12 +1,12 @@
 package processor
 
 import (
-	"go-cli/task"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"fmt"
-	"go-ripper/targetinfo"
-	"go-ripper/files"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-cli/commons"
 )
 
 type CheckLazy func(targetInfo targetinfo.TargetInfo) bool

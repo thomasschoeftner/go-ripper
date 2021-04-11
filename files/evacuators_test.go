@@ -2,11 +2,11 @@ package files
 
 import (
 	"testing"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 	"path/filepath"
 	"strings"
 	"fmt"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/commons"
 	"strconv"
 )
 

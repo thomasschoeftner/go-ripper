@@ -5,7 +5,7 @@ import (
 	"strings"
 	"fmt"
 	"strconv"
-	"go-ripper/metainfo/video"
+	"github.com/thomasschoeftner/go-ripper/metainfo/video"
 )
 
 const (

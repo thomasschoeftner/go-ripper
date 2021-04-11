@@ -4,7 +4,7 @@ import (
 	"testing"
 	"os"
 	"path/filepath"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-cli/test"
 )
 
 var video = NewMovie("f.g", "/a/b/c", "test")

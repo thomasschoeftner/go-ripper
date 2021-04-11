@@ -2,9 +2,9 @@ package omdb
 
 import (
 	"errors"
-	"go-ripper/metainfo"
-	"go-ripper/metainfo/video"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo/video"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"strings"
 	"fmt"
 	"strconv"

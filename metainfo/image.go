@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"errors"
 	"io/ioutil"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/files"
 	"os"
 )
 

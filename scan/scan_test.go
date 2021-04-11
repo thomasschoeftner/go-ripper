@@ -2,12 +2,12 @@ package scan
 
 import (
 	"testing"
-	"go-ripper/ripper"
-	"go-cli/config"
-	"go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/config"
+	"github.com/thomasschoeftner/go-cli/test"
 	"fmt"
 	"path/filepath"
-	"go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/commons"
 )
 
 func loadConfig(json string) (*ripper.AppConf, error) {

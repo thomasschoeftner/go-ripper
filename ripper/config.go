@@ -1,9 +1,9 @@
 package ripper
 
 import (
-	"go-cli/task"
-	"go-cli/require"
-	"go-cli/config"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-cli/require"
+	"github.com/thomasschoeftner/go-cli/config"
 	"fmt"
 	"strings"
 )

@@ -1,15 +1,15 @@
 package video
 
 import (
-	"go-cli/test"
-	"go-ripper/ripper"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 	"path/filepath"
-	"go-cli/config"
-	"go-ripper/files"
+	"github.com/thomasschoeftner/go-cli/config"
+	"github.com/thomasschoeftner/go-ripper/files"
 	"testing"
 	"fmt"
 	"bytes"
-	"go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
 )
 
 func setupFindOrFetcher(assert *test.Assertion, movie *MovieMetaInfo, series *SeriesMetaInfo, episode *EpisodeMetaInfo, images map[string][]byte) (string, *ripper.AppConf) {
