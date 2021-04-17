@@ -1,28 +1,29 @@
 package tag
 
 import (
-	"testing"
-	"go-ripper/targetinfo"
-	"go-ripper/ripper"
-	"go-cli/test"
-	"path/filepath"
-	"go-ripper/files"
-	"fmt"
-	"go-ripper/metainfo"
-	"go-ripper/metainfo/video"
-	"strconv"
-	"go-cli/commons"
-	"go-cli/task"
-	"go-cli/config"
 	"errors"
+	"fmt"
+	"path/filepath"
+	"strconv"
+	"testing"
+
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/config"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo/video"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 )
 
 const expectedVideoExtension = "mp4"
 
-
-func newTestVideoTagger(raiseError error) func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (VideoTagger, error) {
-	return func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (VideoTagger, error) {
-		return &testTagger{raiseError: raiseError}, nil
+func newTestVideoTagger(raiseError error) func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (MovieTagger, EpisodeTagger, error) {
+	return func(conf *ripper.TagConfig, lazy bool, printf commons.FormatPrinter) (MovieTagger, EpisodeTagger, error) {
+		var tagger = &testTagger{raiseError: raiseError}
+		return tagger.TagMovie, tagger.TagEpisode, nil
 	}
 }
 
@@ -64,13 +65,12 @@ func (tagger *testTagger) TagEpisode(inFile string, outFile string, id string, s
 	return tagger.raiseError
 }
 
-
 func TestTagMovie(t *testing.T) {
 	t.Run("expect error when no appropriate input inFile is found", func(t *testing.T) {
 		assert := test.AssertOn(t)
 		ti := targetinfo.NewMovie(files.WithExtension("movie", "avi"), "/some/dir", "movie-id")
 		tagger := &testTagger{}
-		dest, err := tagMovie(tagger, ti,"/repo", ti.File)
+		dest, err := tagMovie(tagger, ti, "/repo", ti.File)
 		assert.ExpectError("expected error when tagging movie without appropriate input inFile, but got none")(err)
 		assert.IntsEqual(0, len(dest))
 	})
@@ -79,7 +79,7 @@ func TestTagMovie(t *testing.T) {
 		assert := test.AssertOn(t)
 		ti := targetinfo.NewMovie(files.WithExtension("movie", expectedVideoExtension), "/some/dir", "movie-id")
 		tagger := &testTagger{}
-		dest, err := tagMovie(tagger, ti,"/repo", ti.File)
+		dest, err := tagMovie(tagger, ti, "/repo", ti.File)
 		assert.ExpectError("expected error when tagging movie without meta-info inFile, but got none")(err)
 		assert.IntsEqual(0, len(dest))
 	})
@@ -90,14 +90,14 @@ func TestTagMovie(t *testing.T) {
 		dir := test.MkTempFolder(t)
 		defer test.RmTempFolder(t, dir)
 		repoDir := filepath.Join(dir, "repo")
-		mi := video.MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: "movie-id"}, Title: "true art", Year: "1966", Poster: "/a/b/c/art.png" }
+		mi := video.MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: "movie-id"}, Title: "true art", Year: "1966", Poster: "/a/b/c/art.png"}
 		metainfo.SaveMetaInfo(video.MovieFileName(repoDir, mi.Id), mi)
 
 		ti := targetinfo.NewMovie(files.WithExtension("movie", expectedVideoExtension), "/some/dir", mi.Id)
 		fileToProcess := files.WithExtension("some/other/file", expectedVideoExtension)
 
 		tagger := &testTagger{}
-		dest, err := tagMovie(tagger, ti,repoDir, fileToProcess)
+		dest, err := tagMovie(tagger, ti, repoDir, fileToProcess)
 		assert.NotError(err)
 		assert.StringsEqual(mi.Id, tagger.id)
 		assert.StringsEqual(mi.Title, tagger.title)
@@ -114,7 +114,7 @@ func TestTagEpisode(t *testing.T) {
 		assert := test.AssertOn(t)
 		ti := targetinfo.NewEpisode(files.WithExtension("movie", "avi"), "/some/dir", "episode-id", 4, 2, 2, 9)
 		tagger := &testTagger{}
-		dest, err := tagEpisode(tagger, ti,"/repo", ti.File)
+		dest, err := tagEpisode(tagger, ti, "/repo", ti.File)
 		assert.ExpectError("expected error when tagging episode without appropriate input inFile, but got none")(err)
 		assert.IntsEqual(0, len(dest))
 	})
@@ -125,13 +125,13 @@ func TestTagEpisode(t *testing.T) {
 		defer test.RmTempFolder(t, dir)
 		repoDir := filepath.Join(dir, "repo")
 
-		seriesMi := video.SeriesMetaInfo{IdInfo: metainfo.IdInfo{"series-id"}, Title: "traffic education", Seasons: 9, Year: "2010", Poster: "/pic/of/a/car.jpeg" }
+		seriesMi := video.SeriesMetaInfo{IdInfo: metainfo.IdInfo{"series-id"}, Title: "traffic education", Seasons: 9, Year: "2010", Poster: "/pic/of/a/car.jpeg"}
 		metainfo.SaveMetaInfo(video.SeriesFileName(repoDir, seriesMi.Id), seriesMi)
 
 		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", seriesMi.Id, 2, 4, 4, 9)
 
 		tagger := &testTagger{}
-		dest, err := tagEpisode(tagger, ti,repoDir, ti.File)
+		dest, err := tagEpisode(tagger, ti, repoDir, ti.File)
 		assert.ExpectError("expected error when tagging episode without episode meta-info, but got none")(err)
 		assert.IntsEqual(0, len(dest))
 	})
@@ -158,7 +158,7 @@ func TestTagEpisode(t *testing.T) {
 		defer test.RmTempFolder(t, dir)
 		repoDir := filepath.Join(dir, "repo")
 
-		seriesMi := video.SeriesMetaInfo{IdInfo: metainfo.IdInfo{"series-id"}, Title: "traffic education", Seasons: 9, Year: "2010", Poster: "/pic/of/a/car.jpeg" }
+		seriesMi := video.SeriesMetaInfo{IdInfo: metainfo.IdInfo{"series-id"}, Title: "traffic education", Seasons: 9, Year: "2010", Poster: "/pic/of/a/car.jpeg"}
 		episodeMi := video.EpisodeMetaInfo{IdInfo: metainfo.IdInfo{"episode-id"}, Title: "crash boom", Season: 4, Episode: 2, Year: "2014"}
 		metainfo.SaveMetaInfo(video.SeriesFileName(repoDir, seriesMi.Id), seriesMi)
 		metainfo.SaveMetaInfo(video.EpisodeFileName(repoDir, seriesMi.Id, episodeMi.Season, episodeMi.Episode), episodeMi)
@@ -179,7 +179,7 @@ func TestTagEpisode(t *testing.T) {
 		assert.StringsEqual(metainfo.ImageFileName(repoDir, seriesMi.Id, files.GetExtension(seriesMi.Poster)), tagger.posterPath)
 		assert.StringsEqual(fileToProcess, tagger.inFile)
 		assert.StringsEqual(fileToProcess, tagger.outFile)
-		expectedFileName :=  files.WithExtension(fmt.Sprintf(templateEpisodeFilename, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title), expectedVideoExtension)
+		expectedFileName := files.WithExtension(fmt.Sprintf(templateEpisodeFilename, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title), expectedVideoExtension)
 		assert.StringSlicesEqual([]string{seriesMi.Title, strconv.Itoa(episodeMi.Season), expectedFileName}, dest)
 	})
 }
@@ -195,11 +195,11 @@ func TestTagVideo(t *testing.T) {
 		conf.WorkDirectory = workDir
 		conf.MetaInfoRepo = "./testdata/meta"
 		ctx := task.Context{
-			Config: &conf,
-			Printf: commons.Printf,
-			RunLazy: true,
+			Config:    &conf,
+			Printf:    commons.Printf,
+			RunLazy:   true,
 			OutputDir: filepath.Join(workDir, "out")}
-		job := map[string]string {ripper.JobField_Path : inputFile}
+		job := map[string]string{ripper.JobField_Path: inputFile}
 		return assert, ctx, job
 	}
 
@@ -223,7 +223,7 @@ func TestTagVideo(t *testing.T) {
 
 	t.Run("return error if target-info not found", func(t *testing.T) {
 		NewVideoTagger = newTestVideoTagger(nil)
-		assert, ctx, job := setup(t,"./testdata/in/unknown.mp4")
+		assert, ctx, job := setup(t, "./testdata/in/unknown.mp4")
 		handlerFunc := TagVideo(ctx)
 		jobs, err := handlerFunc(job)
 		assert.ExpectError("expected error when tagging video with missing targetinfo")(err)

@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
-	"go-cli/task"
-	"go-ripper/ripper"
-	"go-ripper/targetinfo"
-	"go-ripper/metainfo/video"
-	"go-ripper/metainfo"
-	"go-ripper/files"
-	"go-cli/commons"
-	"go-ripper/processor"
+
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/metainfo/video"
+	"github.com/thomasschoeftner/go-ripper/processor"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 )
 
 type MovieTagger func(inFile string, outFile string, id string, title string, year string, posterPath string) error
 type EpisodeTagger func(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error
 
-
 type TaggerFactory func(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)
+
 var TaggerFactories map[string]TaggerFactory
 
 func init() {
@@ -39,6 +40,7 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 		err = fmt.Errorf("unknown video tagger configured: \"%s\"", conf.Tag.Video.Tagger)
 	} else {
 		movieTagger, episodeTagger, err = createAtomicParsleyVideoTagger(conf, ctx.RunLazy, ctx.Printf, conf.WorkDirectory)
+		// 		movieTagger, episodeTagger, err = tf(conf, ctx.RunLazy, ctx.Printf, conf.WorkDirectory)
 	}
 
 	if err != nil {
@@ -117,7 +119,7 @@ func tagEpisode(tag EpisodeTagger, conf *ripper.AppConf, ti *targetinfo.Episode,
 }
 
 func buildDestinationPath(invalidFileNameChars string, outputDir string, pathElems ...string) string {
-	dstPathElems := []string {outputDir}
+	dstPathElems := []string{outputDir}
 	for _, pathElem := range pathElems {
 		dstPathElems = append(dstPathElems, commons.RemoveCharacters(pathElem, invalidFileNameChars))
 	}
