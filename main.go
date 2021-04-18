@@ -1,37 +1,34 @@
 package main
 
 import (
-	"os"
-	"github.com/google/logger"
-	"github.com/thomasschoeftner/go-cli/task"
-	"github.com/thomasschoeftner/go-ripper/ripper"
-	"github.com/thomasschoeftner/go-cli/pipeline"
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/thomasschoeftner/go-cli/require"
-	"errors"
-	"github.com/thomasschoeftner/go-cli/cli"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+
+	"github.com/google/logger"
+	"github.com/thomasschoeftner/go-cli/cli"
+	"github.com/thomasschoeftner/go-cli/pipeline"
+	"github.com/thomasschoeftner/go-cli/require"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/files"
 	"github.com/thomasschoeftner/go-ripper/metainfo/video"
 	"github.com/thomasschoeftner/go-ripper/omdb"
-	"io/ioutil"
-	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 )
 
 const (
-	cliFlagVerbose             = "verbose"
-	cliFlagLazy                = "lazy"
-	cliFlagOmdbTokens          = "omdbtoken"
-	cliFlagConfigFile          = "config"
-	cliFlagOutputFolder        = "output"
-	ApplicationName            = "go-ripper"
+	cliFlagVerbose    = "verbose"
+	cliFlagLazy       = "lazy"
+	cliFlagConfigFile = "config"
+	ApplicationName   = "go-ripper"
 )
 
 var isVerbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBoolean().WithDefault(false)
-var isLazy = cli.FromFlag(cliFlagLazy, "execute task only if no output from previous execution is available").GetBoolean().WithDefault(true)
-var omdbTokens = cli.FromFlag(cliFlagOmdbTokens, "the access token für connecting to OMDB - can also be specified as ENV variable").OrEnvironmentVar(cliFlagOmdbTokens).GetArray().WithDefault()
-var configFile = cli.FromFlag(cliFlagConfigFile, "the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault(ApplicationName + ".conf")
-var outputDirectory = cli.FromFlag(cliFlagOutputFolder, "the output folder for the completely processed (tagged) items - defaults to DefaultOutputDirectory in config").GetString().WithDefault("")
+var isLazy = cli.FromFlag(cliFlagLazy, "avoid re-execution of task, if output from previous execution is available - defaults to true").GetBoolean().WithDefault(true)
+var configFile = cli.FromFlag(cliFlagConfigFile, "the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault("./config/" + ApplicationName + ".conf")
 
 func main() {
 	os.Exit(launch())
@@ -45,11 +42,7 @@ func launch() int {
 
 	// read config
 	conf := ripper.GetConfig(*configFile)
-	conf.Resolve.Video.Omdb.OmdbTokens = *omdbTokens
-	if outputDirectory != nil && len(*outputDirectory) > 0 {
-		conf.OutputDirectory = *outputDirectory
-		require.NotFailed(files.CreateFolderStructure(conf.OutputDirectory))
-	}
+	require.NotFailed(files.CreateFolderStructure(conf.OutputDirectory))
 
 	switch conf.Resolve.Video.Resolver {
 	case omdb.CONF_OMDB_RESOLVER:
@@ -59,7 +52,7 @@ func launch() int {
 	}
 
 	// create task Tree
-	allTasks  := CreateTasks()
+	allTasks := CreateTasks()
 	taskMap, err := task.ValidateTasks(allTasks)
 	require.NotFailed(err)
 
@@ -112,7 +105,7 @@ func handleProcessingEvents(pipe *pipeline.Pipeline) error {
 		} else if isDone, job := event.IsDone(); isDone {
 			logger.Infof("processing job %v is completed", job)
 		} else {
-			return errors.New(fmt.Sprintf("unknown event received: %+v", event))
+			return fmt.Errorf("unknown event received: %+v", event)
 		}
 	}
 	return nil
