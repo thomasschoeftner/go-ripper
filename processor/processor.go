@@ -1,12 +1,13 @@
 package processor
 
 import (
-	"github.com/thomasschoeftner/go-cli/task"
-	"github.com/thomasschoeftner/go-ripper/ripper"
 	"fmt"
-	"github.com/thomasschoeftner/go-ripper/targetinfo"
-	"github.com/thomasschoeftner/go-ripper/files"
+
 	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 )
 
 type CheckLazy func(targetInfo targetinfo.TargetInfo) bool
@@ -75,7 +76,7 @@ func DefaultCheckLazy(lazyEnabled bool, expectedExtension string) CheckLazy {
 func NeverLazy(lazyEnabled bool, processorName string, printf commons.FormatPrinter) CheckLazy {
 	return func(targetInfo targetinfo.TargetInfo) bool {
 		if lazyEnabled {
-			printf("processor %s ignores lazy", processorName)
+			printf("processor %s ignores lazy\n", processorName)
 		}
 		return false
 	}
