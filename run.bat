@@ -1,1 +1,1 @@
-go-ripper --config=d:\golang-dev\src\go-ripper\go-ripper.original.conf scanVideo tagVideo d:\movies\new
+go-ripper --config=\path\to\go-ripper.original.conf scanVideo tagVideo
