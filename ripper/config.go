@@ -1,16 +1,17 @@
 package ripper
 
 import (
-	"github.com/thomasschoeftner/go-cli/task"
-	"github.com/thomasschoeftner/go-cli/require"
-	"github.com/thomasschoeftner/go-cli/config"
 	"fmt"
 	"strings"
+
+	"github.com/thomasschoeftner/go-cli/config"
+	"github.com/thomasschoeftner/go-cli/require"
+	"github.com/thomasschoeftner/go-cli/task"
 )
 
 func GetConfig(configFile string) *AppConf {
 	conf := AppConf{}
-	require.NotFailed(config.FromFile(&conf, configFile, map[string]string {}))
+	require.NotFailed(config.FromFile(&conf, configFile, map[string]string{}))
 	require.NotFailed(validateConfig(&conf))
 	return &conf
 }
@@ -20,7 +21,7 @@ func validateConfig(c *AppConf) error {
 		return fmt.Errorf("config is nil - no config available")
 	}
 
-	validatePath:= func(path string, fieldName string) error {
+	validatePath := func(path string, fieldName string) error {
 		if 0 == len(path) {
 			return fmt.Errorf("[config error] \"%s\" is empty", fieldName)
 		}
@@ -50,23 +51,22 @@ func validateConfig(c *AppConf) error {
 	return nil
 }
 
-
 type AppConf struct {
-	IgnorePrefix           string
-	WorkDirectory          string
-	MetaInfoRepo           string
-	OutputDirectory        string
-	Processing             *task.ProcessingConfig
-	Output                 *OutputConfig
-	Scan                   *ScanConfigGroup
-	Resolve                *ResolveConfig
-	Rip                    *RipConfig
-	Tag                    *TagConfig
+	IgnorePrefix    string
+	WorkDirectory   string
+	MetaInfoRepo    string
+	OutputDirectory string
+	Processing      *task.ProcessingConfig
+	Output          *OutputConfig
+	Scan            *ScanConfigGroup
+	Resolve         *ResolveConfig
+	Rip             *RipConfig
+	Tag             *TagConfig
 }
 
 type OutputConfig struct {
-	Video string
 	InvalidCharactersInFileName string
+	Video                       string
 }
 
 type ScanConfigGroup struct {
@@ -105,15 +105,15 @@ type RipConfig struct {
 }
 
 type VideoRipConfig struct {
-	Ripper string
+	Ripper                 string
 	AllowedInputExtensions []string
-	Handbrake *HandbrakeConfig
+	Handbrake              *HandbrakeConfig
 }
 
 type HandbrakeConfig struct {
 	CommandlineToolConfig
 	PresetsFile string
-	PresetName string
+	PresetName  string
 }
 
 type TagConfig struct {
@@ -130,8 +130,8 @@ type AtomicParsleyConfig struct {
 }
 
 type CommandlineToolConfig struct {
-	Path    string
-	Timeout string
-	ShowErrorOutput bool
+	Path               string
+	Timeout            string
+	ShowErrorOutput    bool
 	ShowStandardOutput bool
 }
