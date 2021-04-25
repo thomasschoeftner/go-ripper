@@ -18,7 +18,7 @@ import (
 type MovieTagger func(inFile string, outFile string, id string, title string, year string, posterPath string) error
 type EpisodeTagger func(inFile string, outFile string, id string, series string, season int, episode int, title string, year string, posterPath string) error
 
-type TaggerFactory func(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)
+type TaggerFactory func(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter) (MovieTagger, EpisodeTagger, error)
 
 var TaggerFactories map[string]TaggerFactory
 
@@ -36,11 +36,12 @@ func TagVideo(ctx task.Context) task.HandlerFunc {
 	var err error
 
 	tf := TaggerFactories[taggerType]
+
 	if tf == nil {
 		err = fmt.Errorf("unknown video tagger configured: \"%s\"", conf.Tag.Video.Tagger)
 	} else {
-		movieTagger, episodeTagger, err = createAtomicParsleyVideoTagger(conf, ctx.RunLazy, ctx.Printf, conf.WorkDirectory)
-		// 		movieTagger, episodeTagger, err = tf(conf, ctx.RunLazy, ctx.Printf, conf.WorkDirectory)
+		// movieTagger, episodeTagger, err = createAtomicParsleyVideoTagger(conf, ctx.RunLazy, ctx.Printf)
+		movieTagger, episodeTagger, err = tf(conf, ctx.RunLazy, ctx.Printf)
 	}
 
 	if err != nil {
@@ -76,7 +77,7 @@ func tagMovie(tag MovieTagger, conf *ripper.AppConf, ti *targetinfo.Movie, input
 		return err
 	}
 
-	if 0 == len(movieMi.Id) {
+	if len(movieMi.Id) == 0 {
 		return fmt.Errorf("could not find meta-info for movie: %s\n", ti.String())
 	}
 	imgFile := metainfo.ImageFileName(conf.MetaInfoRepo, movieMi.Id, files.GetExtension(movieMi.Poster))
@@ -97,7 +98,7 @@ func tagEpisode(tag EpisodeTagger, conf *ripper.AppConf, ti *targetinfo.Episode,
 	if err != nil {
 		return err
 	}
-	if 0 == len(episodeMi.Id) {
+	if len(episodeMi.Id) == 0 {
 		return fmt.Errorf("could not find meta-info for episode: %s\n", ti.String())
 	}
 
@@ -106,7 +107,7 @@ func tagEpisode(tag EpisodeTagger, conf *ripper.AppConf, ti *targetinfo.Episode,
 	if err != nil {
 		return err
 	}
-	if 0 == len(seriesMi.Id) {
+	if len(seriesMi.Id) == 0 {
 		return fmt.Errorf("could not find meta-info for series: %s\n", ti.String())
 	}
 	imgFile := metainfo.ImageFileName(conf.MetaInfoRepo, seriesMi.Id, files.GetExtension(seriesMi.Poster))
