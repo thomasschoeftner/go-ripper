@@ -1,41 +1,43 @@
 package tag
 
 import (
-	"github.com/thomasschoeftner/go-ripper/ripper"
-	"github.com/thomasschoeftner/go-cli/commons"
-	"github.com/thomasschoeftner/go-cli/cli"
-	"time"
-	"github.com/thomasschoeftner/go-ripper/files"
 	"fmt"
-	"strconv"
-	"os"
 	"io"
+	"os"
 	"path/filepath"
+	"strconv"
+	"time"
+
+	"github.com/thomasschoeftner/go-cli/cli"
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 )
 
 const conf_tagger_atomicparsley = "atomicparsley"
 const (
-	paramOutputFile = "-o"
+	paramOutputFile   = "-o"
 	argumentOverwrite = "--overWrite"
 
-	paramTitle = "--title"
-	paramYear = "--year"
-	paramPoster = "--artwork"
+	paramTitle       = "--title"
+	paramYear        = "--year"
+	paramPoster      = "--artwork"
 	paramDescription = "--description"
 
-	paramSeriesName = "--TVShowName"
-	paramSeason = "--TVSeasonNum"
-	paramEpisode = "--TVEpisodeNum"
+	paramSeriesName  = "--TVShowName"
+	paramSeason      = "--TVSeasonNum"
+	paramEpisode     = "--TVEpisodeNum"
 	paramEpisodeName = "--TVEpisode"
 
 	paramComment = "--comment"
-	paramGenre = "--genre"
-	paramAlbum = "--album"
-	paramDisc = "--disk"
+	paramGenre   = "--genre"
+	paramAlbum   = "--album"
+	paramDisc    = "--disk"
 )
 
-func createAtomicParsleyVideoTagger(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter, workDir string) (MovieTagger, EpisodeTagger, error)  {
+func createAtomicParsleyVideoTagger(conf *ripper.AppConf, lazy bool, printf commons.FormatPrinter) (MovieTagger, EpisodeTagger, error) {
 	apConf := conf.Tag.Video.AtomicParsley
+	workDir := conf.WorkDirectory
 	tagCtx := &atomicParsley{}
 	var err error
 
@@ -65,13 +67,13 @@ func createAtomicParsleyVideoTagger(conf *ripper.AppConf, lazy bool, printf comm
 }
 
 type atomicParsley struct {
-	path string
-	timeout time.Duration
-	printf commons.FormatPrinter
-	stdout io.Writer
-	errout io.Writer
+	path     string
+	timeout  time.Duration
+	printf   commons.FormatPrinter
+	stdout   io.Writer
+	errout   io.Writer
 	evacuate files.EvacuatorFunc
-	tempDir string
+	tempDir  string
 }
 
 func (ap *atomicParsley) movie(inFile string, outFile string, id string, title string, year string, posterPath string) error {
