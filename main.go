@@ -28,7 +28,7 @@ const (
 
 var isVerbose = cli.FromFlag(cliFlagVerbose, "full log output in console").GetBoolean().WithDefault(false)
 var isLazy = cli.FromFlag(cliFlagLazy, "avoid re-execution of task, if output from previous execution is available - defaults to true").GetBoolean().WithDefault(true)
-var configFile = cli.FromFlag(cliFlagConfigFile, "the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault("./config/" + ApplicationName + ".conf")
+var configFile = cli.FromFlag(cliFlagConfigFile, "the config file location").OrEnvironmentVar(ApplicationName + "-" + cliFlagConfigFile).GetString().WithDefault("/" + ApplicationName + "/config/" + ApplicationName + ".conf")
 
 func main() {
 	os.Exit(launch())
