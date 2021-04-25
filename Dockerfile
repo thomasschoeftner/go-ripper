@@ -6,6 +6,8 @@ RUN apt update && apt install -y --no-install-recommends \
     bzip2 \
     handbrake-cli \
     atomicparsley \
+    dvdbackup \
+    lsdvd \
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +19,9 @@ RUN curl -L https://get.videolan.org/libdvdcss/${LIBDVDCSS_VERSION}/libdvdcss-${
     cd libdvdcss-${LIBDVDCSS_VERSION} && \
     ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/libdvdcss-${LIBDVDCSS_VERSION} && \
     make && \
-    make install
+    make install && \
+    rm -rf /go-ripper/libdvdcss
+
 
 WORKDIR /go-ripper
 
@@ -27,5 +31,7 @@ RUN go get github.com/thomasschoeftner/go-ripper && \
     go build -o /usr/bin/go-ripper
 
 VOLUME /go-ripper/config
+VOLUME /go-ripper/storage
+VOLUME /dev/dvd
 
 ENTRYPOINT ["/bin/bash"]
