@@ -2,6 +2,8 @@ FROM golang:1.15.11
 
 ENV LIBDVDCSS_VERSION=1.4.2
 
+ADD scripts/functions /root
+
 RUN apt update && apt install -y --no-install-recommends \
     bzip2 \
     handbrake-cli \
@@ -9,7 +11,9 @@ RUN apt update && apt install -y --no-install-recommends \
     dvdbackup \
     lsdvd \
     && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    echo "source /root/functions" >> /root/.bashrc
+
 
 WORKDIR /go-ripper/libdvdcss
 
@@ -21,7 +25,6 @@ RUN curl -L https://get.videolan.org/libdvdcss/${LIBDVDCSS_VERSION}/libdvdcss-${
     make && \
     make install && \
     rm -rf /go-ripper/libdvdcss
-
 
 WORKDIR /go-ripper
 

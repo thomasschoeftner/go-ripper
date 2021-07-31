@@ -1,0 +1,27 @@
+raw_media_path=/go-ripper/storage/raw
+
+backupdvd() {
+  if [ -z "$1" ]; then
+    echo "error - medium name is missing"
+  else
+    dvdbackup -F -o $raw_media_path -n "$1" -p
+  fi
+}
+
+mergeVobs() {
+  if [ -z "$1" ]; then
+    echo "error - medium name is missing"
+  else
+    medium_name=$1
+    path="${raw_media_path}/${medium_name}"
+    merged_file="${path}/VIDEO_TS/${medium_name}.VOB"
+
+    if [ ! -d "$path" ]; then
+      echo "error - $path not found"
+    else
+      cat "${path}/VIDEO_TS/*.VOB" > "${merged_file}.new"
+      rm "${path}/VIDEO_TS/*.VOB" # drop original fragmented VOBs
+      mv "${merged_file}.new" "${merged_file}"
+    fi
+  fi
+}
