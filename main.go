@@ -97,15 +97,15 @@ func handleProcessingEvents(pipe *pipeline.Pipeline) error {
 		}
 		if isClosed, statistics := event.IsClosed(); isClosed {
 			pipeClosed = true
-			fmt.Printf("statistis: %+v", *statistics) //TODO improve
+			fmt.Printf("statistis: %+v\n", *statistics) //TODO improve
 		} else if isCanceled, reason := event.IsCanceled(); isCanceled {
-			logger.Infof("processing canceled due to reason: %s", reason)
+			logger.Infof("processing canceled due to reason: %s\n", reason)
 		} else if isError, err, job := event.IsError(); isError {
-			logger.Errorf("job %v failed with %s", job, err)
+			logger.Errorf("job %v failed with %s\n", job, err)
 		} else if isDone, job := event.IsDone(); isDone {
-			logger.Infof("processing job %v is completed", job)
+			logger.Infof("processing job %v is completed\n", job)
 		} else {
-			return fmt.Errorf("unknown event received: %+v", event)
+			return fmt.Errorf("unknown event received: %+v\n", event)
 		}
 	}
 	return nil
