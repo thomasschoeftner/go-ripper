@@ -1,7 +1,6 @@
 package tag
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -47,12 +46,6 @@ func createAtomicParsleyVideoTagger(conf *ripper.AppConf, lazy bool, printf comm
 	}
 
 	tagCtx.path = apConf.Path
-	exists, err := files.Exists(tagCtx.path)
-	if err != nil {
-		return nil, nil, err
-	} else if !exists {
-		return nil, nil, fmt.Errorf("unable to find AtomicParsley binary at \"%s\"\n", tagCtx.path)
-	}
 
 	if apConf.ShowErrorOutput {
 		tagCtx.errout = os.Stderr
