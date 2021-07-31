@@ -97,7 +97,7 @@ func handleProcessingEvents(pipe *pipeline.Pipeline) error {
 		}
 		if isClosed, statistics := event.IsClosed(); isClosed {
 			pipeClosed = true
-			fmt.Printf("statistis: %+v\n", *statistics) //TODO improve
+			fmt.Printf("statistics: %+v\n", *statistics) //TODO improve
 		} else if isCanceled, reason := event.IsCanceled(); isCanceled {
 			logger.Infof("processing canceled due to reason: %s\n", reason)
 		} else if isError, err, job := event.IsError(); isError {
