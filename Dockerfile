@@ -1,37 +1,19 @@
-FROM golang:1.15.11
+FROM multimedia-utils:1.4.2-1.4.0
 
-ENV LIBDVDCSS_VERSION=1.4.2
+ADD tools/functions /root
 
-ADD scripts/functions /root
-
-RUN apt update && apt install -y --no-install-recommends \
-    bzip2 \
-    handbrake-cli \
-    atomicparsley \
-    dvdbackup \
-    lsdvd \
-    && \
-    rm -rf /var/lib/apt/lists/* && \
-    echo "source /root/functions" >> /root/.bashrc
+RUN echo "source /root/functions" >> /root/.bashrc
 
 
-WORKDIR /go-ripper/libdvdcss
-
-# build & install libdvdcss
-RUN curl -L https://get.videolan.org/libdvdcss/${LIBDVDCSS_VERSION}/libdvdcss-${LIBDVDCSS_VERSION}.tar.bz2 -o libdvdcss-${LIBDVDCSS_VERSION}.tar.bz2 && \
-    tar -xjf libdvdcss-${LIBDVDCSS_VERSION}.tar.bz2 && \
-    cd libdvdcss-${LIBDVDCSS_VERSION} && \
-    ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/libdvdcss-${LIBDVDCSS_VERSION} && \
-    make && \
-    make install && \
-    rm -rf /go-ripper/libdvdcss
-
-WORKDIR /go-ripper
+WORKDIR /go-ripper/source
 
 # build and install go-ripper
 RUN go get github.com/thomasschoeftner/go-ripper && \
     cd /go/src/github.com/thomasschoeftner/go-ripper && \
-    go build -o /usr/bin/go-ripper
+    go build -o /usr/bin/go-ripper && \
+    rm -rf /go-ripper/source
+
+WORKDIR /go-ripper
 
 VOLUME /go-ripper/config
 VOLUME /go-ripper/storage
