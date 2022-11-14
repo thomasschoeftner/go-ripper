@@ -14,7 +14,11 @@ import (
 )
 
 const conf_tagger_atomicparsley = "atomicparsley"
+
 const (
+	paramInputFile = "-i"
+
+	
 	paramOutputFile   = "-o"
 	argumentOverwrite = "--overWrite"
 

@@ -24,7 +24,7 @@ var TaggerFactories map[string]TaggerFactory
 
 func init() {
 	TaggerFactories = make(map[string]TaggerFactory)
-	TaggerFactories[conf_tagger_atomicparsley] = createAtomicParsleyVideoTagger
+	TaggerFactories[conf_tagger_ffmpeg] = createFFMPEGVideoTagger
 }
 
 func TagVideo(ctx task.Context) task.HandlerFunc {

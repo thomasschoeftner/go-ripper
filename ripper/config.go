@@ -121,11 +121,11 @@ type TagConfig struct {
 }
 
 type VideoTagConfig struct {
-	Tagger        string
-	AtomicParsley *AtomicParsleyConfig
+	Tagger string
+	FFMPEG *FFMPEGConfig
 }
 
-type AtomicParsleyConfig struct {
+type FFMPEGConfig struct {
 	CommandlineToolConfig
 }
 

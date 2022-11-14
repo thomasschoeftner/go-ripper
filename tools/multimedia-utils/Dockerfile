@@ -65,9 +65,7 @@ RUN git clone --depth 1 --branch $HANDBRAKECLI_VERSION https://github.com/HandBr
     rm -rf /sources/handbrake
 
 RUN apt update && apt install -y --no-install-recommends \
-    atomicparsley \
-    dvdbackup \
-    lsdvd && \
+    ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /
