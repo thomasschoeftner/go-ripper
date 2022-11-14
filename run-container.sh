@@ -12,7 +12,7 @@ if [ ! -d "$STORAGE_DIR" ]; then
     exit 2
 fi
 
-docker run -it --rm --privileged \
+docker run -it --rm \
     -v ${CONFIG_DIR}:/go-ripper/config:ro \
     -v ${STORAGE_DIR}:/go-ripper/storage \
     go-ripper:latest
