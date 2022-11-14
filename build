@@ -1,2 +1,0 @@
-git clone github.com/thomasschoeftner/go-cli
-go get github.com/google/logger
