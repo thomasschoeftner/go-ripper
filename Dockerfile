@@ -1,4 +1,4 @@
-FROM multimedia-utils:1.4.2-1.4.0
+FROM multimedia-utils:1.4.3-1.5.1
 
 ADD tools/functions /root
 

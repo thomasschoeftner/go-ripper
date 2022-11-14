@@ -1,8 +1,8 @@
-FROM golang:1.15.11
+FROM golang:1.19.3
 
-ARG LIBDVDCSS_VERSION=1.4.2
+ARG LIBDVDCSS_VERSION=1.4.3
 
-ARG HANDBRAKECLI_VERSION=1.4.0
+ARG HANDBRAKECLI_VERSION=1.5.1
 
 RUN apt update && apt install -y --no-install-recommends \
     autoconf \
