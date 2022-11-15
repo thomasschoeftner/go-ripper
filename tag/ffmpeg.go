@@ -81,8 +81,8 @@ func (ffmpeg *ffmpegTagger) movie(inFile string, outFile string, id string, titl
 		WithParam(ffmpeg_paramInputFile, posterPath, "").
 		WithParam("-map", "0", "").
 		WithParam("-map", "1", "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%s\"", ffmpeg_tagTitleKey, title), "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%s\"", ffmpeg_tagYearKey, year), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%s", ffmpeg_tagTitleKey, title), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%s", ffmpeg_tagYearKey, year), "").
 		WithParam("-c", "copy", ""). // do not perform encode step
 		WithParam("-disposition:v:1", "attached_pic", ""). // use 2nd input file as artwork
 		WithArgument(fmt.Sprintf("%s", outFile))
@@ -97,11 +97,11 @@ func (ffmpeg *ffmpegTagger) episode(inFile string, outFile string, id string, se
 		WithParam(ffmpeg_paramInputFile, posterPath, "").
 		WithParam("-map", "0", "").
 		WithParam("-map", "1", "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%s\"", ffmpeg_tagTitleKey, title), "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%s\"", ffmpeg_tagYearKey, year), "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%s\"", ffmpeg_tagSeriesNameKey, series), "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%d\"", ffmpeg_tagGroupingKey, season), "").
-		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=\"%d\"", ffmpeg_tagEpisodeKey, episode), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%s", ffmpeg_tagTitleKey, title), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%s", ffmpeg_tagYearKey, year), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%s", ffmpeg_tagSeriesNameKey, series), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%d", ffmpeg_tagGroupingKey, season), "").
+		WithParam(ffmpeg_paramMetaData,  fmt.Sprintf("%s=%d", ffmpeg_tagEpisodeKey, episode), "").
 		WithParam("-c", "copy", ""). // do not perform encode step
 		WithParam("-disposition:v:1", "attached_pic", ""). // use 2nd input file as artwork
 		WithArgument(fmt.Sprintf("%s", outFile))
