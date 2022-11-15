@@ -16,7 +16,7 @@ function join_mkvs() {
         echo "file '$f'" >>"${output_file}.ffmpeg"
     done
 
-    ffmpeg -loglevel info -f concat -safe 0 -i "${output_file}.ffmpeg" -c copy "${output_file}"
+    ffmpeg -loglevel info -f concat -safe 0 -i "${output_file}.ffmpeg" -map 0:v -map 0:a -map 0:s -c copy -scodec copy "${output_file}"
     rm -f "${output_file}.ffmpeg"
 }
 
