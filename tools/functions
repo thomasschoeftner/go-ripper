@@ -1,6 +1,6 @@
 raw_media_path=/go-ripper/storage/raw
 
-backupdvd() {
+function backupdvd() {
   if [ -z "$1" ]; then
     echo "error - medium name is missing"
   else
@@ -8,7 +8,7 @@ backupdvd() {
   fi
 }
 
-mergeVobs() {
+function mergeVobs() {
   if [ -z "$1" ]; then
     echo "error - medium name is missing"
   else
