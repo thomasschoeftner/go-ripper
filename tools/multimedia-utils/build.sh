@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 LIBDVDCSS_VERSION=${1:-1.4.3}
 HANDBRAKECLI_VERSION=${2:-1.5.1}

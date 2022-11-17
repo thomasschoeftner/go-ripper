@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -eu
+
 CONFIG_DIR="$1"
 STORAGE_DIR="$2"
 
