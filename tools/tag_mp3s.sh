@@ -45,7 +45,7 @@ function copy_and_tag() {
     local images_dir="${4:-none}"
 
     [ "$mapping_file" = "none" ] && echo "missing parameter 'mapping_file'" && usage && return 1
-    [ "$1" = "--help" ] && usage
+    [ "$1" = "--help" ] && usage && exit 0
     [ "$input_dir" = "none" ] && echo "missing parameter 'input_dir'" && usage && return 1
     [ ! -d "$input_dir" ] && echo "input dir does not exist: '$input_dir'" && return 2
     [ "$output_dir" = "none" ] && echo "missing parameter 'output_dir'" && usage && return 1
@@ -97,9 +97,7 @@ function copy_and_tag() {
         # echo "title: '$title'"
 
         tag_mp3 "${output_dir}/${tgt_file}" "$image_file" "$artist" "$title" "$track"
-        echo
     done <"$mapping_file"
-
 }
 
 copy_and_tag "$@"
