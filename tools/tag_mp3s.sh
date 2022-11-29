@@ -60,7 +60,7 @@ function copy_and_tag() {
 
     mkdir -p "$output_dir" # create output dir if not existing
 
-    while IFS='#' read src_file tgt_file; do
+    while IFS='#' read -r src_file tgt_file; do
         local src_file="$(_trim_string "$src_file")"
         local tgt_file="$(_trim_string "$tgt_file")"
         if [ -z "$src_file" ] || [ -z "$tgt_file" ]; then
