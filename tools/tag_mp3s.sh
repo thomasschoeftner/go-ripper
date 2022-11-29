@@ -28,7 +28,7 @@ function tag_mp3() {
     [ "$title" = "none" ] && echo "missing parameter: 'title'" && return 1
     [ "$track" = "none" ] && echo "missing parameter: 'track'" && return 1
 
-    ffmpeg -i "${mp3_file}" -i "${image_file}/" -map 0:0 -map 1:0 -c copy -id3v2_version 3 \
+    ffmpeg -i "${mp3_file}" -i "${image_file}" -map 0:0 -map 1:0 -c copy -id3v2_version 3 \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
         -metadata artist="$artist" \
         -metadata title="$title" \
@@ -61,12 +61,15 @@ function copy_and_tag() {
     mkdir -p "$output_dir" # create output dir if not existing
 
     while IFS='#' read src_file tgt_file; do
-        local src_file="$(_trim_string "$src_file")"
-        local tgt_file="$(_trim_string "$tgt_file")"
+        # local src_file="$(_trim_string "$src_file")"
+        # local tgt_file="$(_trim_string "$tgt_file")"
         if [ -z "$src_file" ] || [ -z "$tgt_file" ]; then
             echo "  skipping: '${src_file}' -> '${tgt_file}'"
             continue
         fi
+        # echo "src: '$src_file', tgt: '$tgt_file'"
+        # continue
+        # exit 99
 
         # copy and rename raw file
         # echo "  '${input_dir}/${src_file}' -> '${output_dir}/${tgt_file}'"
