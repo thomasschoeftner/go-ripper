@@ -72,8 +72,8 @@ function find_image_for_mp3() {
     local prefix="${3:-}"
 
     local file_no_extension="$(basename "$mp3_file" ".mp3")" # file name only without ".mp3" file extension
-    local track_no="${mp3_file#*" - "}"                      # remove prefix ending in ' - '
-    track_no=$(_trim_string "${track_no%" - "*}")            # remove suffix starting with ' - '
+    local track_no="${mp3_file#*"- "}"                      # remove prefix ending in ' - '
+    track_no=$(_trim_string "${track_no%" -"*}")            # remove suffix starting with ' - '
 
     local candidates=(
         "${file_no_extension}.jpg"
