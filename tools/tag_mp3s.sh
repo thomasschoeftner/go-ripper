@@ -35,14 +35,17 @@ function tag_mp3() {
 
     echo "Tag MP3: '$mp3_file' with (artist='$artist', title='$title', track='$track', image='$image_file')"
 
-    ffmpeg -i "${mp3_file}" -i "${image_file}" -map 0:0 -map 1:0 -c copy -id3v2_version 3 \
+    rm -f "${mp3_file}.tagged.mp3"
+
+    ffmpeg -nostdin -i "${mp3_file}" -i "${image_file}" -map 0:0 -map 1:0 -c copy -id3v2_version 3 \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
         -metadata artist="$artist" \
         -metadata title="$title" \
         -metadata track="$track" \
         -loglevel error \
-        "${mp3_file}.tagged.mp3" &&
-        mv "${mp3_file}.tagged.mp3" "${mp3_file}"
+        "${mp3_file}.tagged.mp3"
+
+    mv "${mp3_file}.tagged.mp3" "${mp3_file}"
 }
 
 function rename_mp3() {
@@ -102,7 +105,7 @@ function copy_and_tag_mp3() {
     local image_dir="${4:-none}"
     local image_prefix="${5:-none}"
 
-    [ "$mapping_file" = "none" ]  && usage && return 0
+    [ "$mapping_file" = "none" ] && usage && return 0
     [ "$1" = "--help" ] && usage && return 0
     [ "$input_dir" = "none" ] && echo "missing parameter 'input_dir'" && usage && return 1
     [ ! -d "$input_dir" ] && echo "input dir does not exist: '$input_dir'" && return 2
@@ -116,9 +119,12 @@ function copy_and_tag_mp3() {
     echo "Convert mp3s in '$input_dir' according to mapping_file '$mapping_file', tag with images in '$image_dir', and store in '$output_dir'"
     echo
 
-    while IFS='#' read -r src_file tgt_file; do
-        local src_file="$(_trim_string "$src_file")"
-        local tgt_file="$(_trim_string "$tgt_file")"
+    while read -r line; do
+        local src_file="$(_trim_string "${line%#*}")"
+        local tgt_file="$(_trim_string "${line#*#}")"
+        # echo $line
+        # echo "src='$src_file' -> tgt='$tgt_file'"
+        # echo
 
         if [ -z "$src_file" ]; then
             # skip if no source file specified
@@ -140,11 +146,11 @@ function copy_and_tag_mp3() {
         fi
 
         # tag mp3 file
-        IFS='-' read artist track title <<<"$tgt_file_no_extension"
-        artist="$(_trim_string "$artist")"
-        track="$(_trim_string "$track")"
-
-        title="$(_trim_string "$title")"
+        local tgt_file_no_extension="$(basename "${output_dir}/${tgt_file}" ".mp3")" # file name only without ".mp3" file extension
+        local artist="$(_trim_string "${tgt_file_no_extension%%" - "*}")"
+        local track="$(_trim_string "${tgt_file_no_extension#*" - "}")"
+        track=$(_trim_string "${track%" - "*}") 
+        local title="$(_trim_string "${tgt_file_no_extension##*" - "}")"
         tag_mp3 "${output_dir}/${tgt_file}" "$image_file" "$artist" "$title" "$track"
     done <"$mapping_file"
 }
