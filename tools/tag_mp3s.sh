@@ -37,11 +37,14 @@ function tag_mp3() {
 
     rm -f "${mp3_file}.tagged.mp3"
 
+    local metadata=("-metadata artist='$artist'" "-metadata title='$title'")
+    if [ ! "$track" = "none" ]; then
+        metadata+=("-metadata track=$track")
+    fi
+
     ffmpeg -nostdin -i "${mp3_file}" -i "${image_file}" -map 0:0 -map 1:0 -c copy -id3v2_version 3 \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
-        -metadata artist="$artist" \
-        -metadata title="$title" \
-        -metadata track="$track" \
+        ${metadata[*]} \
         -loglevel error \
         "${mp3_file}.tagged.mp3"
 
@@ -72,8 +75,8 @@ function find_image_for_mp3() {
     local prefix="${3:-}"
 
     local file_no_extension="$(basename "$mp3_file" ".mp3")" # file name only without ".mp3" file extension
-    local track_no="${mp3_file#*"- "}"                      # remove prefix ending in ' - '
-    track_no=$(_trim_string "${track_no%" -"*}")            # remove suffix starting with ' - '
+    local track_no="${mp3_file#*"- "}"                       # remove prefix ending in ' - '
+    track_no=$(_trim_string "${track_no%" -"*}")             # remove suffix starting with ' - '
 
     local candidates=(
         "${file_no_extension}.jpg"
@@ -149,8 +152,9 @@ function copy_and_tag_mp3() {
         local tgt_file_no_extension="$(basename "${output_dir}/${tgt_file}" ".mp3")" # file name only without ".mp3" file extension
         local artist="$(_trim_string "${tgt_file_no_extension%%" - "*}")"
         local track="$(_trim_string "${tgt_file_no_extension#*" - "}")"
-        track=$(_trim_string "${track%" - "*}") 
+        track=$(_trim_string "${track%" - "*}")
         local title="$(_trim_string "${tgt_file_no_extension##*" - "}")"
+        [ "$track" = "$title" ] && track="none" # ignore track if track and title are same
         tag_mp3 "${output_dir}/${tgt_file}" "$image_file" "$artist" "$title" "$track"
     done <"$mapping_file"
 }
