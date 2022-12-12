@@ -20,37 +20,19 @@ function _trim_string() {
     echo "$1" | xargs
 }
 
-function tag_mp3() {
+function add_artwork_to_mp3() {
     local mp3_file="${1:-none}"
     local image_file="${2:-none}"
-    local title="${3:-none}"
-    local artist="${4:-none}"
-    local track="${5:-none}"
 
     [ "$mp3_file" = "none" ] && echo "missing parameter: 'mp3_file'" && return 20
     [ "$image_file" = "none" ] && echo "missing parameter: 'image_file'" && return 20
-    [ "$title" = "none" ] && echo "missing parameter: 'title'" && return 20
-    [ "$artist" = "none" ] && echo "ignore missing parameter: 'artist'"
-    [ "$track" = "none" ] && echo "ignore missing parameter: 'track'"
-
-    echo "Tag MP3: '$mp3_file' with (artist='$artist', title='$title', track='$track', image='$image_file')"
 
     rm -f "${mp3_file}.tagged.mp3"
 
-    local metadata=("-metadata title='$title'")
-    if [ ! "$artist" = "none" ]; then
-        metadata+=("-metadata artist='$artist'")
-    fi
-    if [ ! "$track" = "none" ]; then
-        metadata+=("-metadata track=$track")
-    fi
-
     ffmpeg -nostdin -i "${mp3_file}" -i "${image_file}" -map 0:0 -map 1:0 -c copy -id3v2_version 3 \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
-        ${metadata[*]} \
         -loglevel error \
         "${mp3_file}.tagged.mp3"
-
     mv "${mp3_file}.tagged.mp3" "${mp3_file}"
 }
 
@@ -151,15 +133,7 @@ function copy_and_tag_mp3() {
             image_file="$(find_image_for_mp3 "$image_dir" "${output_dir}/${tgt_file}" "$image_prefix")"
         fi
 
-        # tag mp3 file
-        local tgt_file_no_extension="$(basename "${output_dir}/${tgt_file}" ".mp3")" # file name only without ".mp3" file extension
-        local artist="$(_trim_string "${tgt_file_no_extension%%" - "*}")"
-        local track="$(_trim_string "${tgt_file_no_extension#*" - "}")"
-        track=$(_trim_string "${track%" - "*}")
-        local title="$(_trim_string "${tgt_file_no_extension##*" - "}")"
-        [ "$track" = "$title" ] && track="none" # ignore track, if track and title are same
-        [ "$artist" = "$title" ] && artist="none"
-        tag_mp3 "${output_dir}/${tgt_file}" "$image_file" "$title" "$artist" "$track"
+        add_artwork_to_mp3 "${output_dir}/${tgt_file}" "$image_file"
     done <"$mapping_file"
 }
 
