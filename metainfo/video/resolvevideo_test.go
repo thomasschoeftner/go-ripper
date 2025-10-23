@@ -1,25 +1,26 @@
 package video
 
 import (
-	"testing"
-	"github.com/thomasschoeftner/go-cli/test"
-	"github.com/thomasschoeftner/go-ripper/targetinfo"
-	"github.com/thomasschoeftner/go-cli/task"
-	"github.com/thomasschoeftner/go-cli/commons"
-	"github.com/thomasschoeftner/go-ripper/ripper"
-	"github.com/thomasschoeftner/go-cli/config"
 	"path/filepath"
+	"testing"
+
+	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-cli/config"
+	"github.com/thomasschoeftner/go-cli/task"
+	"github.com/thomasschoeftner/go-cli/test"
 	"github.com/thomasschoeftner/go-ripper/files"
 	"github.com/thomasschoeftner/go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 )
 
 var movieTi = targetinfo.NewMovie("movieTi.mp4", "/a/b", "tt123456")
-var episodeTi = targetinfo.NewEpisode("episode1.mp4", "/a/b/c", "tt654321", 3, 2, 4, 7)
+var episodeTi = targetinfo.NewEpisode("episode1.mp4", "/a/b/c", "tt654321", 3, 2, 7)
 
 var movieMi = MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "The awesome adventures of Sepp", Year: "2018", Poster: "taaos.jpg"}
 var seriesMi = SeriesMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "a space oddity", Year: "2017", Seasons: 3, Poster: "aso.png"}
-var episodeMi = EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "attack of the raffgrns", Year: "2017", Episode: 4, Season: 3}
-var imageMi = map[string][]byte{movieMi.Poster : []byte{1,2,3,4}, seriesMi.Poster : []byte{5,6,7,8}}
+var episodeMi = EpisodeMetaInfo{IdInfo: metainfo.IdInfo{Id: episodeTi.Id}, Title: "attack of the raffgrns", Year: "2017", Episode: 2, Season: 3}
+var imageMi = map[string][]byte{movieMi.Poster: []byte{1, 2, 3, 4}, seriesMi.Poster: []byte{5, 6, 7, 8}}
 
 const confJson = `
 {
@@ -32,8 +33,7 @@ const confJson = `
   }
 }`
 
-
-//integration-test
+// integration-test
 func TestResolveVideo(t *testing.T) {
 	assert := test.AssertOn(t)
 
@@ -45,7 +45,7 @@ func TestResolveVideo(t *testing.T) {
 	repoDir := filepath.ToSlash(filepath.Join(dir, "repo"))
 	workDir := filepath.ToSlash(filepath.Join(dir, "work"))
 	assert.NotError(config.FromString(conf, confJson,
-		map[string]string {"repodir" : repoDir, "workdir" : workDir}))
+		map[string]string{"repodir": repoDir, "workdir": workDir}))
 	ctx := task.Context{nil, conf, commons.Printf, false}
 
 	// create target info files
@@ -61,7 +61,7 @@ func TestResolveVideo(t *testing.T) {
 	movieJob := task.Job{}.WithParam(ripper.JobField_Path, filepath.Join(movieTi.GetFolder(), movieTi.GetFile()))
 	episodeJob := task.Job{}.WithParam(ripper.JobField_Path, filepath.Join(episodeTi.GetFolder(), episodeTi.GetFile()))
 
-	t.Run("movieTi", func (t *testing.T) {
+	t.Run("movieTi", func(t *testing.T) {
 		miSource := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
 		NewVideoMetaInfoSource = func(conf *ripper.VideoResolveConfig) (VideoMetaInfoSource, error) {
 			return miSource, nil
@@ -79,14 +79,13 @@ func TestResolveVideo(t *testing.T) {
 		assert.True("image not fetched from meta-info source")(1 == len(miSource.imagesFetched))
 	})
 
-	t.Run("episodeTi", func (t *testing.T) {
+	t.Run("episodeTi", func(t *testing.T) {
 		miSource := newVideoMetaInfoSource(&movieMi, &seriesMi, &episodeMi, imageMi)
 		NewVideoMetaInfoSource = func(conf *ripper.VideoResolveConfig) (VideoMetaInfoSource, error) {
 			return miSource, nil
 		}
 		resolve := ResolveVideo(ctx)
 		NewVideoMetaInfoSource = nil
-
 		assert := test.AssertOn(t)
 		miSource.episodeFetched = false
 		resultJobs, err := resolve(episodeJob)
@@ -100,7 +99,7 @@ func TestResolveVideo(t *testing.T) {
 	})
 }
 
-func setupResolver(t *testing.T, lazy bool) (string, *findOrFetcher){
+func setupResolver(t *testing.T, lazy bool) (string, *findOrFetcher) {
 	dir := test.MkTempFolder(t)
 	assert := test.AssertOn(t)
 	conf := &ripper.AppConf{}

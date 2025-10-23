@@ -124,7 +124,7 @@ func TestTagEpisode(t *testing.T) {
 
 	t.Run("expect error when no appropriate input inFile is found", func(t *testing.T) {
 		assert := test.AssertOn(t)
-		ti := targetinfo.NewEpisode(files.WithExtension("movie", "avi"), "/some/dir", "episode-id", 4, 2, 2, 9)
+		ti := targetinfo.NewEpisode(files.WithExtension("movie", "avi"), "/some/dir", "episode-id", 4, 2, 9)
 		tagger := testTagger{conf: emptyConf}
 		err := tagEpisode(tagger.TagEpisode, tagger.conf, ti, ti.File)
 		assert.ExpectError("expected error when tagging episode without appropriate input inFile, but got none")(err)
@@ -139,7 +139,7 @@ func TestTagEpisode(t *testing.T) {
 		seriesMi := video.SeriesMetaInfo{IdInfo: metainfo.IdInfo{"series-id"}, Title: "traffic education", Seasons: 9, Year: "2010", Poster: "/pic/of/a/car.jpeg"}
 		metainfo.SaveMetaInfo(video.SeriesFileName(repoDir, seriesMi.Id), seriesMi)
 
-		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", seriesMi.Id, 2, 4, 4, 9)
+		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", seriesMi.Id, 2, 4, 9)
 
 		tagger := testTagger{conf: emptyConf}
 		err := tagEpisode(tagger.TagEpisode, tagger.conf, ti, ti.File)
@@ -154,7 +154,7 @@ func TestTagEpisode(t *testing.T) {
 		episodeMi := video.EpisodeMetaInfo{IdInfo: metainfo.IdInfo{"episode-id"}, Title: "crash boom", Season: 4, Episode: 2, Year: "2014"}
 		metainfo.SaveMetaInfo(video.EpisodeFileName(repoDir, "series-id", episodeMi.Season, episodeMi.Episode), episodeMi)
 
-		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", "series-id", 2, 4, 4, 9)
+		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", "series-id", 2, 4, 9)
 
 		tagger := testTagger{conf: emptyConf}
 		err := tagEpisode(tagger.TagEpisode, tagger.conf, ti, ti.File)
@@ -171,7 +171,7 @@ func TestTagEpisode(t *testing.T) {
 		episodeMi := video.EpisodeMetaInfo{IdInfo: metainfo.IdInfo{"episode-id"}, Title: "crash boom", Season: 4, Episode: 2, Year: "2014"}
 		metainfo.SaveMetaInfo(video.SeriesFileName(repoDir, seriesMi.Id), seriesMi)
 		metainfo.SaveMetaInfo(video.EpisodeFileName(repoDir, seriesMi.Id, episodeMi.Season, episodeMi.Episode), episodeMi)
-		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", seriesMi.Id, episodeMi.Season, episodeMi.Episode, episodeMi.Episode, 9)
+		ti := targetinfo.NewEpisode(files.WithExtension("trafficeducation-s4e2", expectedVideoExtension), "/some/dir", seriesMi.Id, episodeMi.Season, episodeMi.Episode, 9)
 		fileToProcess := files.WithExtension("some/other/file", expectedVideoExtension)
 
 		outputDir := filepath.Join(dir, "output")
@@ -229,7 +229,7 @@ func TestTagVideo(t *testing.T) {
 	movieFile := filepath.Join(movieTi.Folder, movieTi.File)
 	mWorkDir, _ := ripper.GetWorkPathForTargetFolder(workDir, movieTi.GetFolder())
 	targetinfo.Save(mWorkDir, movieTi)
-	episodeTi := targetinfo.NewEpisode("part1.mp4", "./testdata/in", "part1", 3, 1, 1, 3)
+	episodeTi := targetinfo.NewEpisode("part1.mp4", "./testdata/in", "part1", 3, 1, 3)
 	episodeFile := filepath.Join(episodeTi.Folder, episodeTi.File)
 	eWorkDir, _ := ripper.GetWorkPathForTargetFolder(workDir, episodeTi.GetFolder())
 	targetinfo.Save(eWorkDir, episodeTi)

@@ -1,14 +1,15 @@
 package targetinfo
 
 import (
-	"testing"
 	"os"
 	"path/filepath"
+	"testing"
+
 	"github.com/thomasschoeftner/go-cli/test"
 )
 
 var video = NewMovie("f.g", "/a/b/c", "test")
-var episode = NewEpisode("f.g", "/a/b/c", "tt987654321", 3, 12, 12, 24)
+var episode = NewEpisode("f.g", "/a/b/c", "tt987654321", 3, 12, 24)
 
 func TestSaveJson(t *testing.T) {
 	t.Run("save single video", func(t *testing.T) {
@@ -27,7 +28,6 @@ func TestSaveJson(t *testing.T) {
 			t.Errorf("target file \"%s\" must not be empty", f)
 		}
 	})
-
 
 	t.Run("save series episode", func(t *testing.T) {
 		ti := episode
@@ -62,7 +62,6 @@ func TestReadJson(t *testing.T) {
 		t.Errorf("targetinfo does not match:\n  to json   %v\n  from json %v", *episode, *readEpisode)
 	}
 }
-
 
 func TestSaveNilTargetInfo(t *testing.T) {
 	err := Save(".", nil)

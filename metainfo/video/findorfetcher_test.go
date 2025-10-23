@@ -1,51 +1,52 @@
 package video
 
 import (
-	"github.com/thomasschoeftner/go-cli/test"
-	"github.com/thomasschoeftner/go-ripper/ripper"
-	"path/filepath"
-	"github.com/thomasschoeftner/go-cli/config"
-	"github.com/thomasschoeftner/go-ripper/files"
-	"testing"
-	"fmt"
 	"bytes"
+	"fmt"
+	"path/filepath"
+	"testing"
+
+	"github.com/thomasschoeftner/go-cli/config"
+	"github.com/thomasschoeftner/go-cli/test"
+	"github.com/thomasschoeftner/go-ripper/files"
 	"github.com/thomasschoeftner/go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 )
 
 func setupFindOrFetcher(assert *test.Assertion, movie *MovieMetaInfo, series *SeriesMetaInfo, episode *EpisodeMetaInfo, images map[string][]byte) (string, *ripper.AppConf) {
-		dir := test.MkTempFolder(assert.T)
-		conf := &ripper.AppConf{}
+	dir := test.MkTempFolder(assert.T)
+	conf := &ripper.AppConf{}
 
-		repoDir := filepath.ToSlash(filepath.Join(dir, "repo"))
-		workDir := filepath.ToSlash(filepath.Join(dir, "work"))
-		assert.NotError(config.FromString(conf, confJson,
-			map[string]string {"repodir" : repoDir, "workdir" : workDir}))
+	repoDir := filepath.ToSlash(filepath.Join(dir, "repo"))
+	workDir := filepath.ToSlash(filepath.Join(dir, "work"))
+	assert.NotError(config.FromString(conf, confJson,
+		map[string]string{"repodir": repoDir, "workdir": workDir}))
 
-		// create meta info files if passed
-		if movie != nil {
-			assert.NotError(metainfo.SaveMetaInfo(MovieFileName(repoDir, movie.Id), movie))
-		}
-		if series != nil {
-			assert.NotError(metainfo.SaveMetaInfo(SeriesFileName(repoDir, series.Id), series))
-		}
-		if episode != nil {
-			assert.NotError(metainfo.SaveMetaInfo(EpisodeFileName(repoDir, episode.Id, episode.Season, episode.Episode), episode))
-		}
-		if images != nil {
-			for f, image := range images {
-				var imgFileName string
-				if movie != nil && movie.Poster == f {
-					imgFileName = metainfo.ImageFileName(repoDir, movie.Id, files.GetExtension(movie.Poster))
-				} else if series != nil && series.Poster == f {
-					imgFileName = metainfo.ImageFileName(repoDir, series.Id, files.GetExtension(series.Poster))
-				} else {
-					assert.T.Fatalf("unknown poster name %s matches neither movie, nor series", f)
-				}
-				assert.NotError(metainfo.SaveImage(imgFileName, image))
+	// create meta info files if passed
+	if movie != nil {
+		assert.NotError(metainfo.SaveMetaInfo(MovieFileName(repoDir, movie.Id), movie))
+	}
+	if series != nil {
+		assert.NotError(metainfo.SaveMetaInfo(SeriesFileName(repoDir, series.Id), series))
+	}
+	if episode != nil {
+		assert.NotError(metainfo.SaveMetaInfo(EpisodeFileName(repoDir, episode.Id, episode.Season, episode.Episode), episode))
+	}
+	if images != nil {
+		for f, image := range images {
+			var imgFileName string
+			if movie != nil && movie.Poster == f {
+				imgFileName = metainfo.ImageFileName(repoDir, movie.Id, files.GetExtension(movie.Poster))
+			} else if series != nil && series.Poster == f {
+				imgFileName = metainfo.ImageFileName(repoDir, series.Id, files.GetExtension(series.Poster))
+			} else {
+				assert.T.Fatalf("unknown poster name %s matches neither movie, nor series", f)
 			}
+			assert.NotError(metainfo.SaveImage(imgFileName, image))
 		}
+	}
 
-		return dir, conf
+	return dir, conf
 }
 
 func teardownFindOrFetcher(assert *test.Assertion, dir string) {
@@ -79,7 +80,6 @@ func TestFindOrFetchMovie(t *testing.T) {
 	}
 	existingMovie := MovieMetaInfo{IdInfo: metainfo.IdInfo{Id: movieTi.Id}, Title: "an earlier awesome adventure of Sepp", Year: "2008", Poster: "aeaaos.jpg"}
 
-
 	t.Run("eager without pre-existing meta-info files", testFindOrFetch(false, nil, false))
 	t.Run("lazy without pre-existing meta-info files", testFindOrFetch(true, nil, false))
 	t.Run("eager with pre-existing meta-info files", testFindOrFetch(false, &existingMovie, false))
@@ -87,8 +87,8 @@ func TestFindOrFetchMovie(t *testing.T) {
 }
 
 func TestFindOrFetchImage(t *testing.T) {
-	testFindOrFetch := func(lazy bool, existingMovie *MovieMetaInfo, existingImages map[string][]byte, noNeedToResolve bool) func(t *testing.T){
-		return func (t *testing.T) {
+	testFindOrFetch := func(lazy bool, existingMovie *MovieMetaInfo, existingImages map[string][]byte, noNeedToResolve bool) func(t *testing.T) {
+		return func(t *testing.T) {
 			assert := test.AssertOn(t)
 			dir, conf := setupFindOrFetcher(assert, existingMovie, nil, nil, existingImages)
 			defer teardownFindOrFetcher(assert, dir)
@@ -146,7 +146,7 @@ func TestFindOrFetchSeries(t *testing.T) {
 			}
 		}
 	}
-	existingSeries := SeriesMetaInfo {IdInfo: metainfo.IdInfo{episodeTi.Id}, Title: "yet another time waster", Seasons: 7, Year: "2002", Poster: "yatw.png"}
+	existingSeries := SeriesMetaInfo{IdInfo: metainfo.IdInfo{episodeTi.Id}, Title: "yet another time waster", Seasons: 7, Year: "2002", Poster: "yatw.png"}
 
 	t.Run("eager without pre-existing image", testFindOrFetch(false, nil, false))
 	t.Run("lazy without pre-existing image", testFindOrFetch(true, nil, false))
@@ -187,7 +187,6 @@ func TestFindOrFetchEpisode(t *testing.T) {
 	t.Run("eager with pre-existing image", testFindOrFetch(false, &existingEpisode, false))
 	t.Run("lazy with pre-existing image", testFindOrFetch(true, &existingEpisode, true))
 }
-
 
 func assertMoviesEqual(assert *test.Assertion, expected *MovieMetaInfo, got *MovieMetaInfo) {
 	if expected == nil || got == nil {
