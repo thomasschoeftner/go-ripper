@@ -62,17 +62,7 @@ func resolveEpisode(findOrFetch *findOrFetcher, ti *targetinfo.Episode) error {
 		return err
 	}
 
-	//for now - assume each season is complete!!!
-	//for later: TODO correct episodeTi numbering
-	//_, err = findOrFetchSeason(metaInfoSource, ti, conf, lazy)
-	//if err != nil {
-	//	return err
-	//}
-	workDir, err := ripper.GetWorkPathForTargetFolder(findOrFetch.conf.WorkDirectory, ti.GetFolder())
-	if err != nil {
-		return err
-	}
-	targetinfo.Save(workDir, ti)
+	// TODO - consider adding Season Meta-Info
 
 	_, err = findOrFetch.episode(ti)
 	if err != nil {
