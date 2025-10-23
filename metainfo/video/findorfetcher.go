@@ -1,10 +1,10 @@
 package video
 
 import (
-	"github.com/thomasschoeftner/go-ripper/targetinfo"
 	"github.com/thomasschoeftner/go-ripper/files"
-	"github.com/thomasschoeftner/go-ripper/ripper"
 	"github.com/thomasschoeftner/go-ripper/metainfo"
+	"github.com/thomasschoeftner/go-ripper/ripper"
+	"github.com/thomasschoeftner/go-ripper/targetinfo"
 )
 
 func findOrFetch(metaInfo VideoMetaInfoSource, conf *ripper.AppConf, lazy bool) *findOrFetcher {
@@ -18,6 +18,7 @@ type findOrFetcher struct {
 }
 
 type fetchFunc func() (metainfo.MetaInfo, error)
+
 func (ff *findOrFetcher) doResolve(metaInfo metainfo.MetaInfo, metaInfoFileName string, doFetch fetchFunc) (metainfo.MetaInfo, error) {
 	if ff.needToResolve(metaInfoFileName, ff.lazy) {
 		mi, err := doFetch()
@@ -37,7 +38,7 @@ func (ff *findOrFetcher) doResolve(metaInfo metainfo.MetaInfo, metaInfoFileName 
 	}
 }
 
-func (ff * findOrFetcher) movie(ti *targetinfo.Movie) (*MovieMetaInfo, error) {
+func (ff *findOrFetcher) movie(ti *targetinfo.Movie) (*MovieMetaInfo, error) {
 	mi, err := ff.doResolve(&MovieMetaInfo{}, MovieFileName(ff.conf.MetaInfoRepo, ti.Id), func() (metainfo.MetaInfo, error) {
 		return ff.metaInfoSource.FetchMovieInfo(ti.Id)
 	})
@@ -48,7 +49,7 @@ func (ff * findOrFetcher) movie(ti *targetinfo.Movie) (*MovieMetaInfo, error) {
 	return mi.(*MovieMetaInfo), nil
 }
 
-func (ff * findOrFetcher) series(ti *targetinfo.Episode) (*SeriesMetaInfo, error) {
+func (ff *findOrFetcher) series(ti *targetinfo.Episode) (*SeriesMetaInfo, error) {
 	mi, err := ff.doResolve(&SeriesMetaInfo{}, SeriesFileName(ff.conf.MetaInfoRepo, ti.Id), func() (metainfo.MetaInfo, error) {
 		return ff.metaInfoSource.FetchSeriesInfo(ti.Id)
 	})
@@ -60,7 +61,7 @@ func (ff * findOrFetcher) series(ti *targetinfo.Episode) (*SeriesMetaInfo, error
 
 func (ff *findOrFetcher) episode(ti *targetinfo.Episode) (*EpisodeMetaInfo, error) {
 	mi, err := ff.doResolve(&EpisodeMetaInfo{}, EpisodeFileName(ff.conf.MetaInfoRepo, ti.Id, ti.Season, ti.Episode), func() (metainfo.MetaInfo, error) {
-		return ff.metaInfoSource.FetchEpisodeInfo(ti.Id, ti.Season, ti.ItemSeqNo)
+		return ff.metaInfoSource.FetchEpisodeInfo(ti.Id, ti.Season, ti.Episode)
 	})
 	if err != nil {
 		return nil, err
@@ -68,9 +69,8 @@ func (ff *findOrFetcher) episode(ti *targetinfo.Episode) (*EpisodeMetaInfo, erro
 	return mi.(*EpisodeMetaInfo), nil
 }
 
-
-func (ff * findOrFetcher) image(id string, imageUri string) error {
-	imageFile := metainfo.ImageFileName(ff. conf.MetaInfoRepo, id, files.GetExtension(imageUri))
+func (ff *findOrFetcher) image(id string, imageUri string) error {
+	imageFile := metainfo.ImageFileName(ff.conf.MetaInfoRepo, id, files.GetExtension(imageUri))
 	if !ff.needToResolve(imageFile, ff.lazy) {
 		return nil
 	}

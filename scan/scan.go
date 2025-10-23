@@ -1,15 +1,16 @@
 package scan
 
 import (
-	"github.com/thomasschoeftner/go-ripper/ripper"
-	"path/filepath"
-	"os"
-	"strings"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
-	"github.com/thomasschoeftner/go-ripper/files"
+	"strings"
+
 	"github.com/thomasschoeftner/go-cli/commons"
+	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 )
 
 type scanResult struct {
@@ -92,20 +93,19 @@ func shouldIgnore(path string, ignorePrefix string, ignoredFolders []string, all
 	return false
 }
 
-
 const (
-	placeholder_Id = "id"
+	placeholder_Id         = "id"
 	placeholder_Collection = "collection"
-	placeholder_ItemNo = "itemno"
+	placeholder_ItemNo     = "itemno"
 )
 
 func dissectPath(path string, conf *ripper.ScanConfig) (*scanResult, error) {
-	 for _, pattern := range conf.Patterns {
-	 	expandedPattern := expandPatterns(pattern, conf.IdPattern, conf.CollectionPattern, conf.ItemNoPattern)
-	 	pathTrail := getLastNPathElements(path, strings.Count(expandedPattern, "/") + 1) //folder depth + file nameee
-	 	re, err := regexp.Compile(expandedPattern)
-	 	if err != nil {
-	 		return nil, err
+	for _, pattern := range conf.Patterns {
+		expandedPattern := expandPatterns(pattern, conf.IdPattern, conf.CollectionPattern, conf.ItemNoPattern)
+		pathTrail := getLastNPathElements(path, strings.Count(expandedPattern, "/")+1) //folder depth + file nameee
+		re, err := regexp.Compile(expandedPattern)
+		if err != nil {
+			return nil, err
 		}
 
 		matches := extractParams(re, pathTrail)
@@ -126,7 +126,7 @@ func dissectPath(path string, conf *ripper.ScanConfig) (*scanResult, error) {
 
 			}
 		}
-	 }
+	}
 	return nil, nil
 }
 
@@ -156,11 +156,11 @@ func expandPatterns(pattern string, idPattern string, colPattern string, itemNoP
 
 func expandPattern(pattern string, placeholder string, subPattern string) string {
 	replacement := fmt.Sprintf("(?P<%s>%s)", placeholder, subPattern) //e.g. (?P<id>\d*)
-	return strings.Replace(pattern, fmt.Sprintf("<%s>",placeholder), replacement, -1)
+	return strings.Replace(pattern, fmt.Sprintf("<%s>", placeholder), replacement, -1)
 }
 
 func getLastNPathElements(path string, n int) string {
-	pathElems := []string{ }
+	pathElems := []string{}
 
 	path = filepath.Clean(path)
 	for i := 0; i < n; i++ {

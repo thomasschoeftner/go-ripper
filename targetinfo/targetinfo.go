@@ -1,14 +1,15 @@
 package targetinfo
 
 import (
-	"io/ioutil"
 	"encoding/json"
-	"os"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
-	"github.com/thomasschoeftner/go-ripper/ripper"
+
 	"github.com/thomasschoeftner/go-ripper/files"
+	"github.com/thomasschoeftner/go-ripper/ripper"
 )
 
 const targetinfo_file_extension = "targetinfo"
@@ -51,7 +52,6 @@ type Episode struct {
 	Video
 	Season     int `json:"season"`
 	Episode    int `json:"episode"`
-	ItemSeqNo  int `json:"itemseqno"`
 	ItemsTotal int `json:"itemstotal"`
 }
 
@@ -75,7 +75,6 @@ func (v *Movie) GetType() string {
 	return TARGETINFO_TYPE_MOVIE
 }
 
-
 func (m *Movie) String() string {
 	return fmt.Sprintf("movie   (id=%s, file=%s)", m.Id, filepath.Join(m.Folder, m.File))
 }
@@ -85,27 +84,25 @@ func (e *Episode) GetType() string {
 }
 
 func (e *Episode) String() string {
-	return fmt.Sprintf("episode (id=%s, season=%-4d, episode=%-4d, item#=%-4d, totalItems=%-4d, file=%s)", e.Id, e.Season, e.Episode, e.ItemSeqNo, e.ItemsTotal, filepath.Join(e.Folder, e.File))
+	return fmt.Sprintf("episode (id=%s, season=%-4d, episode=%-4d, totalItems=%-4d, file=%s)", e.Id, e.Season, e.Episode, e.ItemsTotal, filepath.Join(e.Folder, e.File))
 }
 
-
 func NewMovie(file string, folder string, id string) *Movie {
-	return &Movie{Video{Typed: Typed{ Type: TARGETINFO_TYPE_MOVIE}, File: file, Folder: folder, Id: id}}
+	return &Movie{Video{Typed: Typed{Type: TARGETINFO_TYPE_MOVIE}, File: file, Folder: folder, Id: id}}
 }
 
 func IsMovie(ti TargetInfo) bool {
 	return ti != nil && TARGETINFO_TYPE_MOVIE == ti.GetType()
 }
 
-func NewEpisode(file string, folder string, id string, season int, episode int, itemSeqNo int, itemsTotal int) *Episode {
-	vid := Video{Typed: Typed{ Type: TARGETINFO_TPYE_EPISODE}, File: file, Folder: folder, Id: id}
-	return &Episode{Video: vid, Season: season, Episode: episode, ItemSeqNo: itemSeqNo, ItemsTotal: itemsTotal}
+func NewEpisode(file string, folder string, id string, season int, episode int, itemsTotal int) *Episode {
+	vid := Video{Typed: Typed{Type: TARGETINFO_TPYE_EPISODE}, File: file, Folder: folder, Id: id}
+	return &Episode{Video: vid, Season: season, Episode: episode, ItemsTotal: itemsTotal}
 }
 
 func IsEpisode(ti TargetInfo) bool {
 	return ti != nil && TARGETINFO_TPYE_EPISODE == ti.GetType()
 }
-
 
 // read TargetInfo for specific target file (input file)
 func ForTarget(workDir string, targetPath string) (TargetInfo, error) {

@@ -1,10 +1,11 @@
 package video
 
 import (
+	"errors"
+
 	"github.com/thomasschoeftner/go-cli/task"
 	"github.com/thomasschoeftner/go-ripper/ripper"
 	"github.com/thomasschoeftner/go-ripper/targetinfo"
-	"errors"
 )
 
 // needs to be set for successful creation of a video meta-info source
@@ -67,7 +68,6 @@ func resolveEpisode(findOrFetch *findOrFetcher, ti *targetinfo.Episode) error {
 	//if err != nil {
 	//	return err
 	//}
-	ti.Episode = ti.ItemSeqNo
 	workDir, err := ripper.GetWorkPathForTargetFolder(findOrFetch.conf.WorkDirectory, ti.GetFolder())
 	if err != nil {
 		return err

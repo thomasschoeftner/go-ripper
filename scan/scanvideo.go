@@ -1,18 +1,19 @@
 package scan
 
 import (
+	"errors"
+	"fmt"
+	"path/filepath"
+
 	"github.com/thomasschoeftner/go-cli/task"
 	"github.com/thomasschoeftner/go-ripper/ripper"
 	"github.com/thomasschoeftner/go-ripper/targetinfo"
-	"path/filepath"
-	"errors"
-	"fmt"
 )
 
 func ScanVideo(ctx task.Context) task.HandlerFunc {
 	conf := ctx.Config.(*ripper.AppConf)
 
-	return func (job task.Job) ([]task.Job, error) {
+	return func(job task.Job) ([]task.Job, error) {
 		scanPath := ripper.GetTargetFileFromJob(job)
 
 		ctx.Printf("scanning contents of \"%s\"", scanPath)
@@ -51,8 +52,7 @@ func ScanVideo(ctx task.Context) task.HandlerFunc {
 	}
 }
 
-
-func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
+func toTargetInfos(results []*scanResult) ([]targetinfo.TargetInfo, error) {
 	var targetInfos []targetinfo.TargetInfo
 	episodeCount := map[string]map[int]int{}
 
@@ -68,13 +68,13 @@ func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 
 			seasons := episodeCount[series]
 			if seasons == nil {
-				seasons = map[int]int {}
+				seasons = map[int]int{}
 				episodeCount[series] = seasons
 			}
 			cnt := seasons[season] + 1
 			seasons[season] = cnt
 
-			episodeInfo := targetinfo.NewEpisode(r.File, r.Folder, r.Id, season, episode, cnt, 0)
+			episodeInfo := targetinfo.NewEpisode(r.File, r.Folder, r.Id, season, episode, 0)
 			targetInfos = append(targetInfos, episodeInfo)
 		} else { //single video
 			targetInfos = append(targetInfos, targetinfo.NewMovie(r.File, r.Folder, r.Id))
@@ -86,7 +86,6 @@ func toTargetInfos (results []*scanResult) ([]targetinfo.TargetInfo, error) {
 		if targetinfo.TARGETINFO_TPYE_EPISODE == ti.GetType() {
 			e := ti.(*targetinfo.Episode)
 			e.ItemsTotal = episodeCount[e.Id][e.Season]
-			e.Episode = e.ItemSeqNo
 		}
 	}
 
