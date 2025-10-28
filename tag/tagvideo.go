@@ -114,6 +114,10 @@ func tagEpisode(tag EpisodeTagger, conf *ripper.AppConf, ti *targetinfo.Episode,
 
 	fName := files.WithExtension(fmt.Sprintf(templateEpisodeFilename, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title), files.GetExtension(inputFile))
 	outputFile := buildDestinationPath(conf.Output.InvalidCharactersInFileName, conf.OutputDirectory, seriesMi.Title, strconv.Itoa(episodeMi.Season), fName)
+	err = files.CreateFolderStructure(filepath.Dir(outputFile))
+	if err != nil {
+		return err
+	}
 
 	err = tag(inputFile, outputFile, seriesMi.Id, seriesMi.Title, episodeMi.Season, episodeMi.Episode, episodeMi.Title, episodeMi.Year, imgFile)
 	return err
